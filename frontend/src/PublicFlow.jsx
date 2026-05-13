@@ -27,9 +27,9 @@ function PublicFlow() {
     <div className="min-h-screen flex flex-col items-center justify-center p-4">
       <main className="w-full max-w-md mx-auto">
         {step === 'landing' && <Landing onNext={() => handleNext('name')} />}
-        {step === 'name' && <NameSelection onNext={(targetName) => handleNext('gender', { targetName })} />}
-        {step === 'gender' && <GenderSelection targetName={sessionData.targetName} onNext={(gender) => handleNext('date', { gender })} />}
-        {step === 'date' && <DateSelection targetName={sessionData.targetName} onNext={(data) => handleNext('analyzing', data)} />}
+        {step === 'name' && <NameSelection onNext={(targetName) => handleNext('gender', { targetName })} onBack={() => setStep('landing')} />}
+        {step === 'gender' && <GenderSelection targetName={sessionData.targetName} onNext={(gender) => handleNext('date', { gender })} onBack={() => setStep('name')} />}
+        {step === 'date' && <DateSelection targetName={sessionData.targetName} onNext={(data) => handleNext('analyzing', data)} onBack={() => setStep('gender')} />}
         {step === 'analyzing' && <Analyzing sessionData={sessionData} onComplete={(data) => handleNext('traits', data)} />}
         {step === 'traits' && <Traits sessionData={sessionData} onNext={() => handleNext('results')} onRetry={() => setStep('analyzing')} onBack={() => setStep('date')} />}
         {step === 'results' && <Results sessionData={sessionData} onRestart={() => setStep('landing')} />}
