@@ -95,11 +95,11 @@ app.post('/api/generate-traits', async (c) => {
           messages: [
             { 
               role: 'system', 
-              content: 'Anda ialah pembaca horoskop dalam bahasa Melayu santai. Hasilkan 3 poin ringkas (max 10 patah perkataan setiap poin) menerangkan personaliti berdasarkan Zodiak. Return HANYA format JSON array string: ["poin 1", "poin 2", "poin 3"]. Jangan tambah sebarang teks lain atau penerangan.' 
+              content: `Anda ialah rakan karib di Malaysia. Gunakan bahasa Melayu pasar/santai Malaysia SAHAJA (contoh: memang sah, jenis yang, gila babeng, style, lepak). JANGAN guna bahasa Indonesia. Hasilkan 3 poin ringkas (max 10 patah perkataan setiap poin) menerangkan personaliti Zodiak. MESTI sebut nama "${personName}" dalam setiap poin. Return HANYA format JSON array string: ["poin 1", "poin 2", "poin 3"]. Dilarang letak teks lain.` 
             },
             { 
               role: 'user', 
-              content: `Nama: ${personName}. Zodiak: ${zodiac}. Jantina: ${gender === 'M' ? 'Lelaki' : 'Perempuan'}. Tulis poin seolah-olah bercakap tentang ${personName}. Contoh: "${personName} ni memang suka..."` 
+              content: `Nama kawan saya: ${personName}. Zodiak: ${zodiac}. Jantina: ${gender === 'M' ? 'Lelaki' : 'Perempuan'}. Tulis 3 poin personaliti yang sangat santai dan kasual. Gantikan perkataan 'dia' atau 'kawan' dengan nama "${personName}". Contoh: "${personName} ni jenis yang..." atau "Memang sah ${personName} suka..."` 
             }
           ]
         });
