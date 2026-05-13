@@ -33,41 +33,41 @@ export default function Dashboard() {
 
   return (
     <div className="space-y-6">
-      <h2 className="text-2xl font-heading font-semibold text-white mb-8">Overview</h2>
+      <h2 className="text-2xl font-heading font-bold text-slate-800 mb-8">Overview</h2>
       
       <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-        <div className="glass-card p-6 border-l-4 border-l-blue-500">
+        <div className="bg-white p-6 border-l-4 border-l-blue-500 rounded-xl shadow-sm border-y border-r border-slate-200">
           <div className="flex items-center space-x-4">
-            <div className="p-3 bg-blue-500/20 rounded-lg">
-              <Users className="w-6 h-6 text-blue-400" />
+            <div className="p-3 bg-blue-50 rounded-lg">
+              <Users className="w-6 h-6 text-blue-500" />
             </div>
             <div>
-              <p className="text-slate-400 text-sm">Total Sessions</p>
-              <h3 className="text-3xl font-bold text-white">{stats.sessions}</h3>
+              <p className="text-slate-500 text-sm font-medium">Total Sessions</p>
+              <h3 className="text-3xl font-bold text-slate-800">{stats.sessions}</h3>
             </div>
           </div>
         </div>
 
-        <div className="glass-card p-6 border-l-4 border-l-accent">
+        <div className="bg-white p-6 border-l-4 border-l-orange-500 rounded-xl shadow-sm border-y border-r border-slate-200">
           <div className="flex items-center space-x-4">
-            <div className="p-3 bg-accent/20 rounded-lg">
-              <MousePointerClick className="w-6 h-6 text-accent" />
+            <div className="p-3 bg-orange-50 rounded-lg">
+              <MousePointerClick className="w-6 h-6 text-orange-500" />
             </div>
             <div>
-              <p className="text-slate-400 text-sm">Affiliate Clicks</p>
-              <h3 className="text-3xl font-bold text-white">{stats.clicks}</h3>
+              <p className="text-slate-500 text-sm font-medium">Affiliate Clicks</p>
+              <h3 className="text-3xl font-bold text-slate-800">{stats.clicks}</h3>
             </div>
           </div>
         </div>
 
-        <div className="glass-card p-6 border-l-4 border-l-green-500">
+        <div className="bg-white p-6 border-l-4 border-l-green-500 rounded-xl shadow-sm border-y border-r border-slate-200">
           <div className="flex items-center space-x-4">
-            <div className="p-3 bg-green-500/20 rounded-lg">
-              <TrendingUp className="w-6 h-6 text-green-400" />
+            <div className="p-3 bg-green-50 rounded-lg">
+              <TrendingUp className="w-6 h-6 text-green-500" />
             </div>
             <div>
-              <p className="text-slate-400 text-sm">Est. Click-Through Rate</p>
-              <h3 className="text-3xl font-bold text-white">{ctr}%</h3>
+              <p className="text-slate-500 text-sm font-medium">Est. Click-Through Rate</p>
+              <h3 className="text-3xl font-bold text-slate-800">{ctr}%</h3>
             </div>
           </div>
         </div>
