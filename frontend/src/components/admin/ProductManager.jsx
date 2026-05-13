@@ -158,7 +158,7 @@ export default function ProductManager() {
                   <input required value={formData.image_url} onChange={e => setFormData({...formData, image_url: e.target.value})} className="w-full bg-slate-50 border border-slate-200 focus:border-purple-400 focus:ring-2 focus:ring-purple-100 rounded-lg px-4 py-2 text-slate-800 outline-none transition-all" />
                 </div>
                 <div className="space-y-2">
-                  <label className="text-sm font-semibold text-slate-600">Shopee Affiliate URL</label>
+                  <label className="text-sm font-semibold text-slate-600">Store Affiliate URL</label>
                   <input required value={formData.shopee_url} onChange={e => setFormData({...formData, shopee_url: e.target.value})} className="w-full bg-slate-50 border border-slate-200 focus:border-purple-400 focus:ring-2 focus:ring-purple-100 rounded-lg px-4 py-2 text-slate-800 outline-none transition-all" />
                 </div>
               </div>

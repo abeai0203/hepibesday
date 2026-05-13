@@ -108,7 +108,7 @@ export default function Results({ sessionData, onRestart }) {
                 onClick={() => handleProductClick(product.id, product.shopee_url)}
                 className="w-full flex items-center justify-center space-x-2 py-3 bg-white/80 hover:bg-white border border-purple-200 hover:border-pink-300 rounded-xl text-slate-700 font-bold transition-colors shadow-sm"
               >
-                <span>Tengok di Shopee</span>
+                <span>Lihat di Kedai</span>
                 <ExternalLink className="w-4 h-4 text-pink-500" />
               </button>
             </div>
