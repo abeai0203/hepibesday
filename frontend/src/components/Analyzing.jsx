@@ -20,6 +20,7 @@ export default function Analyzing({ sessionData, onComplete }) {
           body: JSON.stringify({
             birthDate: sessionData.birthDate,
             gender: sessionData.gender,
+            turnstileToken: sessionData.turnstileToken
           }),
         })
 

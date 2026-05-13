@@ -1,8 +1,13 @@
 import { Hono } from 'hono'
 import { cors } from 'hono/cors'
 
+import { sign, verify } from 'hono/jwt'
+
 type Bindings = {
   DB: D1Database
+  ADMIN_PASSPHRASE: string
+  JWT_SECRET: string
+  TURNSTILE_SECRET_KEY?: string
 }
 
 const app = new Hono<{ Bindings: Bindings }>()
@@ -40,10 +45,26 @@ app.get('/', (c) => {
 app.post('/api/generate-traits', async (c) => {
   try {
     const body = await c.req.json()
-    const { birthDate, gender } = body
+    const { birthDate, gender, turnstileToken } = body
 
     if (!birthDate || !gender) {
       return c.json({ error: 'Missing birthDate or gender' }, 400)
+    }
+
+    // Verify Turnstile if key exists
+    if (c.env.TURNSTILE_SECRET_KEY && turnstileToken) {
+      const formData = new FormData()
+      formData.append('secret', c.env.TURNSTILE_SECRET_KEY)
+      formData.append('response', turnstileToken)
+      
+      const turnstileRes = await fetch('https://challenges.cloudflare.com/turnstile/v0/siteverify', {
+        method: 'POST',
+        body: formData,
+      })
+      const turnstileData = await turnstileRes.json()
+      if (!turnstileData.success) {
+        return c.json({ error: 'Bot verification failed' }, 403)
+      }
     }
 
     const zodiac = getZodiacSign(birthDate)
@@ -123,6 +144,109 @@ app.post('/api/track-click', async (c) => {
     return c.json({ success: true })
   } catch (error) {
     return c.json({ error: 'Internal Server Error' }, 500)
+  }
+})
+
+// --- ADMIN ROUTES ---
+
+app.post('/api/admin/login', async (c) => {
+  const { passphrase } = await c.req.json()
+  
+  if (!c.env.ADMIN_PASSPHRASE || passphrase !== c.env.ADMIN_PASSPHRASE) {
+    return c.json({ error: 'Unauthorized' }, 401)
+  }
+
+  // Issue JWT valid for 24 hours
+  const payload = { admin: true, exp: Math.floor(Date.now() / 1000) + 60 * 60 * 24 }
+  const secret = c.env.JWT_SECRET || 'fallback_secret_for_local_dev'
+  const token = await sign(payload, secret)
+
+  return c.json({ token })
+})
+
+// Admin Middleware
+const adminAuth = async (c: any, next: any) => {
+  const authHeader = c.req.header('Authorization')
+  if (!authHeader || !authHeader.startsWith('Bearer ')) {
+    return c.json({ error: 'Unauthorized' }, 401)
+  }
+  const token = authHeader.split(' ')[1]
+  const secret = c.env.JWT_SECRET || 'fallback_secret_for_local_dev'
+  try {
+    const decoded = await verify(token, secret)
+    if (!decoded.admin) throw new Error('Not admin')
+    await next()
+  } catch (e) {
+    return c.json({ error: 'Unauthorized' }, 401)
+  }
+}
+
+app.get('/api/admin/stats', adminAuth, async (c) => {
+  try {
+    const sessionCount = await c.env.DB.prepare('SELECT COUNT(*) as count FROM sessions').first('count')
+    const clickCount = await c.env.DB.prepare('SELECT COUNT(*) as count FROM affiliate_clicks').first('count')
+    return c.json({ 
+      sessions: sessionCount || 0, 
+      clicks: clickCount || 0 
+    })
+  } catch (error) {
+    return c.json({ error: 'Database error' }, 500)
+  }
+})
+
+app.get('/api/admin/products', adminAuth, async (c) => {
+  try {
+    const { results } = await c.env.DB.prepare(`
+      SELECT p.*, json_group_array(json_object('zodiac', pzt.zodiac_sign, 'score', pzt.match_score, 'reason', pzt.reason)) as zodiac_tags
+      FROM products p
+      LEFT JOIN product_zodiac_tags pzt ON p.id = pzt.product_id
+      GROUP BY p.id
+    `).all()
+    
+    // Parse the JSON array string from SQLite
+    const parsedResults = results.map(r => ({
+      ...r,
+      zodiac_tags: JSON.parse(r.zodiac_tags as string)
+    }))
+
+    return c.json({ products: parsedResults })
+  } catch (error) {
+    return c.json({ error: 'Database error' }, 500)
+  }
+})
+
+app.post('/api/admin/products', adminAuth, async (c) => {
+  try {
+    const body = await c.req.json()
+    const { name, description, price_range, image_url, shopee_url, gender_target, zodiac_tags } = body
+    const id = 'p' + Date.now()
+
+    await c.env.DB.prepare(
+      'INSERT INTO products (id, name, description, price_range, image_url, shopee_url, gender_target) VALUES (?, ?, ?, ?, ?, ?, ?)'
+    ).bind(id, name, description, price_range, image_url, shopee_url, gender_target).run()
+
+    if (zodiac_tags && Array.isArray(zodiac_tags)) {
+      for (const tag of zodiac_tags) {
+        await c.env.DB.prepare(
+          'INSERT INTO product_zodiac_tags (product_id, zodiac_sign, match_score, reason) VALUES (?, ?, ?, ?)'
+        ).bind(id, tag.zodiac, tag.score || 90, tag.reason).run()
+      }
+    }
+
+    return c.json({ success: true, id })
+  } catch (error) {
+    return c.json({ error: 'Database error' }, 500)
+  }
+})
+
+app.delete('/api/admin/products/:id', adminAuth, async (c) => {
+  try {
+    const id = c.req.param('id')
+    await c.env.DB.prepare('DELETE FROM product_zodiac_tags WHERE product_id = ?').bind(id).run()
+    await c.env.DB.prepare('DELETE FROM products WHERE id = ?').bind(id).run()
+    return c.json({ success: true })
+  } catch (error) {
+    return c.json({ error: 'Database error' }, 500)
   }
 })
 

@@ -1,14 +1,17 @@
-import { useState } from 'react'
+import { useState, useRef } from 'react'
 import { motion } from 'framer-motion'
 import { Calendar } from 'lucide-react'
+import { Turnstile } from '@marsidev/react-turnstile'
 
 export default function DateSelection({ onNext }) {
   const [date, setDate] = useState('')
+  const [turnstileToken, setTurnstileToken] = useState(null)
+  const turnstileRef = useRef()
 
   const handleSubmit = (e) => {
     e.preventDefault()
     if (date) {
-      onNext(date)
+      onNext({ birthDate: date, turnstileToken })
     }
   }
 
@@ -39,9 +42,17 @@ export default function DateSelection({ onNext }) {
           </div>
         </div>
 
+        {import.meta.env.VITE_TURNSTILE_SITEKEY && (
+          <Turnstile 
+            siteKey={import.meta.env.VITE_TURNSTILE_SITEKEY}
+            onSuccess={setTurnstileToken}
+            options={{ theme: 'dark' }}
+          />
+        )}
+
         <button
           type="submit"
-          disabled={!date}
+          disabled={!date || (import.meta.env.VITE_TURNSTILE_SITEKEY && !turnstileToken)}
           className="w-full px-8 py-4 bg-accent hover:bg-amber-400 disabled:bg-slate-700 disabled:text-slate-400 text-slate-900 rounded-xl font-semibold text-lg transition-all"
         >
           Jom Tengok Personaliti!
