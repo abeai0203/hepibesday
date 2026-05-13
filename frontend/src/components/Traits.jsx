@@ -1,7 +1,7 @@
 import { motion } from 'framer-motion'
-import { Check } from 'lucide-react'
+import { Check, RefreshCw } from 'lucide-react'
 
-export default function Traits({ sessionData, onNext }) {
+export default function Traits({ sessionData, onNext, onRetry }) {
   const { zodiac, traits } = sessionData
 
   return (
@@ -36,15 +36,28 @@ export default function Traits({ sessionData, onNext }) {
         </ul>
       </div>
 
-      <motion.button
-        initial={{ opacity: 0 }}
-        animate={{ opacity: 1 }}
-        transition={{ delay: traits.length * 0.3 + 0.5 }}
-        onClick={onNext}
-        className="w-full px-8 py-4 bg-accent hover:bg-amber-400 text-slate-900 rounded-xl font-semibold text-lg transition-all shadow-[0_0_20px_rgba(245,158,11,0.2)]"
-      >
-        Ya, betul! Tunjuk hadiah
-      </motion.button>
+      <div className="space-y-4">
+        <motion.button
+          initial={{ opacity: 0 }}
+          animate={{ opacity: 1 }}
+          transition={{ delay: traits.length * 0.3 + 0.5 }}
+          onClick={onNext}
+          className="w-full px-8 py-4 bg-accent hover:bg-amber-400 text-slate-900 rounded-xl font-semibold text-lg transition-all shadow-[0_0_20px_rgba(245,158,11,0.2)]"
+        >
+          Ya, betul! Tunjuk hadiah
+        </motion.button>
+
+        <motion.button
+          initial={{ opacity: 0 }}
+          animate={{ opacity: 1 }}
+          transition={{ delay: traits.length * 0.3 + 0.7 }}
+          onClick={onRetry}
+          className="w-full flex items-center justify-center space-x-2 py-3 text-slate-400 hover:text-white transition-colors text-sm font-medium"
+        >
+          <RefreshCw className="w-4 h-4" />
+          <span>Hmm.. kurang tepat, cuba lagi?</span>
+        </motion.button>
+      </div>
     </motion.div>
   )
 }
