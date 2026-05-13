@@ -9,10 +9,8 @@ export default function ProductManager() {
   
   // Form State
   const [formData, setFormData] = useState({
-    name: '', description: '', price_range: '', image_url: '', shopee_url: '', gender_target: 'U', zodiac_tags: []
+    name: '', description: '', price_range: '', image_url: '', shopee_url: '', gender_target: 'U'
   })
-
-  const ZODIACS = ['Aries', 'Taurus', 'Gemini', 'Cancer', 'Leo', 'Virgo', 'Libra', 'Scorpio', 'Sagittarius', 'Capricorn', 'Aquarius', 'Pisces']
 
   const fetchProducts = async () => {
     try {
@@ -66,17 +64,6 @@ export default function ProductManager() {
     }
   }
 
-  const handleZodiacToggle = (zodiac) => {
-    setFormData(prev => {
-      const exists = prev.zodiac_tags.find(t => t.zodiac === zodiac)
-      if (exists) {
-        return { ...prev, zodiac_tags: prev.zodiac_tags.filter(t => t.zodiac !== zodiac) }
-      } else {
-        return { ...prev, zodiac_tags: [...prev.zodiac_tags, { zodiac, score: 90, reason: 'Sebab sesuai dengan personaliti ' + zodiac }] }
-      }
-    })
-  }
-
   if (loading) {
     return <div className="flex justify-center py-20"><Loader2 className="w-8 h-8 text-accent animate-spin" /></div>
   }
@@ -87,7 +74,7 @@ export default function ProductManager() {
         <h2 className="text-2xl font-heading font-semibold text-white">Product Manager</h2>
         <button 
           onClick={() => {
-            setFormData({ name: '', description: '', price_range: '', image_url: '', shopee_url: '', gender_target: 'U', zodiac_tags: [] })
+            setFormData({ name: '', description: '', price_range: '', image_url: '', shopee_url: '', gender_target: 'U' })
             setIsModalOpen(true)
           }}
           className="flex items-center space-x-2 px-4 py-2 bg-accent text-slate-900 rounded-lg hover:bg-amber-400 font-medium transition-colors"
@@ -103,7 +90,6 @@ export default function ProductManager() {
             <tr>
               <th className="px-6 py-4 font-medium">Image</th>
               <th className="px-6 py-4 font-medium">Product Details</th>
-              <th className="px-6 py-4 font-medium">Zodiac Tags</th>
               <th className="px-6 py-4 font-medium text-right">Actions</th>
             </tr>
           </thead>
@@ -116,15 +102,6 @@ export default function ProductManager() {
                 <td className="px-6 py-4">
                   <div className="font-semibold text-white">{p.name}</div>
                   <div className="text-sm text-slate-500">{p.price_range} • Target: {p.gender_target}</div>
-                </td>
-                <td className="px-6 py-4">
-                  <div className="flex flex-wrap gap-1">
-                    {p.zodiac_tags.map(t => t.zodiac ? (
-                      <span key={t.zodiac} className="px-2 py-1 bg-accent/10 text-accent text-xs rounded-md">
-                        {t.zodiac}
-                      </span>
-                    ) : null)}
-                  </div>
                 </td>
                 <td className="px-6 py-4 text-right space-x-2">
                   <button onClick={() => handleDelete(p.id)} className="p-2 text-slate-400 hover:text-red-400 hover:bg-slate-700 rounded-lg transition-colors">
@@ -180,25 +157,6 @@ export default function ProductManager() {
                   <option value="M">Male Only</option>
                   <option value="F">Female Only</option>
                 </select>
-              </div>
-
-              <div className="space-y-2">
-                <label className="text-sm text-slate-400 mb-2 block">Match with Zodiacs</label>
-                <div className="flex flex-wrap gap-2">
-                  {ZODIACS.map(z => {
-                    const isSelected = formData.zodiac_tags.find(t => t.zodiac === z)
-                    return (
-                      <button
-                        type="button"
-                        key={z}
-                        onClick={() => handleZodiacToggle(z)}
-                        className={`px-3 py-1.5 rounded-lg text-sm transition-colors border ${isSelected ? 'bg-accent/20 border-accent text-accent' : 'bg-slate-800 border-slate-700 text-slate-400 hover:border-slate-500'}`}
-                      >
-                        {z}
-                      </button>
-                    )
-                  })}
-                </div>
               </div>
 
               <div className="pt-4 flex justify-end space-x-3 border-t border-slate-700">

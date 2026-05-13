@@ -130,31 +130,77 @@ app.post('/api/generate-traits', async (c) => {
   }
 })
 
-app.get('/api/recommendations', async (c) => {
-  const zodiac = c.req.query('zodiac')
-  const gender = c.req.query('gender') || 'U' // Default to Unisex
-  
-  if (!zodiac) {
-    return c.json({ error: 'Missing zodiac' }, 400)
-  }
-
-  // Get products that match the zodiac and gender
-  // Gender matching: 'U' fits everyone. 'M' fits 'M' and 'U'. 'F' fits 'F' and 'U'.
+app.post('/api/recommendations', async (c) => {
   try {
-    const { results } = await c.env.DB.prepare(`
-      SELECT p.*, pzt.match_score, pzt.reason 
-      FROM products p
-      JOIN product_zodiac_tags pzt ON p.id = pzt.product_id
-      WHERE pzt.zodiac_sign = ? 
-      AND (p.gender_target = ? OR p.gender_target = 'U')
-      AND p.active = TRUE
-      ORDER BY pzt.match_score DESC
-      LIMIT 5
-    `).bind(zodiac, gender).all()
+    const body = await c.req.json()
+    const { zodiac, gender = 'U', targetName = 'kawan', traits = [] } = body
+    
+    if (!zodiac) {
+      return c.json({ error: 'Missing zodiac' }, 400)
+    }
 
-    return c.json({ products: results })
+    // 1. Get up to 20 random active products matching gender
+    const { results: dbProducts } = await c.env.DB.prepare(`
+      SELECT id, name, price_range, image_url, shopee_url 
+      FROM products 
+      WHERE active = TRUE AND (gender_target = ? OR gender_target = 'U')
+      ORDER BY RANDOM()
+      LIMIT 20
+    `).bind(gender).all()
+
+    if (!dbProducts || dbProducts.length === 0) {
+      return c.json({ products: [] })
+    }
+
+    // Default generic fallback products (if AI fails)
+    let finalProducts = dbProducts.slice(0, 3).map(p => ({
+      ...p,
+      reason: `Pilihan yang memang ngam dengan gaya ${targetName}.`
+    }))
+
+    // 2. Ask AI to pick top 3 if AI binding exists and we have enough traits
+    if (c.env.AI && traits.length > 0 && dbProducts.length > 0) {
+      try {
+        const catalog = dbProducts.map(p => ({ id: p.id, name: p.name, price: p.price_range }))
+        const promptSystem = 'Anda ialah pembantu peribadi yang memilih hadiah. Return HANYA JSON array string format tepat: [{"id": "id_produk", "reason": "sebab..."}]. DILARANG letak teks lain.'
+        const promptUser = `Senarai hadiah: ${JSON.stringify(catalog)}. Nama: ${targetName}. Personaliti: ${traits.join(', ')}. Pilih tepat 3 produk (guna id sebenar dari senarai) yang paling sesuai. Berikan alasan ringkas kenapa ia sesuai untuk ${targetName} dalam bahasa Melayu santai.`
+
+        const aiResponse = await c.env.AI.run('@cf/meta/llama-3-8b-instruct', {
+          messages: [
+            { role: 'system', content: promptSystem },
+            { role: 'user', content: promptUser }
+          ]
+        });
+
+        const aiText = (aiResponse as any).response;
+        const match = aiText.match(/\[.*?\]/s);
+        if (match) {
+          const parsed = JSON.parse(match[0]);
+          if (Array.isArray(parsed) && parsed.length > 0) {
+            // Map AI selections back to DB products
+            const selectedProducts = []
+            for (const selection of parsed) {
+              const matchedProduct = dbProducts.find(p => p.id == selection.id)
+              if (matchedProduct) {
+                selectedProducts.push({
+                  ...matchedProduct,
+                  reason: selection.reason || `Sesuai sangat dengan personaliti ${targetName}.`
+                })
+              }
+            }
+            if (selectedProducts.length > 0) {
+              finalProducts = selectedProducts
+            }
+          }
+        }
+      } catch (err) {
+        console.error("AI Matchmaker Error:", err);
+      }
+    }
+
+    return c.json({ products: finalProducts })
   } catch (error) {
-    return c.json({ error: 'Database error' }, 500)
+    return c.json({ error: 'Server error' }, 500)
   }
 })
 
@@ -249,20 +295,12 @@ app.get('/api/admin/products', adminAuth, async (c) => {
 app.post('/api/admin/products', adminAuth, async (c) => {
   try {
     const body = await c.req.json()
-    const { name, description, price_range, image_url, shopee_url, gender_target, zodiac_tags } = body
+    const { name, description, price_range, image_url, shopee_url, gender_target } = body
     const id = 'p' + Date.now()
 
     await c.env.DB.prepare(
       'INSERT INTO products (id, name, description, price_range, image_url, shopee_url, gender_target) VALUES (?, ?, ?, ?, ?, ?, ?)'
     ).bind(id, name, description, price_range, image_url, shopee_url, gender_target).run()
-
-    if (zodiac_tags && Array.isArray(zodiac_tags)) {
-      for (const tag of zodiac_tags) {
-        await c.env.DB.prepare(
-          'INSERT INTO product_zodiac_tags (product_id, zodiac_sign, match_score, reason) VALUES (?, ?, ?, ?)'
-        ).bind(id, tag.zodiac, tag.score || 90, tag.reason).run()
-      }
-    }
 
     return c.json({ success: true, id })
   } catch (error) {
