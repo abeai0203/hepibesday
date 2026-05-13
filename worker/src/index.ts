@@ -236,7 +236,7 @@ app.post('/api/admin/login', async (c) => {
   // Issue JWT valid for 24 hours
   const payload = { admin: true, exp: Math.floor(Date.now() / 1000) + 60 * 60 * 24 }
   const secret = c.env.JWT_SECRET || 'fallback_secret_for_local_dev'
-  const token = await sign(payload, secret)
+  const token = await sign(payload, secret, 'HS256')
 
   return c.json({ token })
 })
@@ -250,11 +250,11 @@ const adminAuth = async (c: any, next: any) => {
   const token = authHeader.split(' ')[1]
   const secret = c.env.JWT_SECRET || 'fallback_secret_for_local_dev'
   try {
-    const decoded = await verify(token, secret)
+    const decoded = await verify(token, secret, 'HS256')
     if (!decoded.admin) throw new Error('Not admin')
     await next()
-  } catch (e) {
-    return c.json({ error: 'Unauthorized' }, 401)
+  } catch (e: any) {
+    console.log("JWT Error:", e); return c.json({ error: 'Unauthorized', details: e.message }, 401)
   }
 }
 
