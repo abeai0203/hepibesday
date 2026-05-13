@@ -7,3 +7,6 @@ binding = "DB"
 database_name = "hepibesday-db"
 database_id = "e8dc1d2e-d19d-4db7-8f83-43f38d2c9eab"
 migrations_dir = "migrations"
+
+[ai]
+binding = "AI"

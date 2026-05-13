@@ -8,6 +8,7 @@ type Bindings = {
   ADMIN_PASSPHRASE: string
   JWT_SECRET: string
   TURNSTILE_SECRET_KEY?: string
+  AI: any
 }
 
 const app = new Hono<{ Bindings: Bindings }>()
@@ -85,7 +86,36 @@ app.post('/api/generate-traits', async (c) => {
       'Pisces': ['Sangat kreatif dan berjiwa seni', 'Penyayang dan mudah empati', 'Suka benda yang sentimental & spiritual']
     }
 
-    const traits = traitsMap[zodiac] || ['Unik dan sangat istimewa', 'Kawan yang sangat baik']
+    let traits = traitsMap[zodiac] || ['Unik dan sangat istimewa', 'Kawan yang sangat baik']
+
+    if (c.env.AI) {
+      try {
+        const aiResponse = await c.env.AI.run('@cf/meta/llama-3-8b-instruct', {
+          messages: [
+            { 
+              role: 'system', 
+              content: 'Anda ialah pembaca horoskop dalam bahasa Melayu santai. Hasilkan 3 poin ringkas (max 10 patah perkataan setiap poin) menerangkan personaliti berdasarkan Zodiak. Return HANYA format JSON array string: ["poin 1", "poin 2", "poin 3"]. Jangan tambah sebarang teks lain atau penerangan.' 
+            },
+            { 
+              role: 'user', 
+              content: `Zodiak: ${zodiac}. Jantina: ${gender === 'M' ? 'Lelaki' : 'Perempuan'}.` 
+            }
+          ]
+        });
+        
+        // Extract JSON array from response string safely
+        const aiText = (aiResponse as any).response;
+        const match = aiText.match(/\[.*?\]/s);
+        if (match) {
+          const parsed = JSON.parse(match[0]);
+          if (Array.isArray(parsed) && parsed.length >= 2) {
+            traits = parsed;
+          }
+        }
+      } catch (err) {
+        console.error("AI Error:", err);
+      }
+    }
 
     // Create a session in DB
     const sessionId = crypto.randomUUID()

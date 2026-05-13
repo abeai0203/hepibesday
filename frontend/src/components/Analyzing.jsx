@@ -28,12 +28,12 @@ export default function Analyzing({ sessionData, onComplete }) {
 
         const data = await response.json()
         
-        // Artificial delay for dramatic effect
+        // Artificial delay for dramatic effect if it was too fast
         setTimeout(() => {
           if (isMounted) {
             onComplete(data)
           }
-        }, 2500)
+        }, 500)
       } catch (err) {
         if (isMounted) {
           setError(err.message)
