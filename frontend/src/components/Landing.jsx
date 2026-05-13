@@ -22,10 +22,10 @@ export default function Landing({ onNext }) {
 
       <div className="space-y-4">
         <h1 className="text-4xl md:text-5xl font-heading font-semibold text-white glow-text">
-          Star-Aligned Gifts
+          Hadiah Dari Bintang ✨
         </h1>
         <p className="text-slate-300 text-lg">
-          Discover the perfect birthday gift, curated by the stars and personality traits.
+          Cari hadiah hari jadi yang paling "ngam", dipilih khas berdasarkan tarikh lahir & personaliti mereka.
         </p>
       </div>
 
@@ -33,7 +33,7 @@ export default function Landing({ onNext }) {
         onClick={onNext}
         className="w-full sm:w-auto px-8 py-4 bg-accent hover:bg-amber-400 text-slate-900 rounded-full font-semibold text-lg transition-all transform hover:scale-105 shadow-[0_0_20px_rgba(245,158,11,0.4)]"
       >
-        Find the Perfect Gift
+        Mula Cari Hadiah
       </button>
     </motion.div>
   )

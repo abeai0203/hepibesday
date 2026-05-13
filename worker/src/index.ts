@@ -50,21 +50,21 @@ app.post('/api/generate-traits', async (c) => {
     
     // In Phase 1, we use static traits. In V3, this would call Cloudflare Workers AI.
     const traitsMap: Record<string, string[]> = {
-      'Aries': ['Energetic and driven', 'Loves a good challenge', 'Appreciates directness and action'],
-      'Taurus': ['Values comfort and luxury', 'Extremely loyal', 'Has excellent taste in material things'],
-      'Gemini': ['Curious and adaptable', 'Loves to communicate', 'Appreciates gadgets and variety'],
-      'Cancer': ['Deeply sentimental', 'Values home and family', 'Loves nurturing and being nurtured'],
-      'Leo': ['Charismatic and confident', 'Loves to be the center of attention', 'Appreciates premium quality'],
-      'Virgo': ['Detail-oriented and practical', 'Values health and wellness', 'Loves useful, well-designed things'],
-      'Libra': ['Appreciates beauty and harmony', 'Extremely social', 'Has a refined aesthetic sense'],
-      'Scorpio': ['Intense and passionate', 'Values privacy and depth', 'Loves mysterious or meaningful items'],
-      'Sagittarius': ['Adventurous and optimistic', 'Loves travel and learning', 'Appreciates experiences over things'],
-      'Capricorn': ['Ambitious and disciplined', 'Values status and tradition', 'Loves high-quality, durable items'],
-      'Aquarius': ['Unique and forward-thinking', 'Values individuality', 'Loves quirky, innovative, or techy gifts'],
-      'Pisces': ['Dreamy and artistic', 'Deeply empathetic', 'Values spiritual and creative items']
+      'Aries': ['Penuh tenaga & suka cabaran baru', 'Pantang dicabar, selalu nak menang', 'Suka benda yang direct dan cepat jalan'],
+      'Taurus': ['Suka keselesaan dan benda-benda premium', 'Kawan yang sangat setia', 'Citarasa tinggi bab makanan & barang'],
+      'Gemini': ['Sangat peramah dan mudah masuk air', 'Otak selalu ligat berfikir', 'Suka gajet dan benda-benda trending'],
+      'Cancer': ['Sangat menjaga hati orang lain', 'Sayang sangat kat family & kawan rapat', 'Suka lepak rumah dari keluar'],
+      'Leo': ['Karismatik dan penuh keyakinan', 'Suka jadi pusat perhatian', 'Peminat barang berkualiti & eksklusif'],
+      'Virgo': ['Sangat detail dan pembersih', 'Utamakan kesihatan & self-care', 'Suka hadiah yang praktikal & berguna'],
+      'Libra': ['Pencinta kecantikan & keharmonian', 'Sangat sosial dan pandai ambil hati', 'Ada taste yang sangat aesthetic'],
+      'Scorpio': ['Intens, misteri tapi penuh semangat', 'Sangat menjaga privasi', 'Suka benda-benda yang ada deep meaning'],
+      'Sagittarius': ['Suka travel dan adventure', 'Sentiasa positif dan happy-go-lucky', 'Lebih hargai pengalaman dari barang'],
+      'Capricorn': ['Sangat disiplin dan kuat kerja', 'Pentingkan kejayaan dan status', 'Suka barang yang tahan lama & nampak mahal'],
+      'Aquarius': ['Sangat unik dan luar kotak', 'Suka kebebasan dan berdikari', 'Peminat inovasi & benda-benda pelik/rare'],
+      'Pisces': ['Sangat kreatif dan berjiwa seni', 'Penyayang dan mudah empati', 'Suka benda yang sentimental & spiritual']
     }
 
-    const traits = traitsMap[zodiac] || ['Unique and special', 'A wonderful friend']
+    const traits = traitsMap[zodiac] || ['Unik dan sangat istimewa', 'Kawan yang sangat baik']
 
     // Create a session in DB
     const sessionId = crypto.randomUUID()

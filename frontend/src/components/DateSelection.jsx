@@ -20,13 +20,13 @@ export default function DateSelection({ onNext }) {
       className="space-y-8 py-8 w-full"
     >
       <div className="text-center space-y-2">
-        <p className="text-accent text-sm font-semibold tracking-wider uppercase">Step 2 of 2</p>
-        <h2 className="text-3xl font-heading text-white">When is their birthday?</h2>
+        <p className="text-accent text-sm font-semibold tracking-wider uppercase">Langkah 2 dari 2</p>
+        <h2 className="text-3xl font-heading text-white">Bila tarikh lahir dorang?</h2>
       </div>
 
       <form onSubmit={handleSubmit} className="glass-card p-8 space-y-6">
         <div className="space-y-2">
-          <label className="text-sm text-slate-400 font-medium">Birth Date</label>
+          <label className="text-sm text-slate-400 font-medium">Tarikh Lahir</label>
           <div className="relative">
             <Calendar className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400 w-5 h-5" />
             <input
@@ -44,7 +44,7 @@ export default function DateSelection({ onNext }) {
           disabled={!date}
           className="w-full px-8 py-4 bg-accent hover:bg-amber-400 disabled:bg-slate-700 disabled:text-slate-400 text-slate-900 rounded-xl font-semibold text-lg transition-all"
         >
-          Discover Personality
+          Jom Tengok Personaliti!
         </button>
       </form>
     </motion.div>

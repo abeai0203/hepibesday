@@ -51,7 +51,7 @@ export default function Analyzing({ sessionData, onComplete }) {
     return (
       <div className="text-center space-y-4">
         <p className="text-red-400">{error}</p>
-        <button onClick={() => window.location.reload()} className="px-4 py-2 bg-white/10 rounded-lg">Try Again</button>
+        <button onClick={() => window.location.reload()} className="px-4 py-2 bg-white/10 rounded-lg">Cuba Lagi</button>
       </div>
     )
   }
@@ -85,9 +85,9 @@ export default function Analyzing({ sessionData, onComplete }) {
           transition={{ duration: 2, repeat: Infinity }}
           className="text-2xl font-heading text-white"
         >
-          Reading the stars...
+          Tengah tilik bintang sekejap...
         </motion.h2>
-        <p className="text-slate-400 text-sm">Aligning celestial patterns with gift ideas</p>
+        <p className="text-slate-400 text-sm">Mencari hadiah yang paling ngam dengan dorang</p>
       </div>
     </motion.div>
   )

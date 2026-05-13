@@ -12,9 +12,9 @@ export default function Traits({ sessionData, onNext }) {
       className="space-y-8 py-8 w-full"
     >
       <div className="text-center space-y-2">
-        <p className="text-accent text-sm font-semibold tracking-wider uppercase">Sign: {zodiac}</p>
-        <h2 className="text-3xl font-heading text-white">We've aligned the stars</h2>
-        <p className="text-slate-400">Does this sound like them?</p>
+        <p className="text-accent text-sm font-semibold tracking-wider uppercase">Bintang: {zodiac}</p>
+        <h2 className="text-3xl font-heading text-white">Ini personaliti dorang kan?</h2>
+        <p className="text-slate-400">Betul ke dorang macam ni?</p>
       </div>
 
       <div className="glass-card p-6 md:p-8 space-y-6">
@@ -43,7 +43,7 @@ export default function Traits({ sessionData, onNext }) {
         onClick={onNext}
         className="w-full px-8 py-4 bg-accent hover:bg-amber-400 text-slate-900 rounded-xl font-semibold text-lg transition-all shadow-[0_0_20px_rgba(245,158,11,0.2)]"
       >
-        Yes, show me the gifts!
+        Ya, betul! Tunjuk hadiah
       </motion.button>
     </motion.div>
   )

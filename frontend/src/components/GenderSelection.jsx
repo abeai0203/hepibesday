@@ -2,9 +2,9 @@ import { motion } from 'framer-motion'
 import { User, UserCircle, Users } from 'lucide-react'
 
 const options = [
-  { id: 'M', label: 'Male', icon: User },
-  { id: 'F', label: 'Female', icon: UserCircle },
-  { id: 'U', label: 'Unisex', icon: Users },
+  { id: 'M', label: 'Lelaki', icon: User },
+  { id: 'F', label: 'Perempuan', icon: UserCircle },
+  { id: 'U', label: 'Tak Kisah (Unisex)', icon: Users },
 ]
 
 export default function GenderSelection({ onNext }) {
@@ -16,8 +16,8 @@ export default function GenderSelection({ onNext }) {
       className="space-y-8 py-8 w-full"
     >
       <div className="text-center space-y-2">
-        <p className="text-accent text-sm font-semibold tracking-wider uppercase">Step 1 of 2</p>
-        <h2 className="text-3xl font-heading text-white">Who is this gift for?</h2>
+        <p className="text-accent text-sm font-semibold tracking-wider uppercase">Langkah 1 dari 2</p>
+        <h2 className="text-3xl font-heading text-white">Hadiah ni untuk siapa?</h2>
       </div>
 
       <div className="grid gap-4">

@@ -71,8 +71,8 @@ export default function Results({ sessionData, onRestart }) {
         <div className="flex justify-center mb-4">
           <Gift className="w-12 h-12 text-accent" />
         </div>
-        <h2 className="text-3xl font-heading text-white">Perfect Gifts for {zodiac}</h2>
-        <p className="text-slate-400">Handpicked based on their personality</p>
+        <h2 className="text-3xl font-heading text-white">Hadiah Paling Ngam Untuk {zodiac}</h2>
+        <p className="text-slate-400">Dipilih khas mengikut personaliti dorang</p>
       </div>
 
       <div className="space-y-6">
@@ -104,7 +104,7 @@ export default function Results({ sessionData, onRestart }) {
                 onClick={() => handleProductClick(product.id, product.shopee_url)}
                 className="w-full flex items-center justify-center space-x-2 py-3 bg-white/5 hover:bg-accent/20 border border-white/10 hover:border-accent/50 rounded-xl text-white transition-colors"
               >
-                <span>View on Shopee</span>
+                <span>Tengok di Shopee</span>
                 <ExternalLink className="w-4 h-4" />
               </button>
             </div>
@@ -112,7 +112,7 @@ export default function Results({ sessionData, onRestart }) {
         ))}
 
         {products.length === 0 && (
-          <p className="text-center text-slate-400">No specific matches found, but keep an eye out for updates!</p>
+          <p className="text-center text-slate-400">Alamak, takde hadiah spesifik jumpa sekarang ni. Nanti kami update lagi!</p>
         )}
       </div>
 
@@ -122,7 +122,7 @@ export default function Results({ sessionData, onRestart }) {
           className="text-slate-400 hover:text-white transition-colors flex items-center justify-center space-x-2 mx-auto"
         >
           <RefreshCw className="w-4 h-4" />
-          <span>Start Over</span>
+          <span>Cuba Lagi Sekali</span>
         </button>
       </div>
     </motion.div>
