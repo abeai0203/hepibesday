@@ -13,25 +13,25 @@ export default function Landing({ onNext }) {
         <motion.div
           animate={{ rotate: 360 }}
           transition={{ duration: 20, repeat: Infinity, ease: "linear" }}
-          className="absolute -inset-4 rounded-full border border-white/10 border-dashed"
+          className="absolute -inset-4 rounded-full border border-purple-300 border-dashed opacity-50"
         />
-        <div className="w-32 h-32 rounded-full glass flex items-center justify-center">
-          <Sparkles className="w-16 h-16 text-accent" />
+        <div className="w-32 h-32 rounded-full glass flex items-center justify-center bg-white/60">
+          <Sparkles className="w-16 h-16 text-pink-400" />
         </div>
       </div>
 
       <div className="space-y-4">
-        <h1 className="text-4xl md:text-5xl font-heading font-semibold text-white glow-text">
-          Hadiah Dari Bintang ✨
+        <h1 className="text-4xl md:text-5xl font-heading font-bold text-slate-800">
+          Hadiah Dari <span className="gradient-text">Bintang</span> ✨
         </h1>
-        <p className="text-slate-300 text-lg">
+        <p className="text-slate-600 text-lg font-medium">
           Cari hadiah hari jadi yang paling "ngam", dipilih khas berdasarkan tarikh lahir & personaliti mereka.
         </p>
       </div>
 
       <button
         onClick={onNext}
-        className="w-full sm:w-auto px-8 py-4 bg-accent hover:bg-amber-400 text-slate-900 rounded-full font-semibold text-lg transition-all transform hover:scale-105 shadow-[0_0_20px_rgba(245,158,11,0.4)]"
+        className="w-full sm:w-auto px-10 py-4 gradient-btn rounded-full font-bold text-lg transition-transform transform hover:scale-105"
       >
         Mula Cari Hadiah
       </button>

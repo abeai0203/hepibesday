@@ -32,20 +32,20 @@ export default function DateSelection({ targetName, onNext }) {
       className="space-y-8 py-8 w-full"
     >
       <div className="text-center space-y-2">
-        <p className="text-accent text-sm font-semibold tracking-wider uppercase">Langkah 3 dari 3</p>
-        <h2 className="text-3xl font-heading text-white">Bila tarikh lahir {targetName || 'dorang'}?</h2>
+        <p className="text-purple-500 text-sm font-bold tracking-wider uppercase">Langkah 3 dari 4</p>
+        <h2 className="text-3xl font-heading font-bold text-slate-800">Bila tarikh lahir {targetName || 'dorang'}?</h2>
       </div>
 
       <form onSubmit={handleSubmit} className="glass-card p-8 space-y-6">
         <div className="space-y-2">
-          <label className="text-sm text-slate-400 font-medium">Tarikh Lahir</label>
+          <label className="text-sm text-slate-600 font-bold">Tarikh Lahir</label>
           <div className="relative">
-            <Calendar className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400 w-5 h-5" />
+            <Calendar className="absolute left-4 top-1/2 -translate-y-1/2 text-purple-400 w-5 h-5" />
             <input
               type="date"
               value={date}
               onChange={(e) => setDate(e.target.value)}
-              className="w-full bg-white/5 border border-white/10 rounded-xl py-4 pl-12 pr-4 text-white placeholder-slate-500 focus:outline-none focus:border-accent focus:ring-1 focus:ring-accent transition-all color-scheme-dark"
+              className="w-full bg-white/50 border border-purple-200 rounded-xl py-4 pl-12 pr-4 text-slate-800 placeholder-slate-400 focus:outline-none focus:border-purple-400 focus:ring-2 focus:ring-purple-200 transition-all"
               required
             />
           </div>
@@ -55,7 +55,7 @@ export default function DateSelection({ targetName, onNext }) {
           <Turnstile 
             siteKey={import.meta.env.VITE_TURNSTILE_SITEKEY}
             onSuccess={setTurnstileToken}
-            options={{ theme: 'dark' }}
+            options={{ theme: 'light' }}
           />
         )}
 
@@ -63,7 +63,7 @@ export default function DateSelection({ targetName, onNext }) {
           <button
             type="submit"
             disabled={!date || (import.meta.env.VITE_TURNSTILE_SITEKEY && !turnstileToken)}
-            className="w-full px-8 py-4 bg-accent hover:bg-amber-400 disabled:bg-slate-700 disabled:text-slate-400 text-slate-900 rounded-xl font-semibold text-lg transition-all"
+            className="w-full gradient-btn py-4 rounded-xl font-bold text-lg disabled:opacity-50 disabled:shadow-none"
           >
             Jom Tengok Personaliti!
           </button>
@@ -71,7 +71,7 @@ export default function DateSelection({ targetName, onNext }) {
           <button
             type="button"
             onClick={handleRandomDate}
-            className="w-full flex items-center justify-center space-x-2 py-3 text-slate-400 hover:text-white transition-colors text-sm font-medium"
+            className="w-full flex items-center justify-center space-x-2 py-3 text-purple-500 hover:text-purple-700 transition-colors text-sm font-bold"
           >
             <Dices className="w-4 h-4" />
             <span>Tak ingat? Pilih secara rawak</span>

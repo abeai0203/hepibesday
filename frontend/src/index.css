@@ -12,21 +12,28 @@
 
 @layer base {
   body {
-    @apply bg-slate-950 text-slate-50 antialiased selection:bg-accent selection:text-slate-950;
-    background-image: radial-gradient(circle at top, #312E81, #020617);
+    @apply bg-slate-50 text-slate-800 antialiased selection:bg-pink-300 selection:text-slate-900;
+    background: radial-gradient(circle at 10% 20%, rgba(255, 236, 204, 1) 0%, rgba(245, 230, 254, 1) 40%, rgba(234, 224, 254, 1) 100%);
+    background-attachment: fixed;
     min-height: 100vh;
   }
 }
 
-/* Glassmorphism utilities */
+/* Glassmorphism & Light Theme utilities */
 @layer utilities {
   .glass {
-    @apply bg-surface backdrop-blur-md border border-white/10 shadow-xl;
+    @apply bg-white/70 backdrop-blur-md border border-white/40 shadow-[0_8px_30px_rgb(0,0,0,0.04)];
   }
   .glass-card {
-    @apply bg-surface backdrop-blur-lg border border-white/20 shadow-2xl rounded-2xl;
+    @apply bg-white/80 backdrop-blur-lg border border-white/50 shadow-[0_8px_30px_rgb(0,0,0,0.06)] rounded-3xl;
   }
   .glow-text {
-    text-shadow: 0 0 20px rgba(245, 158, 11, 0.5);
+    text-shadow: 0 0 20px rgba(236, 72, 153, 0.3);
+  }
+  .gradient-text {
+    @apply bg-clip-text text-transparent bg-gradient-to-r from-pink-500 to-rose-400;
+  }
+  .gradient-btn {
+    @apply bg-gradient-to-r from-pink-400 via-rose-400 to-orange-400 text-white shadow-[0_8px_20px_rgba(251,113,133,0.3)] hover:shadow-[0_8px_25px_rgba(251,113,133,0.4)] transition-all;
   }
 }

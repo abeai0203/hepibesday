@@ -51,8 +51,8 @@ export default function Analyzing({ sessionData, onComplete }) {
   if (error) {
     return (
       <div className="text-center space-y-4">
-        <p className="text-red-400">{error}</p>
-        <button onClick={() => window.location.reload()} className="px-4 py-2 bg-white/10 rounded-lg">Cuba Lagi</button>
+        <p className="text-red-500">{error}</p>
+        <button onClick={() => window.location.reload()} className="px-4 py-2 bg-slate-200 rounded-lg text-slate-700">Cuba Lagi</button>
       </div>
     )
   }
@@ -68,7 +68,7 @@ export default function Analyzing({ sessionData, onComplete }) {
         <motion.div
           animate={{ rotate: 360 }}
           transition={{ duration: 4, repeat: Infinity, ease: "linear" }}
-          className="w-32 h-32 rounded-full border-t-2 border-r-2 border-accent"
+          className="w-32 h-32 rounded-full border-t-2 border-r-2 border-pink-400"
         />
         <motion.div
           animate={{ rotate: -360 }}
@@ -76,7 +76,7 @@ export default function Analyzing({ sessionData, onComplete }) {
           className="absolute inset-2 rounded-full border-b-2 border-l-2 border-purple-400"
         />
         <div className="absolute inset-0 flex items-center justify-center">
-          <Star className="w-10 h-10 text-amber-300 animate-pulse" />
+          <Sparkles className="w-10 h-10 text-orange-400 animate-pulse" />
         </div>
       </div>
 
@@ -84,11 +84,11 @@ export default function Analyzing({ sessionData, onComplete }) {
         <motion.h2
           animate={{ opacity: [0.5, 1, 0.5] }}
           transition={{ duration: 2, repeat: Infinity }}
-          className="text-2xl font-heading text-white"
+          className="text-2xl font-heading font-bold text-slate-800"
         >
           Tengah tilik bintang untuk {sessionData.targetName || 'si dia'}...
         </motion.h2>
-        <p className="text-slate-400 text-sm">Mencari hadiah yang paling ngam</p>
+        <p className="text-slate-600 font-medium text-sm">Mencari hadiah yang paling ngam</p>
       </div>
     </motion.div>
   )
