@@ -55,3 +55,6 @@ JWT Error: JwtAlgorithmRequired: JWT verification requires "alg" option to be sp
 ⎔ Reloading local server...
 ⎔ Local server updated and ready
 [wrangler:info] POST /api/generate-traits 500 Internal Server Error (4258ms)
+[31m✘ [41;31m[[41;97mERROR[41;31m][0m [1mFailed to fetch auth token: 401 Unauthorized[0m
+
+
