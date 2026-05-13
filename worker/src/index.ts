@@ -46,7 +46,7 @@ app.get('/', (c) => {
 app.post('/api/generate-traits', async (c) => {
   try {
     const body = await c.req.json()
-    const { birthDate, gender, turnstileToken } = body
+    const { birthDate, gender, targetName, turnstileToken } = body
 
     if (!birthDate || !gender) {
       return c.json({ error: 'Missing birthDate or gender' }, 400)
@@ -69,6 +69,7 @@ app.post('/api/generate-traits', async (c) => {
     }
 
     const zodiac = getZodiacSign(birthDate)
+    const personName = targetName || 'kawan'
     
     // In Phase 1, we use static traits. In V3, this would call Cloudflare Workers AI.
     const traitsMap: Record<string, string[]> = {
@@ -98,7 +99,7 @@ app.post('/api/generate-traits', async (c) => {
             },
             { 
               role: 'user', 
-              content: `Zodiak: ${zodiac}. Jantina: ${gender === 'M' ? 'Lelaki' : 'Perempuan'}.` 
+              content: `Nama: ${personName}. Zodiak: ${zodiac}. Jantina: ${gender === 'M' ? 'Lelaki' : 'Perempuan'}. Tulis poin seolah-olah bercakap tentang ${personName}. Contoh: "${personName} ni memang suka..."` 
             }
           ]
         });

@@ -71,8 +71,8 @@ export default function Results({ sessionData, onRestart }) {
         <div className="flex justify-center mb-4">
           <Gift className="w-12 h-12 text-accent" />
         </div>
-        <h2 className="text-3xl font-heading text-white">Hadiah Paling Ngam Untuk {zodiac}</h2>
-        <p className="text-slate-400">Dipilih khas mengikut personaliti dorang</p>
+        <h2 className="text-3xl font-heading text-white">Hadiah Paling Ngam Untuk {sessionData.targetName || zodiac}</h2>
+        <p className="text-slate-400">Dipilih khas mengikut personaliti {sessionData.targetName || 'dorang'}</p>
       </div>
 
       <div className="space-y-6">

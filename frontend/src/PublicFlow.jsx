@@ -1,5 +1,6 @@
 import { useState } from 'react'
 import Landing from './components/Landing'
+import NameSelection from './components/NameSelection'
 import GenderSelection from './components/GenderSelection'
 import DateSelection from './components/DateSelection'
 import Analyzing from './components/Analyzing'
@@ -9,6 +10,7 @@ import Results from './components/Results'
 function PublicFlow() {
   const [step, setStep] = useState('landing')
   const [sessionData, setSessionData] = useState({
+    targetName: null,
     gender: null,
     birthDate: null,
     sessionId: null,
@@ -24,9 +26,10 @@ function PublicFlow() {
   return (
     <div className="min-h-screen flex flex-col items-center justify-center p-4">
       <main className="w-full max-w-md mx-auto">
-        {step === 'landing' && <Landing onNext={() => handleNext('gender')} />}
-        {step === 'gender' && <GenderSelection onNext={(gender) => handleNext('date', { gender })} />}
-        {step === 'date' && <DateSelection onNext={(data) => handleNext('analyzing', data)} />}
+        {step === 'landing' && <Landing onNext={() => handleNext('name')} />}
+        {step === 'name' && <NameSelection onNext={(targetName) => handleNext('gender', { targetName })} />}
+        {step === 'gender' && <GenderSelection targetName={sessionData.targetName} onNext={(gender) => handleNext('date', { gender })} />}
+        {step === 'date' && <DateSelection targetName={sessionData.targetName} onNext={(data) => handleNext('analyzing', data)} />}
         {step === 'analyzing' && <Analyzing sessionData={sessionData} onComplete={(data) => handleNext('traits', data)} />}
         {step === 'traits' && <Traits sessionData={sessionData} onNext={() => handleNext('results')} />}
         {step === 'results' && <Results sessionData={sessionData} onRestart={() => setStep('landing')} />}

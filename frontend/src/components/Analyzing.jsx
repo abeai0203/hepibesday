@@ -86,9 +86,9 @@ export default function Analyzing({ sessionData, onComplete }) {
           transition={{ duration: 2, repeat: Infinity }}
           className="text-2xl font-heading text-white"
         >
-          Tengah tilik bintang sekejap...
+          Tengah tilik bintang untuk {sessionData.targetName || 'si dia'}...
         </motion.h2>
-        <p className="text-slate-400 text-sm">Mencari hadiah yang paling ngam dengan dorang</p>
+        <p className="text-slate-400 text-sm">Mencari hadiah yang paling ngam</p>
       </div>
     </motion.div>
   )

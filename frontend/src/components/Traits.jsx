@@ -13,8 +13,8 @@ export default function Traits({ sessionData, onNext }) {
     >
       <div className="text-center space-y-2">
         <p className="text-accent text-sm font-semibold tracking-wider uppercase">Bintang: {zodiac}</p>
-        <h2 className="text-3xl font-heading text-white">Ini personaliti dorang kan?</h2>
-        <p className="text-slate-400">Betul ke dorang macam ni?</p>
+        <h2 className="text-3xl font-heading text-white">Ini personaliti {sessionData.targetName || 'dorang'} kan?</h2>
+        <p className="text-slate-400">Betul ke {sessionData.targetName || 'dorang'} macam ni?</p>
       </div>
 
       <div className="glass-card p-6 md:p-8 space-y-6">
