@@ -17,8 +17,13 @@ export default function ProductManager() {
       const res = await fetch(import.meta.env.VITE_API_URL + '/api/admin/products', {
         headers: { 'Authorization': `Bearer ${localStorage.getItem('adminToken')}` }
       })
+      if (res.status === 401) {
+        localStorage.removeItem('adminToken')
+        window.location.href = '/admin/login'
+        return
+      }
       const data = await res.json()
-      if (res.ok) setProducts(data.products || [])
+      if (res.ok) setProducts(data.results || data.products || [])
     } catch (err) {
       console.error('Failed to fetch products')
     } finally {
@@ -55,6 +60,11 @@ export default function ProductManager() {
         },
         body: JSON.stringify(formData)
       })
+      if (res.status === 401) {
+        localStorage.removeItem('adminToken')
+        window.location.href = '/admin/login'
+        return
+      }
       const data = await res.json()
       if (!res.ok) throw new Error(data.details || data.error || 'Failed to save')
       

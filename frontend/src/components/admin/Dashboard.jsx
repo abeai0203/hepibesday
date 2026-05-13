@@ -11,6 +11,11 @@ export default function Dashboard() {
         const res = await fetch(import.meta.env.VITE_API_URL + '/api/admin/stats', {
           headers: { 'Authorization': `Bearer ${localStorage.getItem('adminToken')}` }
         })
+        if (res.status === 401) {
+          localStorage.removeItem('adminToken')
+          window.location.href = '/admin/login'
+          return
+        }
         const data = await res.json()
         if (res.ok) {
           setStats(data)
