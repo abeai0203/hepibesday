@@ -1,0 +1,9 @@
+name = "hepibesday-api"
+main = "src/index.ts"
+compatibility_date = "2024-03-20"
+
+[[d1_databases]]
+binding = "DB"
+database_name = "hepibesday-db"
+database_id = "local-db"
+migrations_dir = "migrations"

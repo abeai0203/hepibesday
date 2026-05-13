@@ -1,0 +1,32 @@
+@import "tailwindcss";
+
+@theme {
+  --color-primary: #1E1B4B;
+  --color-accent: #F59E0B;
+  --color-surface: rgba(255, 255, 255, 0.1);
+  --color-surface-hover: rgba(255, 255, 255, 0.15);
+  
+  --font-sans: 'Inter', system-ui, sans-serif;
+  --font-heading: 'Outfit', 'Playfair Display', serif;
+}
+
+@layer base {
+  body {
+    @apply bg-slate-950 text-slate-50 antialiased selection:bg-accent selection:text-slate-950;
+    background-image: radial-gradient(circle at top, #312E81, #020617);
+    min-height: 100vh;
+  }
+}
+
+/* Glassmorphism utilities */
+@layer utilities {
+  .glass {
+    @apply bg-surface backdrop-blur-md border border-white/10 shadow-xl;
+  }
+  .glass-card {
+    @apply bg-surface backdrop-blur-lg border border-white/20 shadow-2xl rounded-2xl;
+  }
+  .glow-text {
+    text-shadow: 0 0 20px rgba(245, 158, 11, 0.5);
+  }
+}
