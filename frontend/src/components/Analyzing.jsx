@@ -25,9 +25,15 @@ export default function Analyzing({ sessionData, onComplete }) {
           }),
         })
 
-        if (!response.ok) throw new Error('Failed to generate traits')
+        if (!response.ok) {
+          const rawText = await response.text()
+          let errData = {}
+          try { errData = JSON.parse(rawText) } catch (e) {}
+          throw new Error(errData.details || errData.error || `HTTP ${response.status}: ${rawText.slice(0, 50)}...`)
+        }
 
-        const data = await response.json()
+        const rawText = await response.text()
+        const data = JSON.parse(rawText)
         
         // Artificial delay for dramatic effect if it was too fast
         setTimeout(() => {

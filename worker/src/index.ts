@@ -125,8 +125,8 @@ app.post('/api/generate-traits', async (c) => {
     ).bind(sessionId, zodiac, gender).run()
 
     return c.json({ sessionId, zodiac, traits })
-  } catch (error) {
-    return c.json({ error: 'Internal Server Error' }, 500)
+  } catch (error: any) {
+    return c.json({ error: 'Internal Server Error', details: error.message }, 500)
   }
 })
 
