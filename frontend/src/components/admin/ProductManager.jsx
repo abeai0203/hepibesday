@@ -47,7 +47,7 @@ export default function ProductManager() {
     e.preventDefault()
     setSaving(true)
     try {
-      await fetch(import.meta.env.VITE_API_URL + '/api/admin/products', {
+      const res = await fetch(import.meta.env.VITE_API_URL + '/api/admin/products', {
         method: 'POST',
         headers: { 
           'Content-Type': 'application/json',
@@ -55,10 +55,13 @@ export default function ProductManager() {
         },
         body: JSON.stringify(formData)
       })
+      const data = await res.json()
+      if (!res.ok) throw new Error(data.details || data.error || 'Failed to save')
+      
       setIsModalOpen(false)
       fetchProducts()
     } catch (err) {
-      alert('Save failed')
+      alert(`Save failed: ${err.message}`)
     } finally {
       setSaving(false)
     }

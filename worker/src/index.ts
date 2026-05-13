@@ -304,7 +304,7 @@ app.post('/api/admin/products', adminAuth, async (c) => {
 
     return c.json({ success: true, id })
   } catch (error) {
-    return c.json({ error: 'Database error' }, 500)
+    return c.json({ error: 'Database error', details: (error as Error).message }, 500)
   }
 })
 
