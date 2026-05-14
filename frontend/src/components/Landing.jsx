@@ -42,8 +42,8 @@ export default function Landing({ onNext }) {
             <div className="absolute bottom-1/4 -right-20 w-[600px] h-[600px] bg-purple-100/30 blur-[120px] rounded-full" />
           </div>
 
-          <div className="w-full flex flex-col items-center text-center pt-8 px-6 z-40 pointer-events-none">
-            <div className="w-28 md:w-32 mb-4 overflow-hidden flex items-center justify-center">
+          <div className="w-full flex flex-col items-center text-center pt-6 md:pt-12 px-6 z-40 pointer-events-none">
+            <div className="w-24 md:w-32 mb-2 md:mb-4 overflow-hidden flex items-center justify-center">
               <img 
                 src="/logo.png" 
                 className="w-full h-full object-contain mix-blend-multiply brightness-[1.05] contrast-[1.1]" 
@@ -55,34 +55,34 @@ export default function Landing({ onNext }) {
               />
             </div>
 
-            <div className="relative w-full h-32 md:h-40 flex items-center justify-center mt-2">
+            <div className="relative w-full h-36 md:h-48 flex items-center justify-center mt-4 md:mt-6">
               <motion.div style={{ opacity: title1Opacity }} className="absolute inset-0 flex flex-col items-center">
-                <div className="inline-flex items-center gap-2 px-5 py-2 rounded-full bg-white shadow-md border border-pink-50 mb-4">
-                  <Star className="w-4 h-4 text-orange-400 fill-orange-400" />
-                  <span className="text-xs font-black text-pink-500 uppercase tracking-wide">Pening pilih hadiah?</span>
+                <div className="inline-flex items-center gap-2 px-4 py-1.5 md:px-5 md:py-2 rounded-full bg-white shadow-md border border-pink-50 mb-3 md:mb-6">
+                  <Star className="w-3.5 h-3.5 md:w-4 md:h-4 text-orange-400 fill-orange-400" />
+                  <span className="text-[10px] md:text-xs font-black text-pink-500 uppercase tracking-wide">Pening pilih hadiah?</span>
                 </div>
-                <h1 className="text-4xl md:text-6xl font-black text-indigo-950 leading-[0.95] tracking-tight mb-4">
+                <h1 className="text-3xl md:text-6xl font-black text-indigo-950 leading-[0.95] tracking-tight mb-4">
                   Sedang mencari<br/><span className="text-pink-500">hadiah?</span>
                 </h1>
-                <motion.div animate={{ y: [0, 8, 0] }} transition={{ duration: 2, repeat: Infinity }} className="text-slate-400 font-bold text-xs">
+                <motion.div animate={{ y: [0, 8, 0] }} transition={{ duration: 2, repeat: Infinity }} className="text-slate-400 font-bold text-[10px] md:text-xs">
                   Skrol ke bawah... ✨
                 </motion.div>
               </motion.div>
 
               <motion.div style={{ opacity: title2Opacity }} className="absolute inset-0 flex flex-col items-center">
-                <div className="inline-flex items-center gap-2 px-5 py-2 rounded-full bg-white shadow-md border border-pink-50 mb-4">
-                  <Wand2 className="w-4 h-4 text-pink-500" />
-                  <span className="text-xs font-black text-pink-500 uppercase tracking-wide">Kami Sedia Membantu</span>
+                <div className="inline-flex items-center gap-2 px-4 py-1.5 md:px-5 md:py-2 rounded-full bg-white shadow-md border border-pink-50 mb-3 md:mb-6">
+                  <Wand2 className="w-3.5 h-3.5 md:w-4 md:h-4 text-pink-500" />
+                  <span className="text-[10px] md:text-xs font-black text-pink-500 uppercase tracking-wide">Kami Sedia Membantu</span>
                 </div>
-                <h1 className="text-4xl md:text-6xl font-black text-indigo-950 leading-[0.95] tracking-tight">
+                <h1 className="text-3xl md:text-6xl font-black text-indigo-950 leading-[0.95] tracking-tight">
                   Kami akan<br/><span className="text-pink-500">bantu anda!</span>
                 </h1>
               </motion.div>
             </div>
           </div>
 
-          <div className="absolute inset-0 flex items-center justify-center pointer-events-none z-10">
-            <motion.div style={{ scale: boxScale }} className="relative w-72 h-72 md:w-80 md:h-80 flex items-center justify-center">
+          <div className="absolute inset-0 flex items-center justify-center pointer-events-none z-10 pt-20 md:pt-32">
+            <motion.div style={{ scale: boxScale }} className="relative w-64 h-64 md:w-80 md:h-80 flex items-center justify-center">
               <div className="absolute inset-0 bg-pink-400/10 blur-[100px] rounded-full" />
               
               <motion.div 
