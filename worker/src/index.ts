@@ -133,37 +133,42 @@ app.post('/api/generate-traits', async (c) => {
 app.post('/api/recommendations', async (c) => {
   try {
     const body = await c.req.json()
-    const { zodiac, gender = 'U', targetName = 'kawan', traits = [] } = body
+    const { zodiac, gender = 'U', targetName = 'kawan', traits = [], relationship = 'U', hobby = '' } = body
     
     if (!zodiac) {
       return c.json({ error: 'Missing zodiac' }, 400)
     }
 
-    // 1. Get up to 20 random active products matching gender
+    // 1. Get products matching gender and relationship
     const { results: dbProducts } = await c.env.DB.prepare(`
-      SELECT id, name, price_range, image_url, shopee_url 
+      SELECT id, name, price_range, image_url, shopee_url, tags, relationship_target 
       FROM products 
-      WHERE active = TRUE AND (gender_target = ? OR gender_target = 'U')
+      WHERE active = TRUE 
+      AND (gender_target = ? OR gender_target = 'U')
+      AND (relationship_target = ? OR relationship_target = 'U')
       ORDER BY RANDOM()
       LIMIT 20
-    `).bind(gender).all()
+    `).bind(gender, relationship).all()
 
     if (!dbProducts || dbProducts.length === 0) {
       return c.json({ products: [] })
     }
 
-    // Default generic fallback products (if AI fails)
+    // Default fallback
     let finalProducts = dbProducts.slice(0, 3).map(p => ({
       ...p,
       reason: `Pilihan yang memang ngam dengan gaya ${targetName}.`
     }))
 
-    // 2. Ask AI to pick top 3 if AI binding exists and we have enough traits
-    if (c.env.AI && traits.length > 0 && dbProducts.length > 0) {
+    // 2. AI Selection using Traits, Hobby, and Relationship
+    if (c.env.AI && (traits.length > 0 || hobby) && dbProducts.length > 0) {
       try {
-        const catalog = dbProducts.map(p => ({ id: p.id, name: p.name, price: p.price_range }))
-        const promptSystem = 'Anda ialah pembantu peribadi yang memilih hadiah. Return HANYA JSON array string format tepat: [{"id": "id_produk", "reason": "sebab..."}]. DILARANG letak teks lain.'
-        const promptUser = `Senarai hadiah: ${JSON.stringify(catalog)}. Nama: ${targetName}. Personaliti: ${traits.join(', ')}. Pilih tepat 3 produk (guna id sebenar dari senarai) yang paling sesuai. Berikan alasan ringkas kenapa ia sesuai untuk ${targetName} dalam bahasa Melayu santai.`
+        const catalog = dbProducts.map(p => ({ id: p.id, name: p.name, tags: p.tags }))
+        const promptSystem = 'Anda ialah pakar hadiah Malaysia. Return HANYA JSON array: [{"id": "...", "reason": "..."}]'
+        const promptUser = `Pilih 3 hadiah terbaik dari katalog: ${JSON.stringify(catalog)}. 
+        Penerima: ${targetName} (${gender === 'M' ? 'Lelaki' : 'Perempuan'}). 
+        Hubungan: ${relationship}. Hobi: ${hobby}. Personaliti: ${traits.join(', ')}. 
+        Berikan alasan santai dalam BM kenapa hadiah ini paling "ngam" untuk dia.`
 
         const aiResponse = await c.env.AI.run('@cf/meta/llama-3-8b-instruct', {
           messages: [
@@ -176,26 +181,16 @@ app.post('/api/recommendations', async (c) => {
         const match = aiText.match(/\[.*?\]/s);
         if (match) {
           const parsed = JSON.parse(match[0]);
-          if (Array.isArray(parsed) && parsed.length > 0) {
-            // Map AI selections back to DB products
-            const selectedProducts = []
-            for (const selection of parsed) {
-              const matchedProduct = dbProducts.find(p => p.id == selection.id)
-              if (matchedProduct) {
-                selectedProducts.push({
-                  ...matchedProduct,
-                  reason: selection.reason || `Sesuai sangat dengan personaliti ${targetName}.`
-                })
-              }
-            }
-            if (selectedProducts.length > 0) {
-              finalProducts = selectedProducts
+          const selectedProducts = []
+          for (const selection of parsed) {
+            const matchedProduct = dbProducts.find(p => p.id == selection.id)
+            if (matchedProduct) {
+              selectedProducts.push({ ...matchedProduct, reason: selection.reason })
             }
           }
+          if (selectedProducts.length > 0) finalProducts = selectedProducts
         }
-      } catch (err) {
-        console.error("AI Matchmaker Error:", err);
-      }
+      } catch (err) {}
     }
 
     return c.json({ products: finalProducts })
@@ -317,12 +312,12 @@ app.get('/api/admin/products', adminAuth, async (c) => {
 app.post('/api/admin/products', adminAuth, async (c) => {
   try {
     const body = await c.req.json()
-    const { name, description, price_range, image_url, shopee_url, gender_target } = body
+    const { name, description, price_range, image_url, shopee_url, gender_target, tags, relationship_target } = body
     const id = 'p' + Date.now()
 
     await c.env.DB.prepare(
-      'INSERT INTO products (id, name, description, price_range, image_url, shopee_url, gender_target) VALUES (?, ?, ?, ?, ?, ?, ?)'
-    ).bind(id, name, description, price_range, image_url, shopee_url, gender_target).run()
+      'INSERT INTO products (id, name, description, price_range, image_url, shopee_url, gender_target, tags, relationship_target) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)'
+    ).bind(id, name, description, price_range, image_url, shopee_url, gender_target, tags, relationship_target || 'U').run()
 
     return c.json({ success: true, id })
   } catch (error) {
@@ -343,21 +338,23 @@ app.delete('/api/admin/products/:id', adminAuth, async (c) => {
 
 app.on(['GET', 'POST'], '/api/admin/scrape-product', adminAuth, async (c) => {
   try {
-    // For GET, we check query params. For POST, we check body.
     const { url, name: providedName } = c.req.method === 'POST' ? await c.req.json() : c.req.query();
     
     if (!url && !providedName) return c.json({ error: 'URL atau Nama diperlukan' }, 400)
 
     let name = providedName || ''
     let description = ''
+    let tags = ''
     let imageUrl = 'https://via.placeholder.com/500?text=Masukkan+Gambar+Produk'
 
-    // AI Polish - If we have a name
     if (c.env.AI && name && name.length > 3) {
       try {
         const aiResponse = await c.env.AI.run('@cf/meta/llama-3-8b-instruct', {
           messages: [
-            { role: 'system', content: 'Anda ialah pakar e-commerce Malaysia. Bersihkan nama produk (max 5 kata) dan buat deskripsi hadiah menarik (BM santai). Return JSON: {"name": "...", "description": "..."}' },
+            { 
+              role: 'system', 
+              content: 'Anda ialah pakar e-commerce Malaysia. Kemaskan Nama Produk, buat Deskripsi menarik (BM santai), dan BERIKAN 2-3 TAG HOBI (contoh: Gaming, Travel, Beauty). Return JSON: {"name": "...", "description": "...", "tags": "tag1, tag2"}' 
+            },
             { role: 'user', content: `Nama: ${name}` }
           ]
         })
@@ -367,6 +364,7 @@ app.on(['GET', 'POST'], '/api/admin/scrape-product', adminAuth, async (c) => {
           const parsed = JSON.parse(match[0]);
           name = parsed.name || name;
           description = parsed.description || '';
+          tags = parsed.tags || '';
         }
       } catch (err) {}
     }
@@ -375,6 +373,7 @@ app.on(['GET', 'POST'], '/api/admin/scrape-product', adminAuth, async (c) => {
       name: name,
       image_url: imageUrl,
       description: description || 'Hadiah menarik dari Shopee!',
+      tags: tags,
       shopee_url: url || ''
     })
   } catch (error: any) {
