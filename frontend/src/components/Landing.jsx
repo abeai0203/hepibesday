@@ -15,6 +15,8 @@ export default function Landing({ onNext }) {
   const boxScale = useTransform(smoothProgress, [0, 0.5], [1, 1.3])
   const closedOpacity = useTransform(smoothProgress, [0.05, 0.25], [1, 0])
   const openOpacity = useTransform(smoothProgress, [0.2, 0.4], [0, 1])
+  
+  // Adjusted qMarkY to sit deeper in the box at start
   const qMarkY = useTransform(smoothProgress, [0.3, 0.5], [60, -100])
   const qMarkScale = useTransform(smoothProgress, [0.3, 0.5], [0, 1.1])
   const qMarkOpacity = useTransform(smoothProgress, [0.3, 0.45], [0, 1])
@@ -43,12 +45,14 @@ export default function Landing({ onNext }) {
             <div className="absolute bottom-1/4 -right-20 w-[600px] h-[600px] bg-purple-100/30 blur-[120px] rounded-full" />
           </div>
 
-            {/* NEW LOGO IMAGE - Shrunk to prevent overlap */}
+          {/* Header & Hero Area */}
+          <div className="w-full flex flex-col items-center text-center pt-8 px-6 z-40 pointer-events-none">
+            {/* Logo Image - Scaled down */}
             <div className="w-28 md:w-32 mb-4 overflow-hidden flex items-center justify-center">
               <img 
                 src="/logo.png" 
                 className="w-full h-full object-contain mix-blend-multiply brightness-[1.05] contrast-[1.1]" 
-                alt="Hepi Besday"
+                alt="Logo"
                 style={{
                   maskImage: 'radial-gradient(circle, black 80%, transparent 100%)',
                   WebkitMaskImage: 'radial-gradient(circle, black 80%, transparent 100%)'
