@@ -351,42 +351,32 @@ app.post('/api/admin/scrape-product', adminAuth, async (c) => {
     let imageUrl = 'https://via.placeholder.com/500?text=Masukkan+Gambar+Produk'
     let expandedUrl = url
 
-    // 1. Try to expand URL and get metadata in one go
+    // 1. Use a Public Unshorten API to bypass Cloudflare Ban
     try {
-      const res = await fetch(url, {
-        headers: {
-          'User-Agent': 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36',
-          'Accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,image/apng,*/*;q=0.8',
-          'Accept-Language': 'en-US,en;q=0.9'
-        },
-        redirect: 'follow'
-      })
-      expandedUrl = res.url
-      const html = await res.text()
-      
-      // Look for OG Title or Meta Title
-      const ogTitle = html.match(/property="og:title"\s+content="(.*?)"/i) || html.match(/name="twitter:title"\s+content="(.*?)"/i)
-      const pageTitle = html.match(/<title>(.*?)<\/title>/i)
-      
-      name = (ogTitle ? ogTitle[1] : (pageTitle ? pageTitle[1] : '')).split('|')[0].split('-')[0].trim()
-      
-      // Look for OG Image
-      const ogImage = html.match(/property="og:image"\s+content="(.*?)"/i)
-      if (ogImage) imageUrl = ogImage[1]
+      const unshortenRes = await fetch(`https://unshorten.me/api/v2/unshorten?url=${encodeURIComponent(url)}`)
+      const unshortenData: any = await unshortenRes.json()
+      if (unshortenData.success && unshortenData.unshortened_url) {
+        expandedUrl = unshortenData.unshortened_url
+      }
     } catch (e) {
-      console.log("Extraction failed, falling back to AI");
+      console.log("Unshorten API failed, falling back to manual");
     }
 
-    // 2. Use AI to finalize or infer
+    // 2. Extract context from the expanded URL slug
+    // URL usually looks like: shopee.com.my/PRODUCT-NAME-i.SHOPID.ITEMID
+    const slug = expandedUrl.split('/').pop()?.split('?')[0] || ''
+    const cleanSlug = slug.replace(/-i\.\d+\.\d+$/, '').replace(/-/g, ' ')
+
+    // 3. Use AI to infer from the Slug (This is the most reliable part)
     if (c.env.AI) {
-      const prompt = name 
-        ? `Produk: "${name}". Bersihkan nama ini (max 5 kata) dan buat deskripsi hadiah menarik (BM santai).`
-        : `Berdasarkan pautan Shopee ini: ${expandedUrl}, teka produk apa ini dan beri nama serta deskripsi menarik (BM santai).`;
+      const prompt = cleanSlug.length > 5
+        ? `Produk ini dinamakan: "${cleanSlug}". Sila buat Nama Produk yang kemas (max 5 kata) dan Deskripsi menarik (BM santai).`
+        : `Berdasarkan URL Shopee ini: ${expandedUrl}, teka produk apa ini.`;
 
       try {
         const aiResponse = await c.env.AI.run('@cf/meta/llama-3-8b-instruct', {
           messages: [
-            { role: 'system', content: 'Anda ialah pakar hadiah. Return HANYA JSON: {"name": "...", "description": "..."}' },
+            { role: 'system', content: 'Anda ialah pakar e-commerce. Return HANYA JSON: {"name": "...", "description": "..."}' },
             { role: 'user', content: prompt }
           ]
         })
@@ -394,16 +384,16 @@ app.post('/api/admin/scrape-product', adminAuth, async (c) => {
         const match = aiText.match(/\{.*?\}/s);
         if (match) {
           const parsed = JSON.parse(match[0]);
-          name = parsed.name || name;
+          name = parsed.name || cleanSlug;
           description = parsed.description || description;
         }
       } catch (err) {}
     }
 
     return c.json({
-      name: name || 'Cadangan Hadiah Shopee',
+      name: name || cleanSlug || 'Produk Shopee',
       image_url: imageUrl,
-      description: description || 'Hadiah menarik yang pasti disukai!',
+      description: description || 'Hadiah menarik yang ditemui di Shopee!',
       shopee_url: expandedUrl
     })
   } catch (error: any) {
