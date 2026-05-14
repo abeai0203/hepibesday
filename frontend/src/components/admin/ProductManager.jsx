@@ -212,7 +212,7 @@ export default function ProductManager() {
                         try {
                           const currentOrigin = window.location.origin;
                           // Use relative path if possible, otherwise fallback to the worker URL
-                          const apiUrl = import.meta.env.VITE_API_URL || (currentOrigin.includes('localhost') ? 'http://localhost:8787' : '');
+                          const apiUrl = import.meta.env.VITE_API_URL || (currentOrigin.includes('localhost') ? 'http://localhost:8787' : 'https://hepibesday-api.abeai0203.workers.dev');
                           
                           const fetchUrl = apiUrl ? `${apiUrl}/api/admin/scrape-product` : '/api/admin/scrape-product';
                           
