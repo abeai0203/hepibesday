@@ -346,71 +346,29 @@ app.post('/api/admin/scrape-product', adminAuth, async (c) => {
     const { url } = await c.req.json()
     if (!url) return c.json({ error: 'URL diperlukan' }, 400)
 
-    let finalUrl = url
     let name = ''
-    let imageUrl = ''
     let description = ''
+    let imageUrl = 'https://via.placeholder.com/500?text=Masukkan+Gambar+Produk'
 
-    // 1. Follow Redirects to get the real URL
-    try {
-      const initialRes = await fetch(url, {
-        method: 'HEAD',
-        headers: { 'User-Agent': 'Mozilla/5.0 (iPhone; CPU iPhone OS 17_0 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/17.0 Mobile/15E148 Safari/604.1' },
-        redirect: 'follow'
-      })
-      finalUrl = initialRes.url
-    } catch (e) {
-      console.log("Redirect follow failed, using original URL");
-    }
-
-    // 2. Try to extract ShopID and ItemID from finalUrl
-    // Format usually: shopee.com.my/product/SHOPID/ITEMID or shopee.com.my/NAME-i.SHOPID.ITEMID
-    const productMatch = finalUrl.match(/product\/(\d+)\/(\d+)/) || finalUrl.match(/-i\.(\d+)\.(\d+)/)
-    
-    if (productMatch) {
-      const shopId = productMatch[1]
-      const itemId = productMatch[2]
-      
-      try {
-        const apiRes = await fetch(`https://shopee.com.my/api/v4/item/get?itemid=${itemId}&shopid=${shopId}`, {
-          headers: {
-            'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36',
-            'Referer': 'https://shopee.com.my/'
-          }
-        })
-        const data: any = await apiRes.json()
-        
-        if (data?.data) {
-          const item = data.data
-          name = item.name || ''
-          description = item.description || ''
-          if (item.image) {
-            imageUrl = `https://down-my.img.susercontent.com/file/${item.image}`
-          }
-        }
-      } catch (apiErr) {
-        console.error("Shopee API Error:", apiErr);
-      }
-    }
-
-    // 3. Fallback to AI if API failed or no IDs found
-    if (c.env.AI && (!name || name.length < 5)) {
+    // Use AI to infer details from the URL string
+    // This is much more reliable as it doesn't get blocked by Shopee's anti-bot
+    if (c.env.AI) {
       try {
         const aiResponse = await c.env.AI.run('@cf/meta/llama-3-8b-instruct', {
           messages: [
             { 
               role: 'system', 
-              content: 'Anda ialah pakar e-commerce. Berdasarkan URL produk ini, teka Nama (max 5 kata) dan Deskripsi menarik (BM santai). Return HANYA JSON: {"name": "...", "description": "..."}' 
+              content: 'Anda ialah pakar e-commerce. Berdasarkan URL produk Shopee ini, teka Nama Produk (max 5 kata) dan buat Deskripsi menarik dalam Bahasa Melayu santai. Return HANYA JSON: {"name": "...", "description": "..."}' 
             },
-            { role: 'user', content: `URL: ${finalUrl}` }
+            { role: 'user', content: `URL: ${url}` }
           ]
         })
         const aiText = (aiResponse as any).response;
         const match = aiText.match(/\{.*?\}/s);
         if (match) {
           const parsed = JSON.parse(match[0]);
-          name = parsed.name || name;
-          description = parsed.description || description;
+          name = parsed.name || '';
+          description = parsed.description || '';
         }
       } catch (aiErr) {
         console.error("AI Inference Error:", aiErr);
@@ -418,13 +376,13 @@ app.post('/api/admin/scrape-product', adminAuth, async (c) => {
     }
 
     return c.json({
-      name: name || 'Produk Baru',
-      image_url: imageUrl || 'https://via.placeholder.com/500?text=Sila+Masukkan+Gambar',
-      description: description || 'Hadiah yang sangat menarik untuk yang tersayang!',
-      shopee_url: finalUrl
+      name: name || 'Produk Shopee Baru',
+      image_url: imageUrl,
+      description: description || 'Hadiah menarik yang ditemui di Shopee!',
+      shopee_url: url
     })
   } catch (error: any) {
-    return c.json({ error: 'Gagal menarik data', details: error.message }, 500)
+    return c.json({ error: 'Gagal memproses pautan', details: error.message }, 500)
   }
 })
 
