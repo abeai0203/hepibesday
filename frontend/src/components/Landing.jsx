@@ -44,13 +44,21 @@ export default function Landing({ onNext }) {
           </div>
 
           {/* Header & Hero Area */}
-          <div className="w-full flex flex-col items-center text-center pt-10 px-6 z-40 pointer-events-none">
-            <div className="flex flex-col mb-10">
-              <span className="text-4xl font-black text-indigo-950 leading-none">Hepi</span>
-              <span className="text-[12px] font-black tracking-[0.3em] text-indigo-400 uppercase mt-1">Besday</span>
+          <div className="w-full flex flex-col items-center text-center pt-8 px-6 z-40 pointer-events-none">
+            {/* NEW LOGO IMAGE */}
+            <div className="w-40 md:w-48 mb-6 overflow-hidden flex items-center justify-center">
+              <img 
+                src="/logo.png" 
+                className="w-full h-full object-contain mix-blend-multiply brightness-[1.05] contrast-[1.1]" 
+                alt="Hepi Besday"
+                style={{
+                  maskImage: 'radial-gradient(circle, black 80%, transparent 100%)',
+                  WebkitMaskImage: 'radial-gradient(circle, black 80%, transparent 100%)'
+                }}
+              />
             </div>
 
-            {/* Container for dual captions with fixed height to prevent blank space */}
+            {/* Container for dual captions */}
             <div className="relative w-full h-40 md:h-48 flex items-center justify-center">
               {/* Initial Caption */}
               <motion.div style={{ opacity: title1Opacity }} className="absolute inset-0 flex flex-col items-center">
