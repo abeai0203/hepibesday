@@ -351,49 +351,65 @@ app.post('/api/admin/scrape-product', adminAuth, async (c) => {
     let imageUrl = 'https://via.placeholder.com/500?text=Masukkan+Gambar+Produk'
     let expandedUrl = url
 
-    // 1. Use a Public Unshorten API to bypass Cloudflare Ban
+    // 1. Try to expand URL by looking into HTML if headers fail
     try {
-      const unshortenRes = await fetch(`https://unshorten.me/api/v2/unshorten?url=${encodeURIComponent(url)}`)
-      const unshortenData: any = await unshortenRes.json()
-      if (unshortenData.success && unshortenData.unshortened_url) {
-        expandedUrl = unshortenData.unshortened_url
-      }
-    } catch (e) {
-      console.log("Unshorten API failed, falling back to manual");
-    }
-
-    // 2. Extract context from the expanded URL slug
-    // URL usually looks like: shopee.com.my/PRODUCT-NAME-i.SHOPID.ITEMID
-    const slug = expandedUrl.split('/').pop()?.split('?')[0] || ''
-    const cleanSlug = slug.replace(/-i\.\d+\.\d+$/, '').replace(/-/g, ' ')
-
-    // 3. Use AI to infer from the Slug (This is the most reliable part)
-    if (c.env.AI) {
-      const prompt = cleanSlug.length > 5
-        ? `Produk ini dinamakan: "${cleanSlug}". Sila buat Nama Produk yang kemas (max 5 kata) dan Deskripsi menarik (BM santai).`
-        : `Berdasarkan URL Shopee ini: ${expandedUrl}, teka produk apa ini.`;
-
-      try {
-        const aiResponse = await c.env.AI.run('@cf/meta/llama-3-8b-instruct', {
-          messages: [
-            { role: 'system', content: 'Anda ialah pakar e-commerce. Return HANYA JSON: {"name": "...", "description": "..."}' },
-            { role: 'user', content: prompt }
-          ]
-        })
-        const aiText = (aiResponse as any).response;
-        const match = aiText.match(/\{.*?\}/s);
-        if (match) {
-          const parsed = JSON.parse(match[0]);
-          name = parsed.name || cleanSlug;
-          description = parsed.description || description;
+      const res = await fetch(url, {
+        headers: {
+          'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36',
+        },
+        redirect: 'follow'
+      })
+      expandedUrl = res.url
+      const html = await res.text()
+      
+      // Look for JavaScript redirect if res.url didn't change
+      if (expandedUrl === url) {
+        const jsRedirect = html.match(/window\.location\.replace\(['"](.*?)['"]\)/) || html.match(/location\.href\s*=\s*['"](.*?)['"]/)
+        if (jsRedirect) {
+          expandedUrl = jsRedirect[1].startsWith('http') ? jsRedirect[1] : `https://shopee.com.my${jsRedirect[1]}`
         }
-      } catch (err) {}
+      }
+
+      // Extract Meta Tags
+      const ogTitle = html.match(/property="og:title"\s+content="(.*?)"/i) || html.match(/name="twitter:title"\s+content="(.*?)"/i)
+      const ogImage = html.match(/property="og:image"\s+content="(.*?)"/i)
+      
+      if (ogTitle) name = ogTitle[1].split('|')[0].trim()
+      if (ogImage) imageUrl = ogImage[1]
+    } catch (e) {}
+
+    // 2. AI Processing - ONLY if we have context, otherwise return placeholder
+    const slug = expandedUrl.split('/').pop()?.split('?')[0] || ''
+    const cleanSlug = slug.includes('-i.') ? slug.split('-i.')[0].replace(/-/g, ' ') : ''
+
+    if (c.env.AI) {
+      const context = name || cleanSlug
+      if (context && context.length > 3) {
+        try {
+          const aiResponse = await c.env.AI.run('@cf/meta/llama-3-8b-instruct', {
+            messages: [
+              { 
+                role: 'system', 
+                content: 'Anda ialah pakar e-commerce. JANGAN REKA INFO. Jika input tidak masuk akal, return {"name": "", "description": ""}. Jika OK, return JSON: {"name": "Nama Pendek", "description": "Deskripsi BM Santai"}' 
+              },
+              { role: 'user', content: `Konteks Produk: ${context}` }
+            ]
+          })
+          const aiText = (aiResponse as any).response;
+          const match = aiText.match(/\{.*?\}/s);
+          if (match) {
+            const parsed = JSON.parse(match[0]);
+            name = parsed.name || name || context;
+            description = parsed.description || '';
+          }
+        } catch (err) {}
+      }
     }
 
     return c.json({
-      name: name || cleanSlug || 'Produk Shopee',
+      name: name || '',
       image_url: imageUrl,
-      description: description || 'Hadiah menarik yang ditemui di Shopee!',
+      description: description || '',
       shopee_url: expandedUrl
     })
   } catch (error: any) {
