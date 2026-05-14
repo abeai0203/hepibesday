@@ -247,7 +247,7 @@ export default function Results({ sessionData, onRestart }) {
               />
               {product.price_range && (
                 <div className="absolute top-4 right-4 bg-pink-500 text-white text-[10px] font-black px-4 py-2 rounded-full shadow-lg transform rotate-6">
-                  {product.price_range}
+                  {product.price_range ? (product.price_range.startsWith('RM') ? product.price_range : `RM ${product.price_range}`) : ''}
                 </div>
               )}
             </div>

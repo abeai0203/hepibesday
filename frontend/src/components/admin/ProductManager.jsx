@@ -95,7 +95,7 @@ export default function ProductManager() {
         </div>
         <button 
           onClick={() => {
-            setFormData({ name: '', description: '', price_range: '', image_url: '', shopee_url: '', gender_target: 'U' })
+            setFormData({ name: '', description: '', price_range: 'RM ', image_url: '', shopee_url: '', gender_target: 'U' })
             setIsModalOpen(true)
           }}
           className="flex items-center space-x-3 px-8 py-4 bg-indigo-950 text-white rounded-2xl hover:bg-pink-500 font-black transition-all shadow-xl hover:-translate-y-1"
@@ -143,7 +143,7 @@ export default function ProductManager() {
                   </td>
                   <td className="px-8 py-6">
                     <span className="inline-block px-3 py-1 bg-white border border-slate-100 rounded-full text-[10px] font-black text-indigo-950 shadow-sm">
-                      {p.price_range}
+                      {p.price_range ? (p.price_range.startsWith('RM') ? p.price_range : `RM ${p.price_range}`) : 'RM -'}
                     </span>
                     <p className="text-[10px] font-bold text-slate-400 mt-1 uppercase tracking-wider">Target: {p.gender_target === 'U' ? 'Semua' : p.gender_target === 'M' ? 'Lelaki' : 'Perempuan'}</p>
                   </td>
