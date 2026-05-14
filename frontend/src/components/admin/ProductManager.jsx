@@ -211,8 +211,12 @@ export default function ProductManager() {
 
                         try {
                           const currentOrigin = window.location.origin;
-                          const apiUrl = import.meta.env.VITE_API_URL || (currentOrigin.includes('localhost') ? 'http://localhost:8787' : 'https://hepibesday-api.asyraq.workers.dev');
-                          const res = await fetch(`${apiUrl}/api/admin/scrape-product`, {
+                          // Use relative path if possible, otherwise fallback to the worker URL
+                          const apiUrl = import.meta.env.VITE_API_URL || (currentOrigin.includes('localhost') ? 'http://localhost:8787' : '');
+                          
+                          const fetchUrl = apiUrl ? `${apiUrl}/api/admin/scrape-product` : '/api/admin/scrape-product';
+                          
+                          const res = await fetch(fetchUrl, {
                             method: 'POST',
                             headers: { 
                               'Content-Type': 'application/json',
