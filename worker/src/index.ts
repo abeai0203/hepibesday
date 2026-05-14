@@ -341,21 +341,23 @@ app.delete('/api/admin/products/:id', adminAuth, async (c) => {
   }
 })
 
-app.post('/api/admin/scrape-product', adminAuth, async (c) => {
+app.on(['GET', 'POST'], '/api/admin/scrape-product', adminAuth, async (c) => {
   try {
-    const { url, name: providedName } = await c.req.json()
-    if (!url) return c.json({ error: 'URL diperlukan' }, 400)
+    // For GET, we check query params. For POST, we check body.
+    const { url, name: providedName } = c.req.method === 'POST' ? await c.req.json() : c.req.query();
+    
+    if (!url && !providedName) return c.json({ error: 'URL atau Nama diperlukan' }, 400)
 
     let name = providedName || ''
     let description = ''
     let imageUrl = 'https://via.placeholder.com/500?text=Masukkan+Gambar+Produk'
 
-    // AI Polish - If we have a name (from frontend or proxy)
-    if (c.env.AI && name) {
+    // AI Polish - If we have a name
+    if (c.env.AI && name && name.length > 3) {
       try {
         const aiResponse = await c.env.AI.run('@cf/meta/llama-3-8b-instruct', {
           messages: [
-            { role: 'system', content: 'Anda ialah pakar e-commerce. Bersihkan nama produk (max 5 kata) dan buat deskripsi hadiah menarik (BM santai). Return JSON: {"name": "...", "description": "..."}' },
+            { role: 'system', content: 'Anda ialah pakar e-commerce Malaysia. Bersihkan nama produk (max 5 kata) dan buat deskripsi hadiah menarik (BM santai). Return JSON: {"name": "...", "description": "..."}' },
             { role: 'user', content: `Nama: ${name}` }
           ]
         })
@@ -373,10 +375,10 @@ app.post('/api/admin/scrape-product', adminAuth, async (c) => {
       name: name,
       image_url: imageUrl,
       description: description || 'Hadiah menarik dari Shopee!',
-      shopee_url: url
+      shopee_url: url || ''
     })
   } catch (error: any) {
-    return c.json({ error: 'Gagal menarik data', details: error.message }, 500)
+    return c.json({ error: 'Gagal memproses data', details: error.message }, 500)
   }
 })
 
