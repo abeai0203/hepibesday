@@ -1,129 +1,127 @@
 import { motion } from 'framer-motion'
-import { Check, RefreshCw, ChevronLeft, ShieldCheck, Sparkles } from 'lucide-react'
+import { Check, RefreshCw, ChevronLeft, ShieldCheck, Sparkles, Wand2, Star } from 'lucide-react'
 
 export default function Traits({ sessionData, onNext, onRetry, onBack }) {
   const { zodiac, traits } = sessionData
 
-  // Emojis and background colors for the 3 traits
   const traitStyles = [
-    { emoji: '🤝', bg: 'bg-pink-100' },
-    { emoji: '💡', bg: 'bg-yellow-100' },
-    { emoji: '🛡️', bg: 'bg-teal-100' }
+    { emoji: '✨', color: 'text-pink-500', bg: 'bg-pink-50' },
+    { emoji: '🌟', color: 'text-purple-500', bg: 'bg-purple-50' },
+    { emoji: '💫', color: 'text-orange-500', bg: 'bg-orange-50' }
   ]
 
   return (
-    <motion.div
-      initial={{ opacity: 0, scale: 0.95 }}
-      animate={{ opacity: 1, scale: 1 }}
-      exit={{ opacity: 0, scale: 1.05 }}
-      className="w-full max-w-md mx-auto pb-8 pt-4 space-y-6"
-    >
-      {/* Top Bar */}
-      <div className="flex items-center justify-between">
+    <div className="min-h-screen w-full bg-[#FDFCF0] relative overflow-hidden flex flex-col p-6 pb-12">
+      {/* Background Blobs */}
+      <div className="absolute inset-0 -z-10">
+        <div className="absolute top-1/4 -right-20 w-[450px] h-[450px] bg-pink-100/30 blur-[100px] rounded-full" />
+        <div className="absolute bottom-1/4 -left-20 w-[550px] h-[550px] bg-purple-100/30 blur-[100px] rounded-full" />
+      </div>
+
+      {/* Top Navigation */}
+      <div className="flex items-center justify-between w-full max-w-lg mx-auto mb-8">
         <button 
           onClick={onBack}
-          className="w-10 h-10 bg-white/60 backdrop-blur shadow-sm rounded-full flex items-center justify-center text-slate-700 hover:bg-white transition-colors"
+          className="w-12 h-12 bg-white shadow-lg rounded-2xl flex items-center justify-center text-slate-700 hover:scale-110 active:scale-95 transition-all border border-pink-50"
         >
-          <ChevronLeft className="w-5 h-5" />
+          <ChevronLeft className="w-6 h-6 text-pink-500" />
         </button>
-        <div className="bg-white/60 backdrop-blur px-4 py-2 rounded-full flex items-center space-x-3 shadow-sm">
-          <span className="text-xs font-bold text-slate-600">LANGKAH 4/5</span>
-          <div className="w-16 h-2 bg-purple-100 rounded-full overflow-hidden">
-            <div className="w-4/5 h-full bg-purple-400 rounded-full" />
+        <div className="bg-white/80 backdrop-blur-md px-5 py-2.5 rounded-2xl flex items-center space-x-4 shadow-xl border border-white">
+          <span className="text-[10px] font-black text-indigo-950 uppercase tracking-widest">Langkah 4/5</span>
+          <div className="w-24 h-2 bg-pink-50 rounded-full overflow-hidden">
+            <motion.div 
+              initial={{ width: '60%' }}
+              animate={{ width: '80%' }}
+              className="h-full bg-gradient-to-r from-pink-400 to-rose-500 rounded-full" 
+            />
           </div>
         </div>
-        <div className="w-10 h-10" /> {/* Empty div for centering */}
       </div>
 
-      {/* Header */}
-      <div className="text-center space-y-3 mt-4">
-        <div className="inline-flex items-center space-x-2 bg-purple-400 text-white px-4 py-1.5 rounded-full shadow-md">
-          <Sparkles className="w-4 h-4" />
-          <span className="text-xs font-bold tracking-wider">BINTANG: {zodiac.toUpperCase()}</span>
-        </div>
-        
-        <h2 className="text-3xl font-heading font-bold text-slate-800 leading-tight">
-          Ini <span className="gradient-text">personaliti</span> {sessionData.targetName || 'dia'} kan?
-        </h2>
-        <p className="text-slate-600 font-medium">Betul ke {sessionData.targetName || 'dia'} macam ni? 😌</p>
-      </div>
-
-      {/* Traits Card */}
-      <div className="glass-card p-6 space-y-6 relative overflow-hidden">
-        {/* Magic sparkles decoration */}
-        <div className="absolute top-2 right-2 text-yellow-300 opacity-50">✨</div>
-        <div className="absolute bottom-4 left-2 text-pink-300 opacity-50">✨</div>
-
-        <ul className="space-y-5 relative z-10">
-          {traits.map((trait, index) => {
-            const style = traitStyles[index % traitStyles.length]
-            return (
-              <motion.li
-                key={index}
-                initial={{ opacity: 0, x: -20 }}
-                animate={{ opacity: 1, x: 0 }}
-                transition={{ delay: index * 0.3 }}
-                className="flex items-start space-x-4"
-              >
-                <div className={`w-14 h-14 rounded-full ${style.bg} flex items-center justify-center shrink-0 relative shadow-inner`}>
-                  <span className="text-2xl">{style.emoji}</span>
-                  <div className="absolute -top-1 -right-1 bg-purple-500 rounded-full p-0.5 border-2 border-white shadow-sm">
-                    <Check className="w-3 h-3 text-white" />
-                  </div>
-                </div>
-                <div className="flex-1 pt-1">
-                  <p className="text-[15px] leading-snug text-slate-700 font-medium">{trait}</p>
-                </div>
-              </motion.li>
-            )
-          })}
-        </ul>
-      </div>
-
-      {/* Actions */}
-      <div className="space-y-4 pt-2">
-        <motion.button
-          initial={{ opacity: 0, y: 10 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ delay: traits.length * 0.3 + 0.4 }}
-          onClick={onNext}
-          className="w-full gradient-btn py-4 rounded-2xl flex items-center justify-center space-x-2 text-lg font-bold relative group"
-        >
-          <Sparkles className="w-5 h-5" />
-          <span>Ya, betul! Tunjuk hadiah</span>
-          <span className="transition-transform group-hover:translate-x-1">→</span>
-          {/* Floating gift icon */}
-          <div className="absolute right-4 -top-3 text-4xl drop-shadow-xl rotate-12 group-hover:rotate-0 transition-transform">
-            🎁
-          </div>
-        </motion.button>
-
-        <motion.button
-          initial={{ opacity: 0, y: 10 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ delay: traits.length * 0.3 + 0.5 }}
-          onClick={onRetry}
-          className="w-full border-2 border-dashed border-purple-200 bg-white/50 backdrop-blur hover:bg-white/80 py-4 rounded-2xl font-semibold flex items-center justify-center space-x-2 text-purple-600 transition-colors shadow-sm"
-        >
-          <RefreshCw className="w-4 h-4" />
-          <span>Hmm.. kurang tepat, cuba lagi?</span>
-        </motion.button>
-      </div>
-
-      {/* Trust Footer */}
-      <motion.div 
-        initial={{ opacity: 0 }}
-        animate={{ opacity: 1 }}
-        transition={{ delay: traits.length * 0.3 + 0.6 }}
-        className="flex items-center justify-center space-x-2 pt-2"
+      {/* Content Area */}
+      <motion.div
+        initial={{ opacity: 0, y: 20 }}
+        animate={{ opacity: 1, y: 0 }}
+        className="flex-1 flex flex-col items-center w-full max-w-lg mx-auto text-center"
       >
-        <div className="bg-purple-500 rounded-full p-0.5">
-          <ShieldCheck className="w-3 h-3 text-white" />
+        <div className="mb-8">
+          <div className="inline-flex items-center space-x-2 bg-indigo-950 text-white px-5 py-2 rounded-2xl shadow-xl mb-6">
+            <Star className="w-4 h-4 text-orange-400 fill-orange-400" />
+            <span className="text-[10px] font-black tracking-widest uppercase">BINTANG: {zodiac?.toUpperCase()}</span>
+          </div>
+          
+          <h2 className="text-4xl md:text-5xl font-black text-indigo-950 leading-tight">
+            Ini personaliti <br/>
+            <span className="text-pink-500">{sessionData.targetName || 'dia'} kan?</span>
+          </h2>
+          <p className="text-slate-500 font-bold mt-4">Bintang-bintang kata dia macam ni... 😌</p>
         </div>
-        <span className="text-xs font-medium text-slate-500">
-          100% selamat • Tiada data peribadi dikongsi
-        </span>
+
+        {/* Traits Card */}
+        <div className="w-full bg-white/70 backdrop-blur-xl border-2 border-white rounded-[2.5rem] p-8 shadow-2xl space-y-8 relative overflow-hidden mb-10 text-left">
+          {/* Decorative Sparkles */}
+          <div className="absolute top-4 right-4 text-orange-300 opacity-30"><Sparkles size={32} /></div>
+          
+          <ul className="space-y-8">
+            {traits?.map((trait, index) => {
+              const style = traitStyles[index % traitStyles.length]
+              return (
+                <motion.li
+                  key={index}
+                  initial={{ opacity: 0, x: -20 }}
+                  animate={{ opacity: 1, x: 0 }}
+                  transition={{ delay: 0.2 + index * 0.2 }}
+                  className="flex items-start space-x-5"
+                >
+                  <div className={`w-14 h-14 rounded-2xl ${style.bg} flex items-center justify-center shrink-0 shadow-inner relative`}>
+                    <span className="text-2xl">{style.emoji}</span>
+                    <div className="absolute -top-2 -right-2 bg-white rounded-full p-1 shadow-md border border-pink-50">
+                      <Check className={`w-3 h-3 ${style.color}`} strokeWidth={4} />
+                    </div>
+                  </div>
+                  <div className="flex-1">
+                    <p className="text-lg leading-tight text-indigo-950 font-black pt-1">{trait}</p>
+                  </div>
+                </motion.li>
+              )
+            })}
+          </ul>
+        </div>
+
+        {/* Actions */}
+        <div className="w-full space-y-4">
+          <motion.button
+            whileHover={{ scale: 1.02 }}
+            whileTap={{ scale: 0.98 }}
+            onClick={onNext}
+            className="w-full py-6 bg-gradient-to-r from-pink-400 via-rose-500 to-orange-500 rounded-[2rem] text-white font-black text-xl shadow-2xl flex items-center justify-center gap-3 relative group"
+          >
+            <Sparkles className="w-6 h-6" />
+            <span>Ya, betul! Tunjuk hadiah</span>
+            <div className="absolute right-6 -top-4 text-4xl drop-shadow-xl rotate-12 group-hover:rotate-0 transition-transform">
+              🎁
+            </div>
+          </motion.button>
+
+          <motion.button
+            whileHover={{ scale: 1.05 }}
+            whileTap={{ scale: 0.95 }}
+            onClick={onRetry}
+            className="w-full py-4 text-pink-500 font-black flex items-center justify-center space-x-2"
+          >
+            <RefreshCw className="w-5 h-5" />
+            <span>Kurang tepat, cuba lagi?</span>
+          </motion.button>
+        </div>
+
+        {/* Trust Footer */}
+        <div className="flex items-center justify-center space-x-2 mt-8 opacity-50">
+          <ShieldCheck className="w-4 h-4 text-indigo-950" />
+          <span className="text-[10px] font-black text-indigo-950 uppercase tracking-widest">
+            100% selamat • Data anda dirahsiakan
+          </span>
+        </div>
       </motion.div>
-    </motion.div>
+    </div>
   )
 }
