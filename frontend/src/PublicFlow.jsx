@@ -9,6 +9,20 @@ import Results from './components/Results'
 
 function PublicFlow() {
   const [step, setStep] = useState('landing')
+
+  // Dynamic Title Update
+  useEffect(() => {
+    const titles = {
+      landing: 'Hepibesday - Cari Hadiah Paling Ngam',
+      name: 'Siapa si dia? - Hepibesday',
+      gender: 'Lelaki atau Perempuan? - Hepibesday',
+      date: 'Tarikh Lahir - Hepibesday',
+      analyzing: 'Mencari Magik... - Hepibesday',
+      traits: 'Analisis Personaliti - Hepibesday',
+      results: 'Hadiah Terbaik! - Hepibesday'
+    }
+    document.title = titles[step] || 'Hepibesday'
+  }, [step])
   const [sessionData, setSessionData] = useState({
     targetName: null,
     gender: null,
