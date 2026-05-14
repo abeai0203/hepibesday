@@ -46,7 +46,7 @@ app.get('/', (c) => {
 app.post('/api/generate-traits', async (c) => {
   try {
     const body = await c.req.json()
-    const { birthDate, gender, targetName, turnstileToken } = body
+    const { birthDate, gender, targetName, turnstileToken, relationship = 'U', hobby = '' } = body
 
     if (!birthDate || !gender) {
       return c.json({ error: 'Missing birthDate or gender' }, 400)
@@ -71,7 +71,6 @@ app.post('/api/generate-traits', async (c) => {
     const zodiac = getZodiacSign(birthDate)
     const personName = targetName || 'kawan'
     
-    // In Phase 1, we use static traits. In V3, this would call Cloudflare Workers AI.
     const traitsMap: Record<string, string[]> = {
       'Aries': ['Penuh tenaga & suka cabaran baru', 'Pantang dicabar, selalu nak menang', 'Suka benda yang direct dan cepat jalan'],
       'Taurus': ['Suka keselesaan dan benda-benda premium', 'Kawan yang sangat setia', 'Citarasa tinggi bab makanan & barang'],
@@ -95,11 +94,11 @@ app.post('/api/generate-traits', async (c) => {
           messages: [
             { 
               role: 'system', 
-              content: `Anda ialah rakan karib di Malaysia. Gunakan bahasa Melayu pasar/santai Malaysia SAHAJA (contoh: memang sah, jenis yang, gila babeng, style, lepak). JANGAN guna bahasa Indonesia. Hasilkan 3 poin ringkas (max 10 patah perkataan setiap poin) menerangkan personaliti Zodiak. MESTI sebut nama "${personName}" dalam setiap poin. Return HANYA format JSON array string: ["poin 1", "poin 2", "poin 3"]. Dilarang letak teks lain.` 
+              content: `Anda ialah rakan karib di Malaysia. Gunakan bahasa Melayu pasar/santai Malaysia SAHAJA (contoh: memang sah, jenis yang, gila babeng, style, lepak). Hasilkan 3 poin ringkas (max 10 patah perkataan setiap poin) menerangkan personaliti Zodiak. MESTI sebut nama "${personName}" dalam setiap poin. Return HANYA format JSON array string: ["poin 1", "poin 2", "poin 3"]. Dilarang letak teks lain.` 
             },
             { 
               role: 'user', 
-              content: `Nama kawan saya: ${personName}. Zodiak: ${zodiac}. Jantina: ${gender === 'M' ? 'Lelaki' : 'Perempuan'}. Tulis 3 poin personaliti yang sangat santai dan kasual. Gantikan perkataan 'dia' atau 'kawan' dengan nama "${personName}". Contoh: "${personName} ni jenis yang..." atau "Memang sah ${personName} suka..."` 
+              content: `Nama: ${personName}. Zodiak: ${zodiac}. Jantina: ${gender === 'M' ? 'Lelaki' : 'Perempuan'}. Hubungan dengan saya: ${relationship}. Hobi: ${hobby}. Tulis 3 poin personaliti yang sangat santai. Gantikan perkataan 'dia' dengan nama "${personName}".` 
             }
           ]
         });
