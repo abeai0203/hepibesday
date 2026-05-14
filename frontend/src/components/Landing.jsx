@@ -3,26 +3,20 @@ import { motion, useScroll, useTransform, useMotionValueEvent } from 'framer-mot
 import { Sparkles, Wand2, Users, Heart, Star, Gift, ShoppingBag, ChevronRight } from 'lucide-react'
 
 export default function Landing({ onNext }) {
-  const [scrollPct, setScrollPct] = useState(0)
   const { scrollYProgress } = useScroll()
 
-  // Update debug state
-  useMotionValueEvent(scrollYProgress, "change", (latest) => {
-    setScrollPct(Math.round(latest * 100))
-  })
-
-  // Animation values - Made them very robust and early
-  const boxScale = useTransform(scrollYProgress, [0, 0.3], [1, 1.4])
-  const closedOpacity = useTransform(scrollYProgress, [0.1, 0.25], [1, 0])
-  const openOpacity = useTransform(scrollYProgress, [0.2, 0.4], [0, 1])
-  const qMarkY = useTransform(scrollYProgress, [0.3, 0.6], [50, -110])
-  const qMarkScale = useTransform(scrollYProgress, [0.3, 0.5], [0, 1.1])
-  const qMarkOpacity = useTransform(scrollYProgress, [0.3, 0.45], [0, 1])
+  // Animation values - Calibrated to reach final state at exactly 80% scroll
+  const boxScale = useTransform(scrollYProgress, [0, 0.8], [1, 1.35])
+  const closedOpacity = useTransform(scrollYProgress, [0.25, 0.45], [1, 0])
+  const openOpacity = useTransform(scrollYProgress, [0.4, 0.6], [0, 1])
+  const qMarkY = useTransform(scrollYProgress, [0.5, 0.8], [50, -100])
+  const qMarkScale = useTransform(scrollYProgress, [0.5, 0.75], [0, 1.1])
+  const qMarkOpacity = useTransform(scrollYProgress, [0.5, 0.7], [0, 1])
   
-  // Hero text fades out quickly
-  const contentOpacity = useTransform(scrollYProgress, [0, 0.15], [1, 0])
-  const footerY = useTransform(scrollYProgress, [0.4, 0.7], [100, 0])
-  const footerOpacity = useTransform(scrollYProgress, [0.4, 0.6], [0, 1])
+  // Hero text fades out as animation progresses
+  const contentOpacity = useTransform(scrollYProgress, [0, 0.25], [1, 0])
+  const footerY = useTransform(scrollYProgress, [0.65, 0.8], [80, 0])
+  const footerOpacity = useTransform(scrollYProgress, [0.65, 0.8], [0, 1])
 
   const steps = [
     { icon: <Users className="w-7 h-7 text-pink-500" />, title: 'Kenali dia', desc: 'dengan ringkas', color: 'bg-pink-50' },
@@ -33,11 +27,6 @@ export default function Landing({ onNext }) {
 
   return (
     <div className="relative w-full">
-      {/* DEBUG OVERLAY - Fixed to avoid runtime errors */}
-      <div className="fixed top-4 right-4 z-[100] bg-black/80 text-white px-3 py-1 rounded-full text-xs font-mono">
-        Scroll: {scrollPct}%
-      </div>
-
       {/* Tall container to provide scroll height */}
       <div className="h-[250vh]">
         {/* Sticky Container - This holds everything in place while scrolling */}
