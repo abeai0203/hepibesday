@@ -343,39 +343,20 @@ app.delete('/api/admin/products/:id', adminAuth, async (c) => {
 
 app.post('/api/admin/scrape-product', adminAuth, async (c) => {
   try {
-    const { url } = await c.req.json()
+    const { url, name: providedName } = await c.req.json()
     if (!url) return c.json({ error: 'URL diperlukan' }, 400)
 
-    let name = ''
+    let name = providedName || ''
     let description = ''
     let imageUrl = 'https://via.placeholder.com/500?text=Masukkan+Gambar+Produk'
-    let expandedUrl = url
 
-    // 1. If it's already a long URL, extract slug immediately
-    if (url.includes('shopee.com.my/') && (url.includes('-i.') || url.includes('/product/'))) {
-      const slugPart = url.split('/').pop()?.split('?')[0] || ''
-      name = slugPart.split('-i.')[0].replace(/-/g, ' ')
-    } else {
-      // 2. Try to expand short link via Google Proxy
-      try {
-        const proxyUrl = `https://translate.google.com/translate?sl=auto&tl=ms&u=${encodeURIComponent(url)}`
-        const res = await fetch(proxyUrl, { headers: { 'User-Agent': 'Mozilla/5.0' } })
-        const html = await res.text()
-        const titleMatch = html.match(/<title>(.*?)<\/title>/i)
-        if (titleMatch && titleMatch[1].includes('Shopee')) {
-          name = titleMatch[1].split('-')[0].split('|')[0].replace('Google Translate', '').trim()
-        }
-      } catch (e) {}
-    }
-
-    // 3. AI Polish - Be smarter but conservative
-    if (c.env.AI) {
-      const context = name || (url.includes('shopee') ? 'Produk Shopee' : '')
+    // AI Polish - If we have a name (from frontend or proxy)
+    if (c.env.AI && name) {
       try {
         const aiResponse = await c.env.AI.run('@cf/meta/llama-3-8b-instruct', {
           messages: [
-            { role: 'system', content: 'Anda ialah pakar e-commerce. Jika input "Produk Shopee", buat Nama: "Cadangan Hadiah". Jika ada nama spesifik, pendekkan (max 5 kata). Return JSON: {"name": "...", "description": "..."}' },
-            { role: 'user', content: `Konteks: ${context}` }
+            { role: 'system', content: 'Anda ialah pakar e-commerce. Bersihkan nama produk (max 5 kata) dan buat deskripsi hadiah menarik (BM santai). Return JSON: {"name": "...", "description": "..."}' },
+            { role: 'user', content: `Nama: ${name}` }
           ]
         })
         const aiText = (aiResponse as any).response;
@@ -389,9 +370,9 @@ app.post('/api/admin/scrape-product', adminAuth, async (c) => {
     }
 
     return c.json({
-      name: name || 'Produk Shopee',
+      name: name,
       image_url: imageUrl,
-      description: description || 'Hadiah menarik yang ditemui di Shopee!',
+      description: description || 'Hadiah menarik dari Shopee!',
       shopee_url: url
     })
   } catch (error: any) {
