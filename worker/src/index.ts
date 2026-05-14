@@ -349,37 +349,33 @@ app.post('/api/admin/scrape-product', adminAuth, async (c) => {
     let name = ''
     let description = ''
     let imageUrl = 'https://via.placeholder.com/500?text=Masukkan+Gambar+Produk'
-    
-    // 1. Use Google Translate as a Proxy to bypass Shopee blocks
-    try {
-      const proxyUrl = `https://translate.google.com/translate?sl=auto&tl=ms&u=${encodeURIComponent(url)}`
-      const res = await fetch(proxyUrl, {
-        headers: {
-          'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36'
+    let expandedUrl = url
+
+    // 1. If it's already a long URL, extract slug immediately
+    if (url.includes('shopee.com.my/') && (url.includes('-i.') || url.includes('/product/'))) {
+      const slugPart = url.split('/').pop()?.split('?')[0] || ''
+      name = slugPart.split('-i.')[0].replace(/-/g, ' ')
+    } else {
+      // 2. Try to expand short link via Google Proxy
+      try {
+        const proxyUrl = `https://translate.google.com/translate?sl=auto&tl=ms&u=${encodeURIComponent(url)}`
+        const res = await fetch(proxyUrl, { headers: { 'User-Agent': 'Mozilla/5.0' } })
+        const html = await res.text()
+        const titleMatch = html.match(/<title>(.*?)<\/title>/i)
+        if (titleMatch && titleMatch[1].includes('Shopee')) {
+          name = titleMatch[1].split('-')[0].split('|')[0].replace('Google Translate', '').trim()
         }
-      })
-      const html = await res.text()
-      
-      // Look for the product name in the translated page title or meta tags
-      const titleMatch = html.match(/<title>(.*?)<\/title>/i)
-      if (titleMatch && titleMatch[1].includes('Shopee')) {
-        name = titleMatch[1].split('-')[0].split('|')[0].replace('Google Translate', '').trim()
-      }
-      
-      // Try to find the original URL in the HTML to extract image if possible
-      const ogImage = html.match(/property="og:image"\s+content="(.*?)"/i)
-      if (ogImage) imageUrl = ogImage[1]
-    } catch (e) {
-      console.log("Proxy expansion failed");
+      } catch (e) {}
     }
 
-    // 2. AI Polish
-    if (c.env.AI && (name || url.includes('shopee'))) {
+    // 3. AI Polish - Be smarter but conservative
+    if (c.env.AI) {
+      const context = name || (url.includes('shopee') ? 'Produk Shopee' : '')
       try {
         const aiResponse = await c.env.AI.run('@cf/meta/llama-3-8b-instruct', {
           messages: [
-            { role: 'system', content: 'Anda ialah pakar e-commerce. Jika Nama kosong, JANGAN REKA. Jika ada Nama, pendekkan jadi kemas (max 5 kata) dan buat deskripsi hadiah (BM santai). Return JSON: {"name": "...", "description": "..."}' },
-            { role: 'user', content: `Nama Produk: ${name || "Sila teka dari URL ini: " + url}` }
+            { role: 'system', content: 'Anda ialah pakar e-commerce. Jika input "Produk Shopee", buat Nama: "Cadangan Hadiah". Jika ada nama spesifik, pendekkan (max 5 kata). Return JSON: {"name": "...", "description": "..."}' },
+            { role: 'user', content: `Konteks: ${context}` }
           ]
         })
         const aiText = (aiResponse as any).response;
@@ -393,9 +389,9 @@ app.post('/api/admin/scrape-product', adminAuth, async (c) => {
     }
 
     return c.json({
-      name: name || '',
+      name: name || 'Produk Shopee',
       image_url: imageUrl,
-      description: description || '',
+      description: description || 'Hadiah menarik yang ditemui di Shopee!',
       shopee_url: url
     })
   } catch (error: any) {
