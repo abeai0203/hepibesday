@@ -210,7 +210,8 @@ export default function ProductManager() {
                         btn.innerHTML = '<span class="animate-spin">🌀</span>';
 
                         try {
-                          const apiUrl = import.meta.env.VITE_API_URL || 'http://localhost:8787'
+                          const currentOrigin = window.location.origin;
+                          const apiUrl = import.meta.env.VITE_API_URL || (currentOrigin.includes('localhost') ? 'http://localhost:8787' : 'https://hepibesday-api.asyraq.workers.dev');
                           const res = await fetch(`${apiUrl}/api/admin/scrape-product`, {
                             method: 'POST',
                             headers: { 
