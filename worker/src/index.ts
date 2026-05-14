@@ -346,39 +346,53 @@ app.post('/api/admin/scrape-product', adminAuth, async (c) => {
     const { url } = await c.req.json()
     if (!url) return c.json({ error: 'URL diperlukan' }, 400)
 
-    // 1. Fetch the page to get metadata
-    const response = await fetch(url, {
-      headers: {
-        'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36',
-        'Accept-Language': 'ms-MY,ms;q=0.9,en-US;q=0.8,en;q=0.7'
-      },
-      redirect: 'follow'
-    })
+    let name = ''
+    let imageUrl = ''
+    let description = ''
+    let finalUrl = url
 
-    const html = await response.text()
-    
-    // Simple Regex-based Meta Tag Extraction (since we don't have a DOM parser in Worker)
-    const titleMatch = html.match(/<title>(.*?)<\/title>/i)
-    const ogImageMatch = html.match(/<meta\s+property=["']og:image["']\s+content=["'](.*?)["']/i) || html.match(/<meta\s+content=["'](.*?)["']\s+property=["']og:image["']/i)
-    const ogDescMatch = html.match(/<meta\s+property=["']og:description["']\s+content=["'](.*?)["']/i) || html.match(/<meta\s+content=["'](.*?)["']\s+property=["']og:description["']/i)
+    try {
+      // 1. Try to fetch the page with more realistic headers
+      const response = await fetch(url, {
+        headers: {
+          'User-Agent': 'Mozilla/5.0 (iPhone; CPU iPhone OS 17_0 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/17.0 Mobile/15E148 Safari/604.1',
+          'Accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8',
+          'Accept-Language': 'en-US,en;q=0.9',
+          'Cache-Control': 'no-cache'
+        },
+        redirect: 'follow'
+      })
 
-    let name = titleMatch ? titleMatch[1].split('|')[0].trim() : ''
-    let imageUrl = ogImageMatch ? ogImageMatch[1] : ''
-    let description = ogDescMatch ? ogDescMatch[1] : ''
+      finalUrl = response.url
+      const html = await response.text()
+      
+      // Extraction
+      const titleMatch = html.match(/<title>(.*?)<\/title>/i)
+      const ogImageMatch = html.match(/<meta\s+property=["']og:image["']\s+content=["'](.*?)["']/i) || html.match(/<meta\s+content=["'](.*?)["']\s+property=["']og:image["']/i)
+      const ogDescMatch = html.match(/<meta\s+property=["']og:description["']\s+content=["'](.*?)["']/i) || html.match(/<meta\s+content=["'](.*?)["']\s+property=["']og:description["']/i)
 
-    // 2. Use AI to clean up and beautify the info
-    if (c.env.AI && name) {
+      name = titleMatch ? titleMatch[1].split('|')[0].trim() : ''
+      imageUrl = ogImageMatch ? ogImageMatch[1] : ''
+      description = ogDescMatch ? ogDescMatch[1] : ''
+      
+      // If we got a "Blocked" page (Shopee often returns 403 or custom challenge)
+      if (html.toLowerCase().includes('robot') || html.toLowerCase().includes('challenge') || !name) {
+        throw new Error('Blocked by Shopee')
+      }
+    } catch (fetchErr) {
+      console.log("Fetch failed or blocked, falling back to URL inference");
+    }
+
+    // 2. Fallback: Use AI to infer info from the URL if name is still empty
+    if (c.env.AI && (!name || name.length < 5)) {
       try {
         const aiResponse = await c.env.AI.run('@cf/meta/llama-3-8b-instruct', {
           messages: [
             { 
               role: 'system', 
-              content: 'Anda ialah pakar e-commerce Malaysia. Tugas anda: 1. Pendekkan tajuk produk Shopee yang panjang jadi nama yang "catchy" (max 5 patah perkataan). 2. Buat deskripsi/alasan hadiah yang sangat menarik dalam Bahasa Melayu santai. Return HANYA JSON: {"name": "...", "description": "..."}' 
+              content: 'Anda ialah pakar e-commerce. Ekstrak nama produk daripada URL Shopee ini. Jika URL ada perkataan pelik, cuba teka produk apa. Berikan Nama (max 5 kata) dan Deskripsi menarik (BM santai). Return HANYA JSON: {"name": "...", "description": "..."}' 
             },
-            { 
-              role: 'user', 
-              content: `Tajuk asal: ${name}. Deskripsi asal: ${description}.` 
-            }
+            { role: 'user', content: `URL: ${finalUrl}` }
           ]
         })
         const aiText = (aiResponse as any).response;
@@ -388,16 +402,16 @@ app.post('/api/admin/scrape-product', adminAuth, async (c) => {
           name = parsed.name || name;
           description = parsed.description || description;
         }
-      } catch (err) {
-        console.error("AI Cleanup Error:", err);
+      } catch (aiErr) {
+        console.error("AI Inference Error:", aiErr);
       }
     }
 
     return c.json({
-      name,
-      image_url: imageUrl,
-      description: description,
-      shopee_url: response.url // Return the final followed URL
+      name: name || 'Produk Baru',
+      image_url: imageUrl || 'https://via.placeholder.com/500?text=Sila+Masukkan+Gambar',
+      description: description || 'Hadiah yang sangat menarik untuk yang tersayang!',
+      shopee_url: finalUrl
     })
   } catch (error: any) {
     return c.json({ error: 'Gagal menarik data', details: error.message }, 500)
