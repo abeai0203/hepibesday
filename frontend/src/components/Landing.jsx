@@ -15,7 +15,7 @@ export default function Landing({ onNext }) {
   const boxScale = useTransform(smoothProgress, [0, 0.5], [1, 1.3])
   const closedOpacity = useTransform(smoothProgress, [0.05, 0.25], [1, 0])
   const openOpacity = useTransform(smoothProgress, [0.2, 0.4], [0, 1])
-  const qMarkY = useTransform(smoothProgress, [0.3, 0.5], [60, -100])
+  const qMarkY = useTransform(smoothProgress, [0.3, 0.5], [110, -100])
   const qMarkScale = useTransform(smoothProgress, [0.3, 0.5], [0, 1.1])
   const qMarkOpacity = useTransform(smoothProgress, [0.3, 0.45], [0, 1])
   
