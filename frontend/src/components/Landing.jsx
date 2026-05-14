@@ -101,7 +101,7 @@ export default function Landing({ onNext }) {
                 className="absolute z-30 w-32 h-32"
               >
                 <img src="/q-mark.png" className="w-full h-full object-contain mix-blend-multiply brightness-[1.1] contrast-[1.1]" alt="?" />
-              </motion.div>v>
+              </motion.div>
 
               <motion.div style={{ opacity: closedOpacity }} className="absolute inset-0 z-20">
                 <img src="/box-closed.png" className="w-full h-full object-contain mix-blend-multiply brightness-[1.05]" alt="Closed Box" />
