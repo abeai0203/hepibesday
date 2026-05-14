@@ -346,43 +346,93 @@ app.post('/api/admin/scrape-product', adminAuth, async (c) => {
     const { url } = await c.req.json()
     if (!url) return c.json({ error: 'URL diperlukan' }, 400)
 
+    let currentUrl = url
     let name = ''
     let description = ''
     let imageUrl = 'https://via.placeholder.com/500?text=Masukkan+Gambar+Produk'
 
-    // Use AI to infer details from the URL string
-    // This is much more reliable as it doesn't get blocked by Shopee's anti-bot
-    if (c.env.AI) {
+    // 1. Aggressive Redirect Tracking (Manual)
+    for (let i = 0; i < 5; i++) {
+      try {
+        const res = await fetch(currentUrl, {
+          method: 'GET',
+          headers: { 
+            'User-Agent': 'Mozilla/5.0 (iPhone; CPU iPhone OS 17_0 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/17.0 Mobile/15E148 Safari/604.1',
+            'Accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8'
+          },
+          redirect: 'manual'
+        })
+        
+        const location = res.headers.get('location')
+        if (location) {
+          // If relative, prepend domain
+          currentUrl = location.startsWith('http') ? location : new URL(location, currentUrl).href
+          if (currentUrl.includes('shopee.com.my/product/') || currentUrl.includes('-i.')) break
+        } else {
+          break
+        }
+      } catch (e) {
+        break
+      }
+    }
+
+    // 2. Extract IDs and fetch from Shopee API
+    const productMatch = currentUrl.match(/product\/(\d+)\/(\d+)/) || currentUrl.match(/-i\.(\d+)\.(\d+)/)
+    if (productMatch) {
+      const shopId = productMatch[1]
+      const itemId = productMatch[2]
+      
+      try {
+        const apiRes = await fetch(`https://shopee.com.my/api/v4/item/get?itemid=${itemId}&shopid=${shopId}`, {
+          headers: {
+            'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36',
+            'Referer': 'https://shopee.com.my/'
+          }
+        })
+        const data: any = await apiRes.json()
+        if (data?.data) {
+          const item = data.data
+          name = item.name || ''
+          description = item.description || ''
+          if (item.image) {
+            imageUrl = `https://down-my.img.susercontent.com/file/${item.image}`
+          }
+        }
+      } catch (apiErr) {
+        console.error("API Fetch Error:", apiErr);
+      }
+    }
+
+    // 3. AI Cleanup (Only if we have a name, to avoid hallucinations)
+    if (c.env.AI && name) {
       try {
         const aiResponse = await c.env.AI.run('@cf/meta/llama-3-8b-instruct', {
           messages: [
             { 
               role: 'system', 
-              content: 'Anda ialah pakar e-commerce. Berdasarkan URL produk Shopee ini, teka Nama Produk (max 5 kata) dan buat Deskripsi menarik dalam Bahasa Melayu santai. Return HANYA JSON: {"name": "...", "description": "..."}' 
+              content: 'Anda ialah pakar e-commerce. Pendekkan nama produk ini supaya kemas (max 5 patah perkataan). Buat deskripsi menarik (BM santai). Return HANYA JSON: {"name": "...", "description": "..."}' 
             },
-            { role: 'user', content: `URL: ${url}` }
+            { role: 'user', content: `Nama: ${name}. Deskripsi: ${description}` }
           ]
         })
         const aiText = (aiResponse as any).response;
         const match = aiText.match(/\{.*?\}/s);
         if (match) {
           const parsed = JSON.parse(match[0]);
-          name = parsed.name || '';
-          description = parsed.description || '';
+          name = parsed.name || name;
+          description = parsed.description || description;
         }
-      } catch (aiErr) {
-        console.error("AI Inference Error:", aiErr);
-      }
+      } catch (err) {}
     }
 
     return c.json({
-      name: name || 'Produk Shopee Baru',
+      name: name || 'Produk Baru',
       image_url: imageUrl,
-      description: description || 'Hadiah menarik yang ditemui di Shopee!',
-      shopee_url: url
+      description: description || 'Hadiah yang sangat menarik dari Shopee!',
+      shopee_url: currentUrl
     })
   } catch (error: any) {
-    return c.json({ error: 'Gagal memproses pautan', details: error.message }, 500)
+    return c.json({ error: 'Gagal menarik data', details: error.message }, 500)
   }
 })
 
