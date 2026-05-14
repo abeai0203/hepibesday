@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react'
-import { Plus, Trash2, Loader2, X, ShoppingBag, Image as ImageIcon, Target, Tag, ExternalLink } from 'lucide-react'
+import { Plus, Trash2, Loader2, X, ShoppingBag, Image as ImageIcon, Target, Tag, ExternalLink, Wand2 } from 'lucide-react'
 import { motion, AnimatePresence } from 'framer-motion'
 
 export default function ProductManager() {
@@ -185,6 +185,67 @@ export default function ProductManager() {
               </div>
               
               <form onSubmit={handleSave} className="p-8 space-y-6 overflow-y-auto">
+                {/* Magic Autofill Section */}
+                <div className="bg-indigo-50 p-6 rounded-2xl border-2 border-indigo-100 space-y-3">
+                  <div className="flex items-center gap-2 text-indigo-950 font-black text-[10px] uppercase tracking-widest">
+                    <Wand2 className="w-4 h-4 text-pink-500" />
+                    Magic Autofill
+                  </div>
+                  <div className="flex gap-2">
+                    <input 
+                      type="text" 
+                      id="magic-url"
+                      placeholder="Tampal link Shopee di sini..." 
+                      className="flex-1 bg-white border-2 border-white rounded-xl px-4 py-3 text-sm font-bold text-indigo-950 shadow-sm focus:outline-none focus:border-indigo-300 transition-all"
+                    />
+                    <button
+                      type="button"
+                      onClick={async () => {
+                        const url = document.getElementById('magic-url').value;
+                        if (!url) return alert('Sila masukkan URL');
+                        
+                        const btn = document.activeElement;
+                        const originalText = btn.innerHTML;
+                        btn.disabled = true;
+                        btn.innerHTML = '<span class="animate-spin">🌀</span>';
+
+                        try {
+                          const apiUrl = import.meta.env.VITE_API_URL || 'http://localhost:8787'
+                          const res = await fetch(`${apiUrl}/api/admin/scrape-product`, {
+                            method: 'POST',
+                            headers: { 
+                              'Content-Type': 'application/json',
+                              'Authorization': `Bearer ${localStorage.getItem('adminToken')}`
+                            },
+                            body: JSON.stringify({ url })
+                          });
+                          const data = await res.json();
+                          if (res.ok) {
+                            setFormData(prev => ({
+                              ...prev,
+                              name: data.name || prev.name,
+                              image_url: data.image_url || prev.image_url,
+                              description: data.description || prev.description,
+                              shopee_url: data.shopee_url || url
+                            }));
+                          } else {
+                            alert(data.error || 'Gagal menarik data');
+                          }
+                        } catch (err) {
+                          alert('Ralat teknikal semasa menarik data');
+                        } finally {
+                          btn.disabled = false;
+                          btn.innerHTML = originalText;
+                        }
+                      }}
+                      className="px-6 py-3 bg-indigo-950 text-white rounded-xl font-black text-xs hover:bg-pink-500 transition-all shadow-lg flex items-center gap-2"
+                    >
+                      <span>🪄 Autofill</span>
+                    </button>
+                  </div>
+                  <p className="text-[9px] text-indigo-400 font-bold italic">Sistem akan automatik tarik Nama, Gambar & Deskripsi menggunakan AI.</p>
+                </div>
+
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                   <div className="space-y-2">
                     <label className="text-[10px] font-black uppercase tracking-widest text-slate-400 ml-1">Nama Produk</label>

@@ -319,4 +319,67 @@ app.delete('/api/admin/products/:id', adminAuth, async (c) => {
   }
 })
 
+app.post('/api/admin/scrape-product', adminAuth, async (c) => {
+  try {
+    const { url } = await c.req.json()
+    if (!url) return c.json({ error: 'URL diperlukan' }, 400)
+
+    // 1. Fetch the page to get metadata
+    const response = await fetch(url, {
+      headers: {
+        'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36',
+        'Accept-Language': 'ms-MY,ms;q=0.9,en-US;q=0.8,en;q=0.7'
+      },
+      redirect: 'follow'
+    })
+
+    const html = await response.text()
+    
+    // Simple Regex-based Meta Tag Extraction (since we don't have a DOM parser in Worker)
+    const titleMatch = html.match(/<title>(.*?)<\/title>/i)
+    const ogImageMatch = html.match(/<meta\s+property=["']og:image["']\s+content=["'](.*?)["']/i) || html.match(/<meta\s+content=["'](.*?)["']\s+property=["']og:image["']/i)
+    const ogDescMatch = html.match(/<meta\s+property=["']og:description["']\s+content=["'](.*?)["']/i) || html.match(/<meta\s+content=["'](.*?)["']\s+property=["']og:description["']/i)
+
+    let name = titleMatch ? titleMatch[1].split('|')[0].trim() : ''
+    let imageUrl = ogImageMatch ? ogImageMatch[1] : ''
+    let description = ogDescMatch ? ogDescMatch[1] : ''
+
+    // 2. Use AI to clean up and beautify the info
+    if (c.env.AI && name) {
+      try {
+        const aiResponse = await c.env.AI.run('@cf/meta/llama-3-8b-instruct', {
+          messages: [
+            { 
+              role: 'system', 
+              content: 'Anda ialah pakar e-commerce Malaysia. Tugas anda: 1. Pendekkan tajuk produk Shopee yang panjang jadi nama yang "catchy" (max 5 patah perkataan). 2. Buat deskripsi/alasan hadiah yang sangat menarik dalam Bahasa Melayu santai. Return HANYA JSON: {"name": "...", "description": "..."}' 
+            },
+            { 
+              role: 'user', 
+              content: `Tajuk asal: ${name}. Deskripsi asal: ${description}.` 
+            }
+          ]
+        })
+        const aiText = (aiResponse as any).response;
+        const match = aiText.match(/\{.*?\}/s);
+        if (match) {
+          const parsed = JSON.parse(match[0]);
+          name = parsed.name || name;
+          description = parsed.description || description;
+        }
+      } catch (err) {
+        console.error("AI Cleanup Error:", err);
+      }
+    }
+
+    return c.json({
+      name,
+      image_url: imageUrl,
+      description: description,
+      shopee_url: response.url // Return the final followed URL
+    })
+  } catch (error: any) {
+    return c.json({ error: 'Gagal menarik data', details: error.message }, 500)
+  }
+})
+
 export default app
