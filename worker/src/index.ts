@@ -346,73 +346,48 @@ app.post('/api/admin/scrape-product', adminAuth, async (c) => {
     const { url } = await c.req.json()
     if (!url) return c.json({ error: 'URL diperlukan' }, 400)
 
-    let currentUrl = url
     let name = ''
     let description = ''
     let imageUrl = 'https://via.placeholder.com/500?text=Masukkan+Gambar+Produk'
+    let expandedUrl = url
 
-    // 1. Aggressive Redirect Tracking (Manual)
-    for (let i = 0; i < 5; i++) {
-      try {
-        const res = await fetch(currentUrl, {
-          method: 'GET',
-          headers: { 
-            'User-Agent': 'Mozilla/5.0 (iPhone; CPU iPhone OS 17_0 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/17.0 Mobile/15E148 Safari/604.1',
-            'Accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8'
-          },
-          redirect: 'manual'
-        })
-        
-        const location = res.headers.get('location')
-        if (location) {
-          // If relative, prepend domain
-          currentUrl = location.startsWith('http') ? location : new URL(location, currentUrl).href
-          if (currentUrl.includes('shopee.com.my/product/') || currentUrl.includes('-i.')) break
-        } else {
-          break
-        }
-      } catch (e) {
-        break
-      }
-    }
-
-    // 2. Extract IDs and fetch from Shopee API
-    const productMatch = currentUrl.match(/product\/(\d+)\/(\d+)/) || currentUrl.match(/-i\.(\d+)\.(\d+)/)
-    if (productMatch) {
-      const shopId = productMatch[1]
-      const itemId = productMatch[2]
+    // 1. Try to expand URL and get metadata in one go
+    try {
+      const res = await fetch(url, {
+        headers: {
+          'User-Agent': 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36',
+          'Accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,image/apng,*/*;q=0.8',
+          'Accept-Language': 'en-US,en;q=0.9'
+        },
+        redirect: 'follow'
+      })
+      expandedUrl = res.url
+      const html = await res.text()
       
-      try {
-        const apiRes = await fetch(`https://shopee.com.my/api/v4/item/get?itemid=${itemId}&shopid=${shopId}`, {
-          headers: {
-            'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36',
-            'Referer': 'https://shopee.com.my/'
-          }
-        })
-        const data: any = await apiRes.json()
-        if (data?.data) {
-          const item = data.data
-          name = item.name || ''
-          description = item.description || ''
-          if (item.image) {
-            imageUrl = `https://down-my.img.susercontent.com/file/${item.image}`
-          }
-        }
-      } catch (apiErr) {
-        console.error("API Fetch Error:", apiErr);
-      }
+      // Look for OG Title or Meta Title
+      const ogTitle = html.match(/property="og:title"\s+content="(.*?)"/i) || html.match(/name="twitter:title"\s+content="(.*?)"/i)
+      const pageTitle = html.match(/<title>(.*?)<\/title>/i)
+      
+      name = (ogTitle ? ogTitle[1] : (pageTitle ? pageTitle[1] : '')).split('|')[0].split('-')[0].trim()
+      
+      // Look for OG Image
+      const ogImage = html.match(/property="og:image"\s+content="(.*?)"/i)
+      if (ogImage) imageUrl = ogImage[1]
+    } catch (e) {
+      console.log("Extraction failed, falling back to AI");
     }
 
-    // 3. AI Cleanup (Only if we have a name, to avoid hallucinations)
-    if (c.env.AI && name) {
+    // 2. Use AI to finalize or infer
+    if (c.env.AI) {
+      const prompt = name 
+        ? `Produk: "${name}". Bersihkan nama ini (max 5 kata) dan buat deskripsi hadiah menarik (BM santai).`
+        : `Berdasarkan pautan Shopee ini: ${expandedUrl}, teka produk apa ini dan beri nama serta deskripsi menarik (BM santai).`;
+
       try {
         const aiResponse = await c.env.AI.run('@cf/meta/llama-3-8b-instruct', {
           messages: [
-            { 
-              role: 'system', 
-              content: 'Anda ialah pakar e-commerce. Pendekkan nama produk ini supaya kemas (max 5 patah perkataan). Buat deskripsi menarik (BM santai). Return HANYA JSON: {"name": "...", "description": "..."}' 
-            },
-            { role: 'user', content: `Nama: ${name}. Deskripsi: ${description}` }
+            { role: 'system', content: 'Anda ialah pakar hadiah. Return HANYA JSON: {"name": "...", "description": "..."}' },
+            { role: 'user', content: prompt }
           ]
         })
         const aiText = (aiResponse as any).response;
@@ -426,10 +401,10 @@ app.post('/api/admin/scrape-product', adminAuth, async (c) => {
     }
 
     return c.json({
-      name: name || 'Produk Baru',
+      name: name || 'Cadangan Hadiah Shopee',
       image_url: imageUrl,
-      description: description || 'Hadiah yang sangat menarik dari Shopee!',
-      shopee_url: currentUrl
+      description: description || 'Hadiah menarik yang pasti disukai!',
+      shopee_url: expandedUrl
     })
   } catch (error: any) {
     return c.json({ error: 'Gagal menarik data', details: error.message }, 500)
