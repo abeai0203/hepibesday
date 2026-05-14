@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react'
-import { Plus, Edit2, Trash2, Loader2, X, ShoppingBag, ImageIcon, Target, Tag, ExternalLink } from 'lucide-react'
+import { Plus, Trash2, Loader2, X, ShoppingBag, Image as ImageIcon, Target, Tag, ExternalLink } from 'lucide-react'
 import { motion, AnimatePresence } from 'framer-motion'
 
 export default function ProductManager() {
@@ -118,11 +118,8 @@ export default function ProductManager() {
             </thead>
             <tbody className="divide-y divide-indigo-950/5">
               {products.map((p, idx) => (
-                <motion.tr 
-                  key={p.id}
-                  initial={{ opacity: 0, x: -10 }}
-                  animate={{ opacity: 1, x: 0 }}
-                  transition={{ delay: idx * 0.05 }}
+                <tr 
+                  key={p.id || idx}
                   className="hover:bg-pink-50/30 transition-colors group"
                 >
                   <td className="px-8 py-6">
@@ -159,15 +156,8 @@ export default function ProductManager() {
                       <Trash2 className="w-5 h-5" />
                     </button>
                   </td>
-                </motion.tr>
-              ))}
-              {products.length === 0 && (
-                <tr>
-                  <td colSpan="4" className="px-8 py-20 text-center text-slate-400 font-bold italic">
-                    Tiada produk ditemui. Mula menambah produk pertama anda!
-                  </td>
                 </tr>
-              )}
+              ))}
             </tbody>
           </table>
         </div>
@@ -253,7 +243,7 @@ export default function ProductManager() {
                 <div className="pt-6 flex gap-4 mt-4">
                   <button type="button" onClick={() => setIsModalOpen(false)} className="flex-1 py-4 text-slate-400 hover:text-indigo-950 font-black uppercase tracking-widest text-xs transition-colors">Batal</button>
                   <button type="submit" disabled={saving} className="flex-[2] py-5 bg-indigo-950 text-white rounded-[1.5rem] font-black text-lg shadow-2xl hover:bg-pink-500 transition-all disabled:opacity-50 flex items-center justify-center gap-3">
-                    {saving ? <Loader2 className="w-5 h-5 animate-spin" /> : <><span>Simpan Produk</span> <Sparkles className="w-5 h-5 text-pink-400" /></>}
+                    {saving ? <Loader2 className="w-5 h-5 animate-spin" /> : <><span>Simpan Produk</span> <Plus className="w-5 h-5" /></>}
                   </button>
                 </div>
               </form>
