@@ -1,11 +1,21 @@
 import { useEffect, useState } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
-import { ExternalLink, RefreshCw, Gift, Star, ShoppingBag, ArrowRight } from 'lucide-react'
+import { ExternalLink, RefreshCw, Gift, Star, ShoppingBag, Heart, Sparkles, Wand2 } from 'lucide-react'
 
 const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:8787'
 
+const waitingQuotes = [
+  "Kejap ya, tengah tanya kawan-kawan dia...",
+  "Tengah check Shopee jap, mana yang paling murah tapi style...",
+  "Uish, susah betul nak cari hadiah yang sesuai dengan aura dia ni!",
+  "Bintang-bintang tengah bermesyuarat kejap...",
+  "Tengah bungkus hadiah secara virtual... zap zap!",
+  "Tengah filter hadiah yang 'common', kita nak yang unik je!",
+  "Tunggu jap, tengah nak make sure hadiah ni dia tak beli sendiri lagi.",
+  "Dah nak siap! Sikit je lagi aura dia tengah loading..."
+]
+
 export default function Results({ sessionData, onRestart }) {
-  // Defensive check for sessionData
   if (!sessionData) {
     return (
       <div className="min-h-screen flex items-center justify-center p-6 text-center">
@@ -21,13 +31,22 @@ export default function Results({ sessionData, onRestart }) {
   const [products, setProducts] = useState([])
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState(null)
+  const [quoteIdx, setQuoteIdx] = useState(0)
+
+  // Cycle through quotes every 3 seconds
+  useEffect(() => {
+    if (!loading) return;
+    const interval = setInterval(() => {
+      setQuoteIdx(prev => (prev + 1) % waitingQuotes.length)
+    }, 3000)
+    return () => clearInterval(interval)
+  }, [loading])
 
   useEffect(() => {
     let isMounted = true
 
     const fetchRecommendations = async () => {
       try {
-        console.log('Fetching recommendations for:', { zodiac, gender, targetName });
         const response = await fetch(`${API_URL}/api/recommendations`, {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
@@ -35,19 +54,19 @@ export default function Results({ sessionData, onRestart }) {
         })
         
         if (!response.ok) {
-          const errText = await response.text();
           throw new Error(`Gagal memuatkan cadangan: ${response.status}`);
         }
         
         const data = await response.json()
-        console.log('Received recommendations:', data);
         
         if (isMounted) {
           setProducts(data.products || [])
-          setLoading(false)
+          // Artificial delay to show at least 2 quotes
+          setTimeout(() => {
+            if (isMounted) setLoading(false)
+          }, 4500)
         }
       } catch (err) {
-        console.error('Fetch error:', err);
         if (isMounted) {
           setError(err.message)
           setLoading(false)
@@ -71,16 +90,90 @@ export default function Results({ sessionData, onRestart }) {
 
   if (loading) {
     return (
-      <div className="min-h-screen w-full bg-[#FDFCF0] flex flex-col items-center justify-center p-6 text-center">
-        <motion.div 
-          animate={{ scale: [1, 1.1, 1], rotate: 360 }}
-          transition={{ duration: 3, repeat: Infinity }}
-          className="w-20 h-20 bg-white rounded-3xl shadow-2xl flex items-center justify-center mb-6 border border-pink-50"
-        >
-          <Gift className="w-10 h-10 text-pink-500" />
-        </motion.div>
-        <h2 className="text-2xl font-black text-indigo-950">Menyusun hadiah terbaik...</h2>
-        <p className="text-slate-400 text-sm mt-2 font-bold uppercase tracking-widest">Keajaiban sedang diproses</p>
+      <div className="min-h-screen w-full bg-[#FDFCF0] relative overflow-hidden flex flex-col items-center justify-center p-6 text-center">
+        {/* Background micro-animations */}
+        <div className="absolute inset-0 pointer-events-none">
+          {[...Array(12)].map((_, i) => (
+            <motion.div
+              key={i}
+              initial={{ 
+                x: Math.random() * window.innerWidth, 
+                y: window.innerHeight + 100,
+                opacity: 0
+              }}
+              animate={{ 
+                y: -100,
+                opacity: [0, 1, 0],
+                x: (Math.random() * 100 - 50) + (Math.random() * window.innerWidth)
+              }}
+              transition={{ 
+                duration: 5 + Math.random() * 5, 
+                repeat: Infinity,
+                delay: i * 0.8
+              }}
+              className="absolute text-pink-200"
+            >
+              {i % 3 === 0 ? <Heart size={24} fill="currentColor" /> : i % 3 === 1 ? <Sparkles size={20} /> : <Gift size={18} />}
+            </motion.div>
+          ))}
+        </div>
+
+        <div className="relative z-10 max-w-sm w-full">
+          {/* Main Animated Icon */}
+          <div className="relative w-40 h-40 mx-auto mb-12">
+            <motion.div 
+              animate={{ 
+                rotate: 360,
+                scale: [1, 1.1, 1]
+              }}
+              transition={{ 
+                rotate: { duration: 10, repeat: Infinity, ease: "linear" },
+                scale: { duration: 2, repeat: Infinity }
+              }}
+              className="absolute inset-0 bg-white rounded-[2.5rem] shadow-2xl flex items-center justify-center border-4 border-pink-50"
+            >
+              <Gift className="w-16 h-16 text-pink-500" />
+            </motion.div>
+            
+            {/* Spinning ring */}
+            <motion.div 
+              animate={{ rotate: -360 }}
+              transition={{ duration: 4, repeat: Infinity, ease: "linear" }}
+              className="absolute -inset-4 border-4 border-dashed border-pink-200 rounded-full opacity-50"
+            />
+          </div>
+
+          <div className="space-y-6">
+            <h2 className="text-2xl font-black text-indigo-950">
+              Menyusun hadiah terbaik...
+            </h2>
+            
+            {/* Quote container with smooth transition */}
+            <div className="h-20 flex items-center justify-center">
+              <AnimatePresence mode="wait">
+                <motion.p
+                  key={quoteIdx}
+                  initial={{ opacity: 0, y: 10, filter: 'blur(5px)' }}
+                  animate={{ opacity: 1, y: 0, filter: 'blur(0px)' }}
+                  exit={{ opacity: 0, y: -10, filter: 'blur(5px)' }}
+                  className="text-pink-500 font-bold text-lg leading-relaxed italic"
+                >
+                  "{waitingQuotes[quoteIdx]}"
+                </motion.p>
+              </AnimatePresence>
+            </div>
+
+            {/* Dynamic Progress Bar */}
+            <div className="w-full h-3 bg-white rounded-full overflow-hidden shadow-inner border border-white">
+              <motion.div 
+                initial={{ width: "0%" }}
+                animate={{ width: "100%" }}
+                transition={{ duration: 10, ease: "easeInOut" }}
+                className="h-full bg-gradient-to-r from-pink-400 via-rose-500 to-orange-500"
+              />
+            </div>
+          </div>
+        </div>
       </div>
     )
   }
