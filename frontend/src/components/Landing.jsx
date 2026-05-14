@@ -15,8 +15,6 @@ export default function Landing({ onNext }) {
   const boxScale = useTransform(smoothProgress, [0, 0.5], [1, 1.3])
   const closedOpacity = useTransform(smoothProgress, [0.05, 0.25], [1, 0])
   const openOpacity = useTransform(smoothProgress, [0.2, 0.4], [0, 1])
-  
-  // Adjusted qMarkY to sit deeper in the box at start
   const qMarkY = useTransform(smoothProgress, [0.3, 0.5], [60, -100])
   const qMarkScale = useTransform(smoothProgress, [0.3, 0.5], [0, 1.1])
   const qMarkOpacity = useTransform(smoothProgress, [0.3, 0.45], [0, 1])
@@ -39,15 +37,12 @@ export default function Landing({ onNext }) {
       <div className="h-[200vh] w-full relative">
         <div className="sticky top-0 h-screen w-full flex flex-col items-center justify-between overflow-hidden">
           
-          {/* Background Blobs */}
           <div className="absolute inset-0 -z-10 bg-gradient-to-b from-[#FDFCF0] to-white">
             <div className="absolute top-1/4 -left-20 w-[500px] h-[500px] bg-pink-100/30 blur-[120px] rounded-full" />
             <div className="absolute bottom-1/4 -right-20 w-[600px] h-[600px] bg-purple-100/30 blur-[120px] rounded-full" />
           </div>
 
-          {/* Header & Hero Area */}
           <div className="w-full flex flex-col items-center text-center pt-8 px-6 z-40 pointer-events-none">
-            {/* Logo Image - Scaled down */}
             <div className="w-28 md:w-32 mb-4 overflow-hidden flex items-center justify-center">
               <img 
                 src="/logo.png" 
@@ -60,9 +55,7 @@ export default function Landing({ onNext }) {
               />
             </div>
 
-            {/* Container for dual captions */}
             <div className="relative w-full h-32 md:h-40 flex items-center justify-center mt-2">
-              {/* Initial Caption */}
               <motion.div style={{ opacity: title1Opacity }} className="absolute inset-0 flex flex-col items-center">
                 <div className="inline-flex items-center gap-2 px-5 py-2 rounded-full bg-white shadow-md border border-pink-50 mb-4">
                   <Star className="w-4 h-4 text-orange-400 fill-orange-400" />
@@ -76,7 +69,6 @@ export default function Landing({ onNext }) {
                 </motion.div>
               </motion.div>
 
-              {/* Final Caption */}
               <motion.div style={{ opacity: title2Opacity }} className="absolute inset-0 flex flex-col items-center">
                 <div className="inline-flex items-center gap-2 px-5 py-2 rounded-full bg-white shadow-md border border-pink-50 mb-4">
                   <Wand2 className="w-4 h-4 text-pink-500" />
@@ -89,7 +81,6 @@ export default function Landing({ onNext }) {
             </div>
           </div>
 
-          {/* Animation Area (Center) */}
           <div className="absolute inset-0 flex items-center justify-center pointer-events-none z-10">
             <motion.div style={{ scale: boxScale }} className="relative w-72 h-72 md:w-80 md:h-80 flex items-center justify-center">
               <div className="absolute inset-0 bg-pink-400/10 blur-[100px] rounded-full" />
@@ -117,7 +108,6 @@ export default function Landing({ onNext }) {
             </motion.div>
           </div>
 
-          {/* Footer Area (Bottom) */}
           <motion.div 
             style={{ y: footerY, opacity: footerOpacity }}
             className="w-full max-w-xl px-6 pb-10 flex flex-col items-center z-50"
@@ -139,7 +129,7 @@ export default function Landing({ onNext }) {
               whileHover={{ scale: 1.05 }}
               whileTap={{ scale: 0.95 }}
               onClick={onNext}
-              className="w-full max-w-sm py-5 bg-gradient-to-r from-pink-400 via-rose-500 to-orange-500 rounded-3xl text-white font-black text-xl shadow-2xl flex items-center justify-center gap-4 pointer-events-auto"
+              className="w-full max-sm py-5 bg-gradient-to-r from-pink-400 via-rose-500 to-orange-500 rounded-3xl text-white font-black text-xl shadow-2xl flex items-center justify-center gap-4 pointer-events-auto"
             >
               <Wand2 className="w-6 h-6" />
               Mula Sekarang
