@@ -1,9 +1,14 @@
 import { useState, useEffect } from 'react'
-import { Users, MousePointerClick, TrendingUp, Loader2, Sparkles, Activity, Target } from 'lucide-react'
+import { Users, MousePointerClick, TrendingUp, Loader2, Sparkles, Activity, Target, PieChart, BarChart3 } from 'lucide-react'
 import { motion } from 'framer-motion'
 
 export default function Dashboard() {
-  const [stats, setStats] = useState({ sessions: 0, clicks: 0 })
+  const [stats, setStats] = useState({ 
+    sessions: 0, 
+    clicks: 0, 
+    topZodiacs: [], 
+    topProducts: [] 
+  })
   const [loading, setLoading] = useState(true)
 
   useEffect(() => {
@@ -101,6 +106,69 @@ export default function Dashboard() {
         ))}
       </div>
 
+      {/* Analytics Grid */}
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
+        {/* Top Zodiacs */}
+        <div className="bg-white border-2 border-slate-50 rounded-[3rem] p-10 shadow-2xl space-y-8">
+          <div className="flex items-center justify-between">
+            <div className="flex items-center space-x-3">
+              <div className="w-10 h-10 bg-purple-50 rounded-xl flex items-center justify-center">
+                <PieChart className="w-5 h-5 text-purple-500" />
+              </div>
+              <h4 className="text-xl font-black text-indigo-950">Zodiak Paling Ramai</h4>
+            </div>
+          </div>
+          
+          <div className="space-y-4">
+            {stats.topZodiacs.length > 0 ? stats.topZodiacs.map((z, i) => (
+              <div key={i} className="space-y-2">
+                <div className="flex justify-between text-xs font-black uppercase tracking-wider text-slate-500">
+                  <span>{z.zodiac_sign}</span>
+                  <span>{z.count} Sesi</span>
+                </div>
+                <div className="w-full h-3 bg-slate-100 rounded-full overflow-hidden">
+                  <motion.div 
+                    initial={{ width: 0 }}
+                    animate={{ width: `${(z.count / stats.sessions) * 100}%` }}
+                    className={`h-full bg-gradient-to-r ${i === 0 ? 'from-purple-500 to-indigo-500' : 'from-slate-400 to-slate-300'}`}
+                  />
+                </div>
+              </div>
+            )) : (
+              <p className="text-center py-10 text-slate-400 italic font-bold">Menunggu data sesi...</p>
+            )}
+          </div>
+        </div>
+
+        {/* Top Products */}
+        <div className="bg-white border-2 border-slate-50 rounded-[3rem] p-10 shadow-2xl space-y-8">
+          <div className="flex items-center justify-between">
+            <div className="flex items-center space-x-3">
+              <div className="w-10 h-10 bg-orange-50 rounded-xl flex items-center justify-center">
+                <BarChart3 className="w-5 h-5 text-orange-500" />
+              </div>
+              <h4 className="text-xl font-black text-indigo-950">Produk Paling Laris (Klik)</h4>
+            </div>
+          </div>
+          
+          <div className="space-y-4">
+            {stats.topProducts.length > 0 ? stats.topProducts.map((p, i) => (
+              <div key={i} className="flex items-center space-x-4 p-4 bg-slate-50 rounded-2xl group hover:bg-orange-50 transition-colors">
+                <div className="w-8 h-8 bg-white rounded-lg flex items-center justify-center font-black text-indigo-950 shadow-sm">
+                  {i + 1}
+                </div>
+                <div className="flex-1 min-w-0">
+                  <p className="font-bold text-indigo-950 truncate text-sm">{p.name}</p>
+                  <p className="text-[10px] font-black text-orange-400 uppercase">{p.count} Klik</p>
+                </div>
+              </div>
+            )) : (
+              <p className="text-center py-10 text-slate-400 italic font-bold">Menunggu data klik...</p>
+            )}
+          </div>
+        </div>
+      </div>
+
       {/* Secondary Stats/Insights Section */}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
         <div className="bg-indigo-950 text-white rounded-[3rem] p-10 shadow-2xl relative overflow-hidden">
@@ -131,7 +199,7 @@ export default function Dashboard() {
               </div>
 
               <p className="text-indigo-200/70 text-sm leading-relaxed font-medium italic">
-                "Tip: Pastikan hadiah yang paling popular sentiasa aktif dalam sistem untuk memaksimumkan klik affiliate."
+                "Tip: Fokus tambah produk untuk zodiak {stats.topZodiacs[0]?.zodiac_sign || 'popular'} kerana mereka pelawat paling aktif."
               </p>
             </div>
           </div>
@@ -143,7 +211,7 @@ export default function Dashboard() {
           </div>
           <h4 className="text-2xl font-black text-indigo-950">Terus Berikan Magik!</h4>
           <p className="text-slate-500 font-bold text-sm max-w-xs mx-auto">
-            Gunakan data di sebelah untuk merancang kempen atau menambah hadiah yang lebih viral.
+            Gunakan data di atas untuk merancang kempen atau menambah hadiah yang lebih viral.
           </p>
           <button 
             onClick={() => window.location.href = '/admin/products'}

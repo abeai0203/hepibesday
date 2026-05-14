@@ -262,9 +262,31 @@ app.get('/api/admin/stats', adminAuth, async (c) => {
   try {
     const sessionCount = await c.env.DB.prepare('SELECT COUNT(*) as count FROM sessions').first('count')
     const clickCount = await c.env.DB.prepare('SELECT COUNT(*) as count FROM affiliate_clicks').first('count')
+    
+    // Top Zodiacs
+    const { results: topZodiacs } = await c.env.DB.prepare(`
+      SELECT zodiac_sign, COUNT(*) as count 
+      FROM sessions 
+      GROUP BY zodiac_sign 
+      ORDER BY count DESC 
+      LIMIT 3
+    `).all()
+
+    // Top Products
+    const { results: topProducts } = await c.env.DB.prepare(`
+      SELECT p.name, COUNT(*) as count 
+      FROM affiliate_clicks ac
+      JOIN products p ON ac.product_id = p.id
+      GROUP BY p.id
+      ORDER BY count DESC 
+      LIMIT 3
+    `).all()
+
     return c.json({ 
       sessions: sessionCount || 0, 
-      clicks: clickCount || 0 
+      clicks: clickCount || 0,
+      topZodiacs: topZodiacs || [],
+      topProducts: topProducts || []
     })
   } catch (error) {
     return c.json({ error: 'Database error' }, 500)
