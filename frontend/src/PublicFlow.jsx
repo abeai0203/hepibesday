@@ -24,7 +24,7 @@ function PublicFlow() {
   }
 
   return (
-    <div className="min-h-screen flex flex-col p-4">
+    <div className={step === 'landing' ? 'w-full' : 'min-h-screen flex flex-col p-4'}>
       <main className="w-full mx-auto">
         {step === 'landing' && <Landing onNext={() => handleNext('name')} />}
         {step === 'name' && <NameSelection onNext={(targetName) => handleNext('gender', { targetName })} onBack={() => setStep('landing')} />}
