@@ -40,10 +40,10 @@ export default function Landing({ onNext }) {
           <div className="cloud-blob w-[800px] h-[800px] -right-64 bottom-0 opacity-80" />
         </div>
 
-        {/* Header */}
+        {/* Header Area */}
         <motion.div 
           style={{ opacity: contentOpacity }}
-          className="w-full max-w-4xl flex justify-between items-center mt-6 px-6 relative z-20"
+          className="w-full max-w-4xl flex justify-between items-center mt-4 px-6 relative z-30"
         >
           <div className="flex flex-col">
             <span className="text-3xl font-black text-indigo-950 leading-none tracking-tight">Hepi</span>
@@ -51,33 +51,26 @@ export default function Landing({ onNext }) {
           </div>
           
           <div className="bg-white/80 backdrop-blur-md px-4 py-2 rounded-full flex items-center gap-3 shadow-sm border border-white/50">
-            <span className="text-[10px] font-extrabold text-indigo-900 leading-none">10K+ dah jumpa hadiah best!</span>
-            <div className="w-7 h-7 bg-pink-100 rounded-full flex items-center justify-center">
-              <Heart className="w-3.5 h-3.5 text-pink-500 fill-pink-500" />
-            </div>
+            <span className="text-[10px] font-extrabold text-indigo-900 leading-none">10K+ dah jumpa hadiah!</span>
           </div>
         </motion.div>
 
         {/* Hero Section */}
         <motion.div 
           style={{ opacity: contentOpacity }}
-          className="flex flex-col items-center text-center mt-10 px-4 relative z-10"
+          className="flex flex-col items-center text-center mt-8 px-4 relative z-20"
         >
           <div className="inline-flex items-center gap-2 px-5 py-2 rounded-full bg-white shadow-md border border-pink-50 mb-6">
             <Star className="w-4 h-4 text-orange-400 fill-orange-400" />
             <span className="text-xs font-black text-pink-500 uppercase tracking-wide">Daripada Bintang, Untuk Dia</span>
           </div>
-
-          <h1 className="text-5xl md:text-7xl font-black text-indigo-950 leading-[0.95] tracking-tight mb-4">
+          <h1 className="text-5xl md:text-7xl font-black text-indigo-950 leading-[0.95] tracking-tight">
             Hadiah yang<br/>dia akan <span className="text-pink-500">ingat</span>
           </h1>
-          <p className="text-slate-500 text-lg font-bold">
-            Scroll sekejap... ✨
-          </p>
         </motion.div>
 
-        {/* Center Animation Area */}
-        <div className="flex-1 w-full flex items-center justify-center relative -mt-16">
+        {/* Center Animation Area - ABSOLUTE to prevent pushing footer */}
+        <div className="absolute inset-0 flex items-center justify-center pointer-events-none z-10">
           <motion.div
             style={{ scale: boxScale }}
             className="relative w-80 h-80 flex items-center justify-center"
@@ -111,7 +104,7 @@ export default function Landing({ onNext }) {
               <img src="/box-closed.png" className="w-full h-full object-contain mix-blend-multiply brightness-[1.08]" alt="Closed Box" />
             </motion.div>
 
-            {/* Open Box - Lid is behind in this image */}
+            {/* Open Box */}
             <motion.div
               style={{ 
                 opacity: openOpacity,
@@ -143,13 +136,13 @@ export default function Landing({ onNext }) {
           </motion.div>
         </div>
 
-        {/* Footer Area */}
+        {/* Footer Area - ALWAYS VISIBLE AT BOTTOM AT END */}
         <motion.div 
           style={{ y: footerY, opacity: footerOpacity }}
-          className="w-full max-w-2xl px-6 pb-10 flex flex-col items-center relative z-40"
+          className="absolute bottom-10 left-0 right-0 px-6 flex flex-col items-center z-40 pointer-events-auto"
         >
           {/* Steps Card */}
-          <div className="w-full glass-card p-6 mb-6">
+          <div className="w-full max-w-2xl glass-card p-5 mb-6">
             <div className="grid grid-cols-4 gap-2">
               {steps.map((step, idx) => (
                 <div key={idx} className="flex flex-col items-center text-center space-y-1">
@@ -166,7 +159,7 @@ export default function Landing({ onNext }) {
             whileHover={{ scale: 1.05 }}
             whileTap={{ scale: 0.95 }}
             onClick={onNext}
-            className="w-full py-5 bg-gradient-to-r from-pink-400 via-rose-500 to-orange-500 rounded-3xl text-white font-black text-xl shadow-xl flex items-center justify-center gap-4"
+            className="w-full max-w-sm py-5 bg-gradient-to-r from-pink-400 via-rose-500 to-orange-500 rounded-3xl text-white font-black text-xl shadow-xl flex items-center justify-center gap-4"
           >
             <Wand2 className="w-6 h-6" />
             Mula Sekarang
