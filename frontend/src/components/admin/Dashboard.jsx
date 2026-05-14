@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react'
-import { Users, MousePointerClick, TrendingUp, Loader2, Sparkles, Activity, Target, PieChart, BarChart3 } from 'lucide-react'
+import { Users, MousePointerClick, TrendingUp, Loader2, Sparkles, Activity, Target, PieChart, BarChart } from 'lucide-react'
 import { motion } from 'framer-motion'
 
 export default function Dashboard() {
@@ -129,7 +129,7 @@ export default function Dashboard() {
                 <div className="w-full h-3 bg-slate-100 rounded-full overflow-hidden">
                   <motion.div 
                     initial={{ width: 0 }}
-                    animate={{ width: `${(z.count / stats.sessions) * 100}%` }}
+                    animate={{ width: `${stats.sessions > 0 ? (z.count / stats.sessions) * 100 : 0}%` }}
                     className={`h-full bg-gradient-to-r ${i === 0 ? 'from-purple-500 to-indigo-500' : 'from-slate-400 to-slate-300'}`}
                   />
                 </div>
@@ -145,7 +145,7 @@ export default function Dashboard() {
           <div className="flex items-center justify-between">
             <div className="flex items-center space-x-3">
               <div className="w-10 h-10 bg-orange-50 rounded-xl flex items-center justify-center">
-                <BarChart3 className="w-5 h-5 text-orange-500" />
+                <BarChart className="w-5 h-5 text-orange-500" />
               </div>
               <h4 className="text-xl font-black text-indigo-950">Produk Paling Laris (Klik)</h4>
             </div>
