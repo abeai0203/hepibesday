@@ -1,6 +1,6 @@
 import { useState, useEffect, useRef } from 'react'
 import { motion, useScroll, useSpring, useTransform } from 'framer-motion'
-import { Wand2, Users, Star, Gift, ShoppingBag, ChevronRight } from 'lucide-react'
+import { Wand2, Users, Star, Gift, ShoppingBag, ChevronRight, Sparkles } from 'lucide-react'
 
 export default function Landing({ onNext }) {
   const containerRef = useRef(null)
