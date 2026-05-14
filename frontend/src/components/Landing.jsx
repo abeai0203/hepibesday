@@ -9,18 +9,18 @@ export default function Landing({ onNext }) {
     offset: ["start start", "end end"]
   })
 
-  // Animation values based on scroll
-  const boxScale = useTransform(scrollYProgress, [0, 0.5], [1, 1.6])
-  const closedOpacity = useTransform(scrollYProgress, [0.3, 0.5], [1, 0])
-  const openOpacity = useTransform(scrollYProgress, [0.4, 0.6], [0, 1])
-  const qMarkY = useTransform(scrollYProgress, [0.5, 0.9], [50, -120])
-  const qMarkScale = useTransform(scrollYProgress, [0.5, 0.8], [0, 1.2])
-  const qMarkOpacity = useTransform(scrollYProgress, [0.5, 0.7], [0, 1])
+  // Animation values based on scroll - adjusted for faster completion
+  const boxScale = useTransform(scrollYProgress, [0, 0.4], [1, 1.5])
+  const closedOpacity = useTransform(scrollYProgress, [0.2, 0.4], [1, 0])
+  const openOpacity = useTransform(scrollYProgress, [0.3, 0.5], [0, 1])
+  const qMarkY = useTransform(scrollYProgress, [0.4, 0.8], [50, -110])
+  const qMarkScale = useTransform(scrollYProgress, [0.4, 0.7], [0, 1.1])
+  const qMarkOpacity = useTransform(scrollYProgress, [0.4, 0.6], [0, 1])
   
-  // Hero text and elements fade out as we zoom in
-  const contentOpacity = useTransform(scrollYProgress, [0, 0.2], [1, 0])
-  const footerY = useTransform(scrollYProgress, [0.7, 1], [100, 0])
-  const footerOpacity = useTransform(scrollYProgress, [0.7, 0.9], [0, 1])
+  // Hero text fades out quickly
+  const contentOpacity = useTransform(scrollYProgress, [0, 0.15], [1, 0])
+  const footerY = useTransform(scrollYProgress, [0.5, 0.8], [80, 0])
+  const footerOpacity = useTransform(scrollYProgress, [0.5, 0.7], [0, 1])
 
   const steps = [
     { icon: <Users className="w-7 h-7 text-pink-500" />, title: 'Kenali dia', desc: 'dengan ringkas', color: 'bg-pink-50' },
@@ -30,8 +30,8 @@ export default function Landing({ onNext }) {
   ]
 
   return (
-    <div ref={containerRef} className="relative h-[250vh] w-full">
-      {/* Sticky Container for the animation */}
+    <div ref={containerRef} className="relative h-[180vh] w-full">
+      {/* Sticky Container */}
       <div className="sticky top-0 h-screen w-full flex flex-col items-center overflow-hidden">
         
         {/* Background Cloud Blobs */}
@@ -40,7 +40,7 @@ export default function Landing({ onNext }) {
           <div className="cloud-blob w-[800px] h-[800px] -right-64 bottom-0 opacity-80" />
         </div>
 
-        {/* Header - Fades out on scroll */}
+        {/* Header */}
         <motion.div 
           style={{ opacity: contentOpacity }}
           className="w-full max-w-4xl flex justify-between items-center mt-6 px-6 relative z-20"
@@ -58,7 +58,7 @@ export default function Landing({ onNext }) {
           </div>
         </motion.div>
 
-        {/* Hero Section - Fades out on scroll */}
+        {/* Hero Section */}
         <motion.div 
           style={{ opacity: contentOpacity }}
           className="flex flex-col items-center text-center mt-10 px-4 relative z-10"
@@ -72,12 +72,12 @@ export default function Landing({ onNext }) {
             Hadiah yang<br/>dia akan <span className="text-pink-500">ingat</span>
           </h1>
           <p className="text-slate-500 text-lg font-bold">
-            Scroll untuk tengok kejutan... ✨
+            Scroll ke bawah... ✨
           </p>
         </motion.div>
 
         {/* Center Animation Area */}
-        <div className="flex-1 w-full flex items-center justify-center relative">
+        <div className="flex-1 w-full flex items-center justify-center relative -mt-20">
           <motion.div
             style={{ scale: boxScale }}
             className="relative w-80 h-80 flex items-center justify-center"
@@ -85,7 +85,7 @@ export default function Landing({ onNext }) {
             {/* Glow effect */}
             <div className="absolute inset-0 bg-pink-400/20 blur-[100px] rounded-full scale-110 z-0" />
 
-            {/* Question Mark - Pops out */}
+            {/* Question Mark */}
             <motion.div
               style={{ 
                 y: qMarkY, 
@@ -96,7 +96,7 @@ export default function Landing({ onNext }) {
               }}
               className="absolute z-30 w-40 h-40"
             >
-              <img src="/q-mark.png" className="w-full h-full object-contain mix-blend-multiply brightness-[1.1]" alt="?" />
+              <img src="/q-mark.png" className="w-full h-full object-contain mix-blend-multiply brightness-[1.15] contrast-[1.1]" alt="?" />
             </motion.div>
 
             {/* Closed Box */}
@@ -108,7 +108,7 @@ export default function Landing({ onNext }) {
               }}
               className="absolute inset-0 z-20 flex items-center justify-center"
             >
-              <img src="/box-closed.png" className="w-full h-full object-contain mix-blend-multiply brightness-[1.05]" alt="Closed Box" />
+              <img src="/box-closed.png" className="w-full h-full object-contain mix-blend-multiply brightness-[1.08]" alt="Closed Box" />
             </motion.div>
 
             {/* Open Box */}
@@ -120,39 +120,43 @@ export default function Landing({ onNext }) {
               }}
               className="absolute inset-0 z-10 flex items-center justify-center"
             >
-              <img src="/box-open.png" className="w-full h-full object-contain mix-blend-multiply brightness-[1.05]" alt="Open Box" />
+              <img src="/box-open.png" className="w-full h-full object-contain mix-blend-multiply brightness-[1.08]" alt="Open Box" />
             </motion.div>
           </motion.div>
 
-          {/* Floating heart and bag - only visible initially */}
+          {/* Floating assets */}
           <motion.div 
             style={{ opacity: contentOpacity }}
             className="absolute left-10 top-1/2 -translate-y-1/2 w-24 h-24"
           >
-            <img src="/heart.png" className="w-full h-full object-contain mix-blend-multiply opacity-60 animate-float-slow" alt="Heart" />
+            <div className="w-full h-full relative" style={{ maskImage: 'radial-gradient(circle, black 40%, transparent 90%)' }}>
+              <img src="/heart.png" className="w-full h-full object-contain mix-blend-multiply brightness-[1.08] contrast-[1.1] animate-float-slow" alt="Heart" />
+            </div>
           </motion.div>
           <motion.div 
             style={{ opacity: contentOpacity }}
             className="absolute right-10 top-1/2 -translate-y-1/2 w-24 h-24"
           >
-            <img src="/bag.png" className="w-full h-full object-contain mix-blend-multiply opacity-60 animate-float-slow" alt="Bag" />
+            <div className="w-full h-full relative" style={{ maskImage: 'radial-gradient(circle, black 40%, transparent 90%)' }}>
+              <img src="/bag.png" className="w-full h-full object-contain mix-blend-multiply brightness-[1.08] contrast-[1.1] animate-float-slow" alt="Bag" />
+            </div>
           </motion.div>
         </div>
 
-        {/* Footer Area - Appears at the end of scroll */}
+        {/* Footer Area - Persistent at bottom after certain scroll */}
         <motion.div 
           style={{ y: footerY, opacity: footerOpacity }}
-          className="w-full max-w-2xl px-4 pb-10 flex flex-col items-center relative z-40"
+          className="w-full max-w-2xl px-6 pb-12 flex flex-col items-center relative z-40"
         >
           {/* Steps Card */}
-          <div className="w-full glass-card p-6 mb-8">
-            <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+          <div className="w-full glass-card p-6 mb-6">
+            <div className="grid grid-cols-4 gap-2">
               {steps.map((step, idx) => (
-                <div key={idx} className="flex flex-col items-center text-center space-y-2">
-                  <div className={`${step.color} w-12 h-12 rounded-2xl flex items-center justify-center relative shadow-sm`}>
+                <div key={idx} className="flex flex-col items-center text-center space-y-1">
+                  <div className={`${step.color} w-10 h-10 rounded-xl flex items-center justify-center relative shadow-sm`}>
                     {step.icon}
                   </div>
-                  <p className="text-[11px] font-black text-indigo-950">{step.title}</p>
+                  <p className="text-[9px] font-black text-indigo-950 leading-tight">{step.title}</p>
                 </div>
               ))}
             </div>
@@ -162,7 +166,7 @@ export default function Landing({ onNext }) {
             whileHover={{ scale: 1.05 }}
             whileTap={{ scale: 0.95 }}
             onClick={onNext}
-            className="w-full max-w-sm py-5 bg-gradient-to-r from-pink-400 via-rose-500 to-orange-500 rounded-3xl text-white font-black text-2xl shadow-xl flex items-center justify-center gap-4"
+            className="w-full py-5 bg-gradient-to-r from-pink-400 via-rose-500 to-orange-500 rounded-3xl text-white font-black text-xl shadow-xl flex items-center justify-center gap-4"
           >
             <Wand2 className="w-6 h-6" />
             Mula Sekarang
