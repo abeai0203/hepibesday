@@ -346,51 +346,61 @@ app.post('/api/admin/scrape-product', adminAuth, async (c) => {
     const { url } = await c.req.json()
     if (!url) return c.json({ error: 'URL diperlukan' }, 400)
 
+    let finalUrl = url
     let name = ''
     let imageUrl = ''
     let description = ''
-    let finalUrl = url
 
+    // 1. Follow Redirects to get the real URL
     try {
-      // 1. Try to fetch the page with more realistic headers
-      const response = await fetch(url, {
-        headers: {
-          'User-Agent': 'Mozilla/5.0 (iPhone; CPU iPhone OS 17_0 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/17.0 Mobile/15E148 Safari/604.1',
-          'Accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8',
-          'Accept-Language': 'en-US,en;q=0.9',
-          'Cache-Control': 'no-cache'
-        },
+      const initialRes = await fetch(url, {
+        method: 'HEAD',
+        headers: { 'User-Agent': 'Mozilla/5.0 (iPhone; CPU iPhone OS 17_0 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/17.0 Mobile/15E148 Safari/604.1' },
         redirect: 'follow'
       })
-
-      finalUrl = response.url
-      const html = await response.text()
-      
-      // Extraction
-      const titleMatch = html.match(/<title>(.*?)<\/title>/i)
-      const ogImageMatch = html.match(/<meta\s+property=["']og:image["']\s+content=["'](.*?)["']/i) || html.match(/<meta\s+content=["'](.*?)["']\s+property=["']og:image["']/i)
-      const ogDescMatch = html.match(/<meta\s+property=["']og:description["']\s+content=["'](.*?)["']/i) || html.match(/<meta\s+content=["'](.*?)["']\s+property=["']og:description["']/i)
-
-      name = titleMatch ? titleMatch[1].split('|')[0].trim() : ''
-      imageUrl = ogImageMatch ? ogImageMatch[1] : ''
-      description = ogDescMatch ? ogDescMatch[1] : ''
-      
-      // If we got a "Blocked" page (Shopee often returns 403 or custom challenge)
-      if (html.toLowerCase().includes('robot') || html.toLowerCase().includes('challenge') || !name) {
-        throw new Error('Blocked by Shopee')
-      }
-    } catch (fetchErr) {
-      console.log("Fetch failed or blocked, falling back to URL inference");
+      finalUrl = initialRes.url
+    } catch (e) {
+      console.log("Redirect follow failed, using original URL");
     }
 
-    // 2. Fallback: Use AI to infer info from the URL if name is still empty
+    // 2. Try to extract ShopID and ItemID from finalUrl
+    // Format usually: shopee.com.my/product/SHOPID/ITEMID or shopee.com.my/NAME-i.SHOPID.ITEMID
+    const productMatch = finalUrl.match(/product\/(\d+)\/(\d+)/) || finalUrl.match(/-i\.(\d+)\.(\d+)/)
+    
+    if (productMatch) {
+      const shopId = productMatch[1]
+      const itemId = productMatch[2]
+      
+      try {
+        const apiRes = await fetch(`https://shopee.com.my/api/v4/item/get?itemid=${itemId}&shopid=${shopId}`, {
+          headers: {
+            'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36',
+            'Referer': 'https://shopee.com.my/'
+          }
+        })
+        const data: any = await apiRes.json()
+        
+        if (data?.data) {
+          const item = data.data
+          name = item.name || ''
+          description = item.description || ''
+          if (item.image) {
+            imageUrl = `https://down-my.img.susercontent.com/file/${item.image}`
+          }
+        }
+      } catch (apiErr) {
+        console.error("Shopee API Error:", apiErr);
+      }
+    }
+
+    // 3. Fallback to AI if API failed or no IDs found
     if (c.env.AI && (!name || name.length < 5)) {
       try {
         const aiResponse = await c.env.AI.run('@cf/meta/llama-3-8b-instruct', {
           messages: [
             { 
               role: 'system', 
-              content: 'Anda ialah pakar e-commerce. Ekstrak nama produk daripada URL Shopee ini. Jika URL ada perkataan pelik, cuba teka produk apa. Berikan Nama (max 5 kata) dan Deskripsi menarik (BM santai). Return HANYA JSON: {"name": "...", "description": "..."}' 
+              content: 'Anda ialah pakar e-commerce. Berdasarkan URL produk ini, teka Nama (max 5 kata) dan Deskripsi menarik (BM santai). Return HANYA JSON: {"name": "...", "description": "..."}' 
             },
             { role: 'user', content: `URL: ${finalUrl}` }
           ]
