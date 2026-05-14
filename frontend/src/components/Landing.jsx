@@ -3,170 +3,181 @@ import { Sparkles, Wand2, Users, Heart, Star, Gift, ShoppingBag, ChevronRight } 
 
 export default function Landing({ onNext }) {
   const steps = [
-    { icon: <Users className="w-6 h-6 text-pink-500" />, title: 'Kenali dia', desc: 'dengan ringkas', color: 'bg-pink-50' },
-    { icon: <Star className="w-6 h-6 text-purple-500" />, title: 'Bintang dedah', desc: 'personaliti dia', color: 'bg-purple-50' },
-    { icon: <Gift className="w-6 h-6 text-yellow-500" />, title: 'Terima 5 hadiah', desc: 'paling sesuai', color: 'bg-yellow-50' },
-    { icon: <ShoppingBag className="w-6 h-6 text-indigo-500" />, title: 'Klik & beli', desc: 'di Kedai', color: 'bg-indigo-50' },
+    { icon: <Users className="w-7 h-7 text-pink-500" />, title: 'Kenali dia', desc: 'dengan ringkas', color: 'bg-pink-50' },
+    { icon: <Star className="w-7 h-7 text-purple-500" />, title: 'Bintang dedah', desc: 'personaliti dia', color: 'bg-purple-50' },
+    { icon: <Gift className="w-7 h-7 text-yellow-500" />, title: 'Terima 5 hadiah', desc: 'paling sesuai', color: 'bg-yellow-50' },
+    { icon: <ShoppingBag className="w-7 h-7 text-indigo-500" />, title: 'Klik & beli', desc: 'di Kedai', color: 'bg-indigo-50' },
   ]
 
   return (
-    <div className="min-h-screen flex flex-col items-center max-w-2xl mx-auto px-4 py-8">
-      {/* Header */}
-      <div className="w-full flex justify-between items-center mb-12">
+    <div className="min-h-screen flex flex-col items-center w-full max-w-screen-xl mx-auto px-4 py-6 overflow-hidden">
+      {/* Header Area */}
+      <div className="w-full max-w-4xl flex justify-between items-center mb-10 px-2 md:px-0">
         <div className="flex flex-col">
-          <span className="text-2xl font-bold text-indigo-900 leading-tight">Hepi</span>
-          <span className="text-xs font-bold tracking-widest text-indigo-400 uppercase">Besday</span>
+          <span className="text-3xl font-black text-indigo-950 leading-none tracking-tight">Hepi</span>
+          <span className="text-[10px] font-black tracking-[0.3em] text-indigo-400 uppercase mt-0.5 ml-0.5">Besday</span>
         </div>
         
-        <div className="glass px-4 py-2 rounded-full flex items-center gap-3">
+        <div className="bg-white/80 backdrop-blur-md px-4 py-2 rounded-full flex items-center gap-3 shadow-sm border border-white/50">
           <div className="flex -space-x-2">
             {[1, 2, 3].map(i => (
-              <div key={i} className="w-6 h-6 rounded-full border-2 border-white bg-slate-200 overflow-hidden">
-                <img src={`https://i.pravatar.cc/100?img=${i + 10}`} alt="user" />
+              <div key={i} className="w-8 h-8 rounded-full border-2 border-white bg-slate-200 overflow-hidden shadow-sm">
+                <img src={`https://i.pravatar.cc/100?img=${i + 15}`} alt="user" className="w-full h-full object-cover" />
               </div>
             ))}
           </div>
-          <span className="text-[10px] font-bold text-indigo-900/60 leading-none">
-            10K+ dah jumpa<br/>hadiah best!
-          </span>
-          <div className="w-6 h-6 bg-pink-100 rounded-full flex items-center justify-center">
-            <Heart className="w-3 h-3 text-pink-500 fill-pink-500" />
+          <div className="flex flex-col">
+            <span className="text-[10px] font-extrabold text-indigo-900 leading-none">10K+ dah jumpa</span>
+            <span className="text-[10px] font-bold text-indigo-400">hadiah best!</span>
+          </div>
+          <div className="w-7 h-7 bg-pink-100 rounded-full flex items-center justify-center shadow-inner">
+            <Heart className="w-3.5 h-3.5 text-pink-500 fill-pink-500" />
           </div>
         </div>
       </div>
 
-      {/* Hero Section */}
-      <div className="text-center space-y-6 mb-8 relative">
+      {/* Main Content Container */}
+      <div className="w-full max-w-2xl flex flex-col items-center text-center">
+        {/* Sub-badge */}
         <motion.div 
-          initial={{ opacity: 0, scale: 0.9 }}
-          animate={{ opacity: 1, scale: 1 }}
-          className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full bg-white/50 border border-pink-100 shadow-sm"
+          initial={{ opacity: 0, y: 10 }}
+          animate={{ opacity: 1, y: 0 }}
+          className="inline-flex items-center gap-2 px-5 py-2 rounded-full bg-white shadow-md border border-pink-50 mb-8"
         >
           <Star className="w-4 h-4 text-orange-400 fill-orange-400" />
-          <span className="text-sm font-bold text-pink-500">Daripada Bintang, Untuk Dia</span>
+          <span className="text-xs font-black text-pink-500 uppercase tracking-wide">Daripada Bintang, Untuk Dia</span>
           <Sparkles className="w-4 h-4 text-pink-300" />
         </motion.div>
 
-        <h1 className="text-4xl md:text-6xl font-bold text-slate-800 leading-[1.1]">
-          Hadiah yang<br/>dia akan <span className="text-pink-500 relative">
-            ingat
-            <svg className="absolute -right-6 -top-2 w-6 h-6 text-pink-400" viewBox="0 0 24 24" fill="currentColor">
-              <path d="M12 21.35l-1.45-1.32C5.4 15.36 2 12.28 2 8.5 2 5.42 4.42 3 7.5 3c1.74 0 3.41.81 4.5 2.09C13.09 3.81 14.76 3 16.5 3 19.58 3 22 5.42 22 8.5c0 3.78-3.4 6.86-8.55 11.54L12 21.35z"/>
-            </svg>
-          </span>
-        </h1>
+        {/* Hero Headlines */}
+        <div className="space-y-4 mb-8">
+          <h1 className="text-5xl md:text-7xl font-black text-slate-900 leading-[0.95] tracking-tight">
+            Hadiah yang<br/>
+            dia akan <span className="text-pink-500 relative">
+              ingat
+              <motion.div 
+                animate={{ scale: [1, 1.2, 1], rotate: [0, 10, 0] }}
+                transition={{ duration: 2, repeat: Infinity }}
+                className="absolute -right-8 -top-4"
+              >
+                <Heart className="w-8 h-8 text-pink-400 fill-pink-400 opacity-60" />
+              </motion.div>
+            </span>
+          </h1>
+          <p className="text-slate-500 text-lg font-bold flex items-center justify-center gap-2">
+            <span className="bg-pink-100 text-pink-600 px-2 py-0.5 rounded-md">🎁 5 hadiah</span> paling sesuai, khas untuknya.
+          </p>
+        </div>
 
-        <p className="text-slate-500 font-medium">
-          <span className="text-pink-500">🎁 5 hadiah</span> paling sesuai, khas untuknya.
-        </p>
-
-        {/* 3D Visual Centerpiece */}
-        <div className="relative py-12 flex justify-center">
-          {/* Decorative floating elements */}
+        {/* Center Visuals */}
+        <div className="relative w-full max-w-lg aspect-square flex items-center justify-center mb-12">
+          {/* Decorative floating assets */}
           <motion.div 
-            animate={{ y: [0, -15, 0] }}
-            transition={{ duration: 4, repeat: Infinity, ease: "easeInOut" }}
-            className="absolute left-0 top-1/4 w-16 h-16 glass rounded-2xl flex items-center justify-center -rotate-12 shadow-lg"
+            animate={{ y: [0, -20, 0], rotate: [-10, -15, -10] }}
+            transition={{ duration: 6, repeat: Infinity, ease: "easeInOut" }}
+            className="absolute left-4 top-1/4 z-0"
           >
-            <Gift className="w-8 h-8 text-pink-400" />
-          </motion.div>
-          <motion.div 
-            animate={{ y: [0, 15, 0] }}
-            transition={{ duration: 5, repeat: Infinity, ease: "easeInOut", delay: 1 }}
-            className="absolute right-0 top-1/2 w-14 h-14 glass rounded-full flex items-center justify-center rotate-12 shadow-lg"
-          >
-            <ShoppingBag className="w-7 h-7 text-purple-400" />
+            <div className="w-24 h-24 relative">
+               <img src="/heart.png" className="w-full h-full object-contain mix-blend-multiply opacity-80" alt="Floating Heart" />
+            </div>
           </motion.div>
           
-          <motion.div
-            animate={{ y: [0, -10, 0] }}
-            transition={{ duration: 3, repeat: Infinity, ease: "easeInOut" }}
-            className="relative z-10 w-64 h-64 flex items-center justify-center"
+          <motion.div 
+            animate={{ y: [0, 25, 0], rotate: [10, 5, 10] }}
+            transition={{ duration: 7, repeat: Infinity, ease: "easeInOut", delay: 1 }}
+            className="absolute right-4 top-1/3 z-0"
           >
-            <div className="absolute inset-0 bg-pink-300/30 blur-3xl rounded-full scale-75" />
+            <div className="w-24 h-24 relative">
+              <img src="/bag.png" className="w-full h-full object-contain mix-blend-multiply opacity-80" alt="Floating Bag" />
+            </div>
+          </motion.div>
+
+          {/* Main 3D Box */}
+          <motion.div
+            initial={{ opacity: 0, scale: 0.8 }}
+            animate={{ opacity: 1, scale: 1 }}
+            transition={{ type: "spring", stiffness: 100, damping: 15 }}
+            className="relative z-10 w-80 h-80 flex items-center justify-center"
+          >
+            <div className="absolute inset-0 bg-pink-400/20 blur-[80px] rounded-full scale-90" />
             <img 
               src="/hero-box.png" 
-              alt="Gift Surprise" 
-              className="w-full h-full object-contain relative z-10"
+              alt="Magic Gift Box" 
+              className="w-full h-full object-contain relative z-10 mix-blend-multiply"
             />
           </motion.div>
         </div>
-      </div>
 
-      {/* Steps Card */}
-      <div className="w-full glass-card p-6 mb-8">
-        <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-          {steps.map((step, idx) => (
-            <div key={idx} className="flex flex-col items-center text-center space-y-3 relative">
-              <div className={`${step.color} w-14 h-14 rounded-3xl flex items-center justify-center relative shadow-sm`}>
-                {step.icon}
-                <div className="absolute -right-1 -top-1 w-5 h-5 bg-pink-500 text-white text-[10px] font-bold rounded-full flex items-center justify-center border-2 border-white">
-                  {idx + 1}
+        {/* Step Card Container */}
+        <div className="w-full max-w-xl bg-white/40 backdrop-blur-xl border border-white/60 shadow-[0_32px_64px_-16px_rgba(0,0,0,0.08)] rounded-[2.5rem] p-8 mb-10">
+          <div className="grid grid-cols-2 md:grid-cols-4 gap-6">
+            {steps.map((step, idx) => (
+              <div key={idx} className="flex flex-col items-center space-y-4 group relative">
+                <div className={`${step.color} w-16 h-16 rounded-[1.5rem] flex items-center justify-center relative shadow-lg shadow-black/5 transition-transform group-hover:scale-110`}>
+                  {step.icon}
+                  <div className="absolute -right-2 -top-2 w-6 h-6 bg-pink-500 text-white text-xs font-black rounded-full flex items-center justify-center border-2 border-white shadow-md">
+                    {idx + 1}
+                  </div>
                 </div>
-              </div>
-              <div className="space-y-0.5">
-                <p className="text-xs font-bold text-slate-800">{step.title}</p>
-                <p className="text-[10px] font-medium text-slate-400">{step.desc}</p>
-              </div>
-              {idx < steps.length - 1 && (
-                <div className="hidden md:block absolute -right-2 top-6 opacity-20">
-                  <ChevronRight className="w-4 h-4 text-slate-400" />
+                <div className="space-y-1">
+                  <p className="text-[13px] font-black text-indigo-950 leading-tight">{step.title}</p>
+                  <p className="text-[11px] font-bold text-slate-400">{step.desc}</p>
                 </div>
-              )}
-            </div>
-          ))}
-        </div>
-      </div>
-
-      {/* CTA Button */}
-      <div className="w-full flex flex-col items-center gap-6">
-        <motion.button
-          whileHover={{ scale: 1.02 }}
-          whileTap={{ scale: 0.98 }}
-          onClick={onNext}
-          className="w-full py-5 bg-gradient-to-r from-pink-400 via-rose-400 to-orange-400 rounded-full text-white font-bold text-xl shadow-[0_20px_40px_-10px_rgba(251,113,133,0.5)] flex items-center justify-center gap-3 relative overflow-hidden"
-        >
-          <div className="absolute inset-0 bg-white/10 opacity-0 hover:opacity-100 transition-opacity" />
-          <Wand2 className="w-6 h-6" />
-          Mula Sekarang
-          <ChevronRight className="w-6 h-6" />
-        </motion.button>
-
-        {/* Footer info */}
-        <div className="flex flex-wrap justify-center gap-6 text-[10px] font-bold text-slate-400">
-          <div className="flex items-center gap-1.5">
-            <div className="w-4 h-4 rounded-md bg-purple-100 flex items-center justify-center">
-              <Star className="w-2.5 h-2.5 text-purple-500 fill-purple-500" />
-            </div>
-            100% Percuma
-          </div>
-          <div className="flex items-center gap-1.5">
-            <div className="w-4 h-4 rounded-md bg-pink-100 flex items-center justify-center">
-              <Sparkles className="w-2.5 h-2.5 text-pink-500 fill-pink-500" />
-            </div>
-            Cepat & Mudah
-          </div>
-          <div className="flex items-center gap-1.5">
-            <div className="w-4 h-4 rounded-md bg-indigo-100 flex items-center justify-center">
-              <Heart className="w-2.5 h-2.5 text-indigo-500 fill-indigo-500" />
-            </div>
-            Selamat
+                {idx < steps.length - 1 && (
+                  <div className="hidden md:block absolute -right-3 top-8 opacity-20 group-hover:opacity-40 transition-opacity">
+                    <ChevronRight className="w-5 h-5 text-indigo-900" />
+                  </div>
+                )}
+              </div>
+            ))}
           </div>
         </div>
 
-        <motion.div 
-          animate={{ x: [0, 5, 0] }}
-          transition={{ duration: 2, repeat: Infinity }}
-          className="flex flex-col items-center gap-1"
-        >
-          <svg className="w-12 h-6 text-indigo-900/20 rotate-12" viewBox="0 0 50 20" fill="none" stroke="currentColor">
-            <path d="M5 15C15 5 35 5 45 15" strokeWidth="2" strokeLinecap="round"/>
-            <path d="M40 10L45 15L40 20" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
-          </svg>
-          <span className="text-[10px] font-medium text-indigo-900/60">
-            Jom cari hadiah yang dia akan suka! 🥰
-          </span>
-        </motion.div>
+        {/* CTA Button Section */}
+        <div className="w-full max-w-md flex flex-col items-center gap-8">
+          <motion.button
+            whileHover={{ scale: 1.03, y: -4 }}
+            whileTap={{ scale: 0.97 }}
+            onClick={onNext}
+            className="w-full py-6 bg-gradient-to-r from-pink-400 via-rose-500 to-orange-500 rounded-3xl text-white font-black text-2xl shadow-[0_25px_50px_-12px_rgba(244,63,94,0.5)] flex items-center justify-center gap-4 group relative overflow-hidden"
+          >
+            <div className="absolute inset-0 bg-white/20 translate-y-full group-hover:translate-y-0 transition-transform duration-300" />
+            <Sparkles className="w-7 h-7" />
+            Mula Sekarang
+            <ChevronRight className="w-7 h-7" />
+          </motion.button>
+
+          {/* Bottom Trust Indicators */}
+          <div className="flex justify-center gap-8 text-xs font-black text-slate-400/80 uppercase tracking-widest">
+            <div className="flex items-center gap-2">
+              <Star className="w-4 h-4 text-purple-400 fill-purple-400" />
+              100% Percuma
+            </div>
+            <div className="flex items-center gap-2">
+              <Sparkles className="w-4 h-4 text-pink-400 fill-pink-400" />
+              Cepat & Mudah
+            </div>
+            <div className="flex items-center gap-2">
+              <Heart className="w-4 h-4 text-indigo-400 fill-indigo-400" />
+              Selamat
+            </div>
+          </div>
+
+          {/* Decorative Arrow and Text */}
+          <motion.div 
+            animate={{ x: [0, 5, 0] }}
+            transition={{ duration: 2, repeat: Infinity }}
+            className="flex flex-col items-center gap-2"
+          >
+            <svg className="w-16 h-8 text-indigo-900/20 rotate-12" viewBox="0 0 50 20" fill="none" stroke="currentColor">
+              <path d="M5 15C15 5 35 5 45 15" strokeWidth="3" strokeLinecap="round" opacity="0.3" />
+              <path d="M40 8L45 15L40 22" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round" opacity="0.3" />
+            </svg>
+            <span className="text-sm font-black text-indigo-900/40 tracking-tight italic">
+              Jom cari hadiah yang dia akan suka! 🥰
+            </span>
+          </motion.div>
+        </div>
       </div>
     </div>
   )

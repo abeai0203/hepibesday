@@ -3,17 +3,17 @@
 @theme {
   --color-primary: #4C1D95;
   --color-accent: #F472B6;
-  --color-surface: rgba(255, 255, 255, 0.4);
-  --color-surface-hover: rgba(255, 255, 255, 0.5);
+  --color-surface: rgba(255, 255, 255, 0.6);
+  --color-surface-hover: rgba(255, 255, 255, 0.8);
   
   --font-sans: 'Inter', system-ui, sans-serif;
-  --font-heading: 'Outfit', 'Playfair Display', serif;
+  --font-heading: 'Outfit', sans-serif;
 }
 
 @layer base {
   body {
     @apply text-slate-800 antialiased selection:bg-pink-300 selection:text-slate-900;
-    background: linear-gradient(135deg, #FDFCF0 0%, #F5F3FF 50%, #FAE8FF 100%);
+    background: linear-gradient(180deg, #FFFFFF 0%, #F5F3FF 50%, #FAE8FF 100%);
     background-attachment: fixed;
     min-height: 100vh;
   }
