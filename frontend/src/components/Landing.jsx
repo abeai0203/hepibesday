@@ -1,22 +1,17 @@
 import { useState, useEffect, useRef } from 'react'
 import { motion, useScroll, useSpring, useTransform } from 'framer-motion'
-import { Wand2, Users, Star, Gift, ShoppingBag, ChevronRight, Sparkles } from 'lucide-react'
+import { Wand2, Users, Star, Gift, ShoppingBag, ChevronRight } from 'lucide-react'
 
 export default function Landing({ onNext }) {
   const containerRef = useRef(null)
-  
-  // Track scroll of the WHOLE PAGE for maximum reliability
   const { scrollYProgress } = useScroll()
   
-  // Use a spring to smooth out the values (helps with jittery mobile scrolling)
   const smoothProgress = useSpring(scrollYProgress, {
     stiffness: 100,
     damping: 30,
     restDelta: 0.001
   })
 
-  // TIMING: Complete everything by 50% scroll. 
-  // 0.0 -> 0.5 is the magic window.
   const boxScale = useTransform(smoothProgress, [0, 0.5], [1, 1.3])
   const closedOpacity = useTransform(smoothProgress, [0.05, 0.25], [1, 0])
   const openOpacity = useTransform(smoothProgress, [0.2, 0.4], [0, 1])
@@ -24,9 +19,11 @@ export default function Landing({ onNext }) {
   const qMarkScale = useTransform(smoothProgress, [0.3, 0.5], [0, 1.1])
   const qMarkOpacity = useTransform(smoothProgress, [0.3, 0.45], [0, 1])
   
-  // Dynamic Captions Opacity
   const title1Opacity = useTransform(smoothProgress, [0, 0.2], [1, 0])
   const title2Opacity = useTransform(smoothProgress, [0.3, 0.5], [0, 1])
+  
+  const footerY = useTransform(smoothProgress, [0.4, 0.6], [80, 0])
+  const footerOpacity = useTransform(smoothProgress, [0.4, 0.6], [0, 1])
 
   const steps = [
     { icon: <Users className="w-7 h-7 text-pink-500" />, title: 'Kenali dia', color: 'bg-pink-50' },
@@ -37,10 +34,7 @@ export default function Landing({ onNext }) {
 
   return (
     <div className="w-full bg-[#FDFCF0]">
-      {/* 1. SCROLLABLE TRACKER */}
       <div className="h-[200vh] w-full relative">
-        
-        {/* 2. STICKY CONTENT */}
         <div className="sticky top-0 h-screen w-full flex flex-col items-center justify-between overflow-hidden">
           
           {/* Background Blobs */}
@@ -56,14 +50,15 @@ export default function Landing({ onNext }) {
               <span className="text-[12px] font-black tracking-[0.3em] text-indigo-400 uppercase mt-1">Besday</span>
             </div>
 
-            <div className="relative w-full flex flex-col items-center">
+            {/* Container for dual captions with fixed height to prevent blank space */}
+            <div className="relative w-full h-40 md:h-48 flex items-center justify-center">
               {/* Initial Caption */}
-              <motion.div style={{ opacity: title1Opacity }} className="absolute top-0">
+              <motion.div style={{ opacity: title1Opacity }} className="absolute inset-0 flex flex-col items-center">
                 <div className="inline-flex items-center gap-2 px-5 py-2 rounded-full bg-white shadow-md border border-pink-50 mb-6">
                   <Star className="w-4 h-4 text-orange-400 fill-orange-400" />
                   <span className="text-xs font-black text-pink-500 uppercase tracking-wide">Pening pilih hadiah?</span>
                 </div>
-                <h1 className="text-5xl md:text-7xl font-black text-indigo-950 leading-[0.95] tracking-tight mb-6">
+                <h1 className="text-5xl md:text-7xl font-black text-indigo-950 leading-[0.95] tracking-tight mb-4">
                   Sedang mencari<br/><span className="text-pink-500">hadiah?</span>
                 </h1>
                 <motion.div animate={{ y: [0, 8, 0] }} transition={{ duration: 2, repeat: Infinity }} className="text-slate-400 font-bold text-sm">
@@ -72,9 +67,9 @@ export default function Landing({ onNext }) {
               </motion.div>
 
               {/* Final Caption */}
-              <motion.div style={{ opacity: title2Opacity }} className="absolute top-0">
+              <motion.div style={{ opacity: title2Opacity }} className="absolute inset-0 flex flex-col items-center">
                 <div className="inline-flex items-center gap-2 px-5 py-2 rounded-full bg-white shadow-md border border-pink-50 mb-6">
-                  <Sparkles className="w-4 h-4 text-pink-500" />
+                  <Wand2 className="w-4 h-4 text-pink-500" />
                   <span className="text-xs font-black text-pink-500 uppercase tracking-wide">Kami Sedia Membantu</span>
                 </div>
                 <h1 className="text-5xl md:text-7xl font-black text-indigo-950 leading-[0.95] tracking-tight">
@@ -134,7 +129,7 @@ export default function Landing({ onNext }) {
               whileHover={{ scale: 1.05 }}
               whileTap={{ scale: 0.95 }}
               onClick={onNext}
-              className="w-full py-5 bg-gradient-to-r from-pink-400 via-rose-500 to-orange-500 rounded-3xl text-white font-black text-xl shadow-2xl flex items-center justify-center gap-4 pointer-events-auto"
+              className="w-full max-w-sm py-5 bg-gradient-to-r from-pink-400 via-rose-500 to-orange-500 rounded-3xl text-white font-black text-xl shadow-2xl flex items-center justify-center gap-4 pointer-events-auto"
             >
               <Wand2 className="w-6 h-6" />
               Mula Sekarang
