@@ -349,68 +349,54 @@ app.post('/api/admin/scrape-product', adminAuth, async (c) => {
     let name = ''
     let description = ''
     let imageUrl = 'https://via.placeholder.com/500?text=Masukkan+Gambar+Produk'
-    let expandedUrl = url
-
-    // 1. Try to expand URL by looking into HTML if headers fail
+    
+    // 1. Use Google Translate as a Proxy to bypass Shopee blocks
     try {
-      const res = await fetch(url, {
+      const proxyUrl = `https://translate.google.com/translate?sl=auto&tl=ms&u=${encodeURIComponent(url)}`
+      const res = await fetch(proxyUrl, {
         headers: {
-          'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36',
-        },
-        redirect: 'follow'
+          'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36'
+        }
       })
-      expandedUrl = res.url
       const html = await res.text()
       
-      // Look for JavaScript redirect if res.url didn't change
-      if (expandedUrl === url) {
-        const jsRedirect = html.match(/window\.location\.replace\(['"](.*?)['"]\)/) || html.match(/location\.href\s*=\s*['"](.*?)['"]/)
-        if (jsRedirect) {
-          expandedUrl = jsRedirect[1].startsWith('http') ? jsRedirect[1] : `https://shopee.com.my${jsRedirect[1]}`
-        }
+      // Look for the product name in the translated page title or meta tags
+      const titleMatch = html.match(/<title>(.*?)<\/title>/i)
+      if (titleMatch && titleMatch[1].includes('Shopee')) {
+        name = titleMatch[1].split('-')[0].split('|')[0].replace('Google Translate', '').trim()
       }
-
-      // Extract Meta Tags
-      const ogTitle = html.match(/property="og:title"\s+content="(.*?)"/i) || html.match(/name="twitter:title"\s+content="(.*?)"/i)
-      const ogImage = html.match(/property="og:image"\s+content="(.*?)"/i)
       
-      if (ogTitle) name = ogTitle[1].split('|')[0].trim()
+      // Try to find the original URL in the HTML to extract image if possible
+      const ogImage = html.match(/property="og:image"\s+content="(.*?)"/i)
       if (ogImage) imageUrl = ogImage[1]
-    } catch (e) {}
+    } catch (e) {
+      console.log("Proxy expansion failed");
+    }
 
-    // 2. AI Processing - ONLY if we have context, otherwise return placeholder
-    const slug = expandedUrl.split('/').pop()?.split('?')[0] || ''
-    const cleanSlug = slug.includes('-i.') ? slug.split('-i.')[0].replace(/-/g, ' ') : ''
-
-    if (c.env.AI) {
-      const context = name || cleanSlug
-      if (context && context.length > 3) {
-        try {
-          const aiResponse = await c.env.AI.run('@cf/meta/llama-3-8b-instruct', {
-            messages: [
-              { 
-                role: 'system', 
-                content: 'Anda ialah pakar e-commerce. JANGAN REKA INFO. Jika input tidak masuk akal, return {"name": "", "description": ""}. Jika OK, return JSON: {"name": "Nama Pendek", "description": "Deskripsi BM Santai"}' 
-              },
-              { role: 'user', content: `Konteks Produk: ${context}` }
-            ]
-          })
-          const aiText = (aiResponse as any).response;
-          const match = aiText.match(/\{.*?\}/s);
-          if (match) {
-            const parsed = JSON.parse(match[0]);
-            name = parsed.name || name || context;
-            description = parsed.description || '';
-          }
-        } catch (err) {}
-      }
+    // 2. AI Polish
+    if (c.env.AI && (name || url.includes('shopee'))) {
+      try {
+        const aiResponse = await c.env.AI.run('@cf/meta/llama-3-8b-instruct', {
+          messages: [
+            { role: 'system', content: 'Anda ialah pakar e-commerce. Jika Nama kosong, JANGAN REKA. Jika ada Nama, pendekkan jadi kemas (max 5 kata) dan buat deskripsi hadiah (BM santai). Return JSON: {"name": "...", "description": "..."}' },
+            { role: 'user', content: `Nama Produk: ${name || "Sila teka dari URL ini: " + url}` }
+          ]
+        })
+        const aiText = (aiResponse as any).response;
+        const match = aiText.match(/\{.*?\}/s);
+        if (match) {
+          const parsed = JSON.parse(match[0]);
+          name = parsed.name || name;
+          description = parsed.description || '';
+        }
+      } catch (err) {}
     }
 
     return c.json({
       name: name || '',
       image_url: imageUrl,
       description: description || '',
-      shopee_url: expandedUrl
+      shopee_url: url
     })
   } catch (error: any) {
     return c.json({ error: 'Gagal menarik data', details: error.message }, 500)
