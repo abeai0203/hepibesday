@@ -1,9 +1,15 @@
-import { motion, useScroll, useTransform } from 'framer-motion'
+import { useState, useEffect } from 'react'
+import { motion, useScroll, useTransform, useMotionValueEvent } from 'framer-motion'
 import { Sparkles, Wand2, Users, Heart, Star, Gift, ShoppingBag, ChevronRight } from 'lucide-react'
 
 export default function Landing({ onNext }) {
-  // Use window scroll for maximum reliability
+  const [scrollPct, setScrollPct] = useState(0)
   const { scrollYProgress } = useScroll()
+
+  // Update debug state
+  useMotionValueEvent(scrollYProgress, "change", (latest) => {
+    setScrollPct(Math.round(latest * 100))
+  })
 
   // Animation values - Made them very robust and early
   const boxScale = useTransform(scrollYProgress, [0, 0.3], [1, 1.4])
@@ -27,10 +33,10 @@ export default function Landing({ onNext }) {
 
   return (
     <div className="relative w-full">
-      {/* DEBUG OVERLAY */}
-      <motion.div className="fixed top-4 right-4 z-[100] bg-black/80 text-white px-3 py-1 rounded-full text-xs font-mono">
-        Scroll: {useTransform(scrollYProgress, v => (v * 100).toFixed(0))}%
-      </motion.div>
+      {/* DEBUG OVERLAY - Fixed to avoid runtime errors */}
+      <div className="fixed top-4 right-4 z-[100] bg-black/80 text-white px-3 py-1 rounded-full text-xs font-mono">
+        Scroll: {scrollPct}%
+      </div>
 
       {/* Tall container to provide scroll height */}
       <div className="h-[250vh]">
