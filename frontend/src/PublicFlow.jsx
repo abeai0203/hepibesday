@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import Landing from './components/Landing'
 import NameSelection from './components/NameSelection'
 import GenderSelection from './components/GenderSelection'
