@@ -15,7 +15,7 @@ export default function Landing({ onNext }) {
   const boxScale = useTransform(smoothProgress, [0, 0.5], [1, 1.3])
   const closedOpacity = useTransform(smoothProgress, [0.05, 0.25], [1, 0])
   const openOpacity = useTransform(smoothProgress, [0.2, 0.4], [0, 1])
-  const qMarkY = useTransform(smoothProgress, [0.3, 0.5], [40, -100])
+  const qMarkY = useTransform(smoothProgress, [0.3, 0.5], [60, -100])
   const qMarkScale = useTransform(smoothProgress, [0.3, 0.5], [0, 1.1])
   const qMarkOpacity = useTransform(smoothProgress, [0.3, 0.45], [0, 1])
   
@@ -43,10 +43,8 @@ export default function Landing({ onNext }) {
             <div className="absolute bottom-1/4 -right-20 w-[600px] h-[600px] bg-purple-100/30 blur-[120px] rounded-full" />
           </div>
 
-          {/* Header & Hero Area */}
-          <div className="w-full flex flex-col items-center text-center pt-8 px-6 z-40 pointer-events-none">
-            {/* NEW LOGO IMAGE */}
-            <div className="w-40 md:w-48 mb-6 overflow-hidden flex items-center justify-center">
+            {/* NEW LOGO IMAGE - Shrunk to prevent overlap */}
+            <div className="w-28 md:w-32 mb-4 overflow-hidden flex items-center justify-center">
               <img 
                 src="/logo.png" 
                 className="w-full h-full object-contain mix-blend-multiply brightness-[1.05] contrast-[1.1]" 
@@ -59,28 +57,28 @@ export default function Landing({ onNext }) {
             </div>
 
             {/* Container for dual captions */}
-            <div className="relative w-full h-40 md:h-48 flex items-center justify-center">
+            <div className="relative w-full h-32 md:h-40 flex items-center justify-center mt-2">
               {/* Initial Caption */}
               <motion.div style={{ opacity: title1Opacity }} className="absolute inset-0 flex flex-col items-center">
-                <div className="inline-flex items-center gap-2 px-5 py-2 rounded-full bg-white shadow-md border border-pink-50 mb-6">
+                <div className="inline-flex items-center gap-2 px-5 py-2 rounded-full bg-white shadow-md border border-pink-50 mb-4">
                   <Star className="w-4 h-4 text-orange-400 fill-orange-400" />
                   <span className="text-xs font-black text-pink-500 uppercase tracking-wide">Pening pilih hadiah?</span>
                 </div>
-                <h1 className="text-5xl md:text-7xl font-black text-indigo-950 leading-[0.95] tracking-tight mb-4">
+                <h1 className="text-4xl md:text-6xl font-black text-indigo-950 leading-[0.95] tracking-tight mb-4">
                   Sedang mencari<br/><span className="text-pink-500">hadiah?</span>
                 </h1>
-                <motion.div animate={{ y: [0, 8, 0] }} transition={{ duration: 2, repeat: Infinity }} className="text-slate-400 font-bold text-sm">
+                <motion.div animate={{ y: [0, 8, 0] }} transition={{ duration: 2, repeat: Infinity }} className="text-slate-400 font-bold text-xs">
                   Skrol ke bawah... ✨
                 </motion.div>
               </motion.div>
 
               {/* Final Caption */}
               <motion.div style={{ opacity: title2Opacity }} className="absolute inset-0 flex flex-col items-center">
-                <div className="inline-flex items-center gap-2 px-5 py-2 rounded-full bg-white shadow-md border border-pink-50 mb-6">
+                <div className="inline-flex items-center gap-2 px-5 py-2 rounded-full bg-white shadow-md border border-pink-50 mb-4">
                   <Wand2 className="w-4 h-4 text-pink-500" />
                   <span className="text-xs font-black text-pink-500 uppercase tracking-wide">Kami Sedia Membantu</span>
                 </div>
-                <h1 className="text-5xl md:text-7xl font-black text-indigo-950 leading-[0.95] tracking-tight">
+                <h1 className="text-4xl md:text-6xl font-black text-indigo-950 leading-[0.95] tracking-tight">
                   Kami akan<br/><span className="text-pink-500">bantu anda!</span>
                 </h1>
               </motion.div>
@@ -103,7 +101,7 @@ export default function Landing({ onNext }) {
                 className="absolute z-30 w-32 h-32"
               >
                 <img src="/q-mark.png" className="w-full h-full object-contain mix-blend-multiply brightness-[1.1] contrast-[1.1]" alt="?" />
-              </motion.div>
+              </motion.div>v>
 
               <motion.div style={{ opacity: closedOpacity }} className="absolute inset-0 z-20">
                 <img src="/box-closed.png" className="w-full h-full object-contain mix-blend-multiply brightness-[1.05]" alt="Closed Box" />
