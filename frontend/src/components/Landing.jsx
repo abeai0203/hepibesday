@@ -27,6 +27,11 @@ export default function Landing({ onNext }) {
 
   return (
     <div className="relative w-full">
+      {/* DEBUG OVERLAY */}
+      <motion.div className="fixed top-4 right-4 z-[100] bg-black/80 text-white px-3 py-1 rounded-full text-xs font-mono">
+        Scroll: {useTransform(scrollYProgress, v => (v * 100).toFixed(0))}%
+      </motion.div>
+
       {/* Tall container to provide scroll height */}
       <div className="h-[250vh]">
         {/* Sticky Container - This holds everything in place while scrolling */}
