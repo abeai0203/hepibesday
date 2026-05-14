@@ -17,10 +17,10 @@ export default function NameSelection({ onNext, onBack }) {
       initial={{ opacity: 0, x: 20 }}
       animate={{ opacity: 1, x: 0 }}
       exit={{ opacity: 0, x: -20 }}
-      className="space-y-6 py-8 w-full"
+      className="space-y-6 py-8 w-full max-w-md mx-auto"
     >
       {/* Top Bar */}
-      <div className="flex items-center justify-between">
+      <div className="flex items-center justify-between w-full">
         <button 
           onClick={onBack}
           className="w-10 h-10 bg-white/60 backdrop-blur shadow-sm rounded-full flex items-center justify-center text-slate-700 hover:bg-white transition-colors"

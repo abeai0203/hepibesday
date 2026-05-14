@@ -24,8 +24,8 @@ function PublicFlow() {
   }
 
   return (
-    <div className="min-h-screen flex flex-col items-center justify-center p-4">
-      <main className="w-full max-w-md mx-auto">
+    <div className="min-h-screen flex flex-col p-4">
+      <main className="w-full mx-auto">
         {step === 'landing' && <Landing onNext={() => handleNext('name')} />}
         {step === 'name' && <NameSelection onNext={(targetName) => handleNext('gender', { targetName })} onBack={() => setStep('landing')} />}
         {step === 'gender' && <GenderSelection targetName={sessionData.targetName} onNext={(gender) => handleNext('date', { gender })} onBack={() => setStep('name')} />}

@@ -69,7 +69,7 @@ export default function Analyzing({ sessionData, onComplete }) {
       initial={{ opacity: 0 }}
       animate={{ opacity: 1 }}
       exit={{ opacity: 0 }}
-      className="flex flex-col items-center justify-center space-y-8 py-12"
+      className="flex flex-col items-center justify-center min-h-[60vh] space-y-8 text-center max-w-md mx-auto"
     >
       <div className="relative">
         <motion.div

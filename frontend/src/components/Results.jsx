@@ -69,7 +69,7 @@ export default function Results({ sessionData, onRestart }) {
     <motion.div
       initial={{ opacity: 0 }}
       animate={{ opacity: 1 }}
-      className="space-y-8 py-8 w-full max-w-2xl mx-auto"
+      className="space-y-8 py-4 w-full max-w-md mx-auto"
     >
       <div className="text-center space-y-2">
         <div className="flex justify-center mb-4">
