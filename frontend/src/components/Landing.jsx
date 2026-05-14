@@ -9,18 +9,18 @@ export default function Landing({ onNext }) {
     offset: ["start start", "end end"]
   })
 
-  // Animation values based on scroll - adjusted for faster completion
-  const boxScale = useTransform(scrollYProgress, [0, 0.4], [1, 1.5])
-  const closedOpacity = useTransform(scrollYProgress, [0.2, 0.4], [1, 0])
-  const openOpacity = useTransform(scrollYProgress, [0.3, 0.5], [0, 1])
-  const qMarkY = useTransform(scrollYProgress, [0.4, 0.8], [50, -110])
-  const qMarkScale = useTransform(scrollYProgress, [0.4, 0.7], [0, 1.1])
-  const qMarkOpacity = useTransform(scrollYProgress, [0.4, 0.6], [0, 1])
+  // Animation values based on scroll - ULTRA fast completion
+  const boxScale = useTransform(scrollYProgress, [0, 0.4], [1, 1.3])
+  const closedOpacity = useTransform(scrollYProgress, [0.15, 0.3], [1, 0])
+  const openOpacity = useTransform(scrollYProgress, [0.2, 0.4], [0, 1])
+  const qMarkY = useTransform(scrollYProgress, [0.35, 0.7], [40, -100])
+  const qMarkScale = useTransform(scrollYProgress, [0.35, 0.6], [0, 1.1])
+  const qMarkOpacity = useTransform(scrollYProgress, [0.35, 0.5], [0, 1])
   
-  // Hero text fades out quickly
-  const contentOpacity = useTransform(scrollYProgress, [0, 0.15], [1, 0])
-  const footerY = useTransform(scrollYProgress, [0.5, 0.8], [80, 0])
-  const footerOpacity = useTransform(scrollYProgress, [0.5, 0.7], [0, 1])
+  // Hero text fades out almost immediately
+  const contentOpacity = useTransform(scrollYProgress, [0, 0.1], [1, 0])
+  const footerY = useTransform(scrollYProgress, [0.4, 0.7], [60, 0])
+  const footerOpacity = useTransform(scrollYProgress, [0.4, 0.6], [0, 1])
 
   const steps = [
     { icon: <Users className="w-7 h-7 text-pink-500" />, title: 'Kenali dia', desc: 'dengan ringkas', color: 'bg-pink-50' },
@@ -30,7 +30,7 @@ export default function Landing({ onNext }) {
   ]
 
   return (
-    <div ref={containerRef} className="relative h-[180vh] w-full">
+    <div ref={containerRef} className="relative h-[140vh] w-full">
       {/* Sticky Container */}
       <div className="sticky top-0 h-screen w-full flex flex-col items-center overflow-hidden">
         
@@ -72,12 +72,12 @@ export default function Landing({ onNext }) {
             Hadiah yang<br/>dia akan <span className="text-pink-500">ingat</span>
           </h1>
           <p className="text-slate-500 text-lg font-bold">
-            Scroll ke bawah... ✨
+            Scroll sekejap... ✨
           </p>
         </motion.div>
 
         {/* Center Animation Area */}
-        <div className="flex-1 w-full flex items-center justify-center relative -mt-20">
+        <div className="flex-1 w-full flex items-center justify-center relative -mt-16">
           <motion.div
             style={{ scale: boxScale }}
             className="relative w-80 h-80 flex items-center justify-center"
@@ -94,7 +94,7 @@ export default function Landing({ onNext }) {
                 maskImage: 'radial-gradient(circle, black 50%, transparent 95%)',
                 WebkitMaskImage: 'radial-gradient(circle, black 50%, transparent 95%)'
               }}
-              className="absolute z-30 w-40 h-40"
+              className="absolute z-30 w-32 h-32"
             >
               <img src="/q-mark.png" className="w-full h-full object-contain mix-blend-multiply brightness-[1.15] contrast-[1.1]" alt="?" />
             </motion.div>
@@ -111,7 +111,7 @@ export default function Landing({ onNext }) {
               <img src="/box-closed.png" className="w-full h-full object-contain mix-blend-multiply brightness-[1.08]" alt="Closed Box" />
             </motion.div>
 
-            {/* Open Box */}
+            {/* Open Box - Lid is behind in this image */}
             <motion.div
               style={{ 
                 opacity: openOpacity,
@@ -127,7 +127,7 @@ export default function Landing({ onNext }) {
           {/* Floating assets */}
           <motion.div 
             style={{ opacity: contentOpacity }}
-            className="absolute left-10 top-1/2 -translate-y-1/2 w-24 h-24"
+            className="absolute left-6 top-1/2 -translate-y-1/2 w-20 h-20"
           >
             <div className="w-full h-full relative" style={{ maskImage: 'radial-gradient(circle, black 40%, transparent 90%)' }}>
               <img src="/heart.png" className="w-full h-full object-contain mix-blend-multiply brightness-[1.08] contrast-[1.1] animate-float-slow" alt="Heart" />
@@ -135,7 +135,7 @@ export default function Landing({ onNext }) {
           </motion.div>
           <motion.div 
             style={{ opacity: contentOpacity }}
-            className="absolute right-10 top-1/2 -translate-y-1/2 w-24 h-24"
+            className="absolute right-6 top-1/2 -translate-y-1/2 w-20 h-20"
           >
             <div className="w-full h-full relative" style={{ maskImage: 'radial-gradient(circle, black 40%, transparent 90%)' }}>
               <img src="/bag.png" className="w-full h-full object-contain mix-blend-multiply brightness-[1.08] contrast-[1.1] animate-float-slow" alt="Bag" />
@@ -143,10 +143,10 @@ export default function Landing({ onNext }) {
           </motion.div>
         </div>
 
-        {/* Footer Area - Persistent at bottom after certain scroll */}
+        {/* Footer Area */}
         <motion.div 
           style={{ y: footerY, opacity: footerOpacity }}
-          className="w-full max-w-2xl px-6 pb-12 flex flex-col items-center relative z-40"
+          className="w-full max-w-2xl px-6 pb-10 flex flex-col items-center relative z-40"
         >
           {/* Steps Card */}
           <div className="w-full glass-card p-6 mb-6">
