@@ -9,18 +9,18 @@ export default function Landing({ onNext }) {
     offset: ["start start", "end end"]
   })
 
-  // Animation values based on scroll - ULTRA fast completion
-  const boxScale = useTransform(scrollYProgress, [0, 0.4], [1, 1.3])
-  const closedOpacity = useTransform(scrollYProgress, [0.15, 0.3], [1, 0])
-  const openOpacity = useTransform(scrollYProgress, [0.2, 0.4], [0, 1])
-  const qMarkY = useTransform(scrollYProgress, [0.35, 0.7], [40, -100])
-  const qMarkScale = useTransform(scrollYProgress, [0.35, 0.6], [0, 1.1])
-  const qMarkOpacity = useTransform(scrollYProgress, [0.35, 0.5], [0, 1])
+  // Animation values based on scroll - FRONT-LOADED timing
+  const boxScale = useTransform(scrollYProgress, [0, 0.25], [1, 1.3])
+  const closedOpacity = useTransform(scrollYProgress, [0.05, 0.15], [1, 0])
+  const openOpacity = useTransform(scrollYProgress, [0.1, 0.25], [0, 1])
+  const qMarkY = useTransform(scrollYProgress, [0.2, 0.5], [40, -100])
+  const qMarkScale = useTransform(scrollYProgress, [0.2, 0.4], [0, 1.1])
+  const qMarkOpacity = useTransform(scrollYProgress, [0.2, 0.35], [0, 1])
   
   // Hero text fades out almost immediately
-  const contentOpacity = useTransform(scrollYProgress, [0, 0.1], [1, 0])
-  const footerY = useTransform(scrollYProgress, [0.4, 0.7], [60, 0])
-  const footerOpacity = useTransform(scrollYProgress, [0.4, 0.6], [0, 1])
+  const contentOpacity = useTransform(scrollYProgress, [0, 0.08], [1, 0])
+  const footerY = useTransform(scrollYProgress, [0.25, 0.45], [40, 0])
+  const footerOpacity = useTransform(scrollYProgress, [0.25, 0.4], [0, 1])
 
   const steps = [
     { icon: <Users className="w-7 h-7 text-pink-500" />, title: 'Kenali dia', desc: 'dengan ringkas', color: 'bg-pink-50' },
@@ -30,7 +30,7 @@ export default function Landing({ onNext }) {
   ]
 
   return (
-    <div ref={containerRef} className="relative h-[140vh] w-full">
+    <div ref={containerRef} className="relative h-[200vh] w-full">
       {/* Sticky Container */}
       <div className="sticky top-0 h-screen w-full flex flex-col items-center overflow-hidden">
         
