@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react'
-import { Plus, Edit2, Trash2, Loader2, X } from 'lucide-react'
+import { Plus, Edit2, Trash2, Loader2, X, ShoppingBag, ImageIcon, Target, Tag, ExternalLink } from 'lucide-react'
+import { motion, AnimatePresence } from 'framer-motion'
 
 export default function ProductManager() {
   const [products, setProducts] = useState([])
@@ -14,7 +15,8 @@ export default function ProductManager() {
 
   const fetchProducts = async () => {
     try {
-      const res = await fetch(import.meta.env.VITE_API_URL + '/api/admin/products', {
+      const apiUrl = import.meta.env.VITE_API_URL || 'http://localhost:8787'
+      const res = await fetch(`${apiUrl}/api/admin/products`, {
         headers: { 'Authorization': `Bearer ${localStorage.getItem('adminToken')}` }
       })
       if (res.status === 401) {
@@ -36,15 +38,16 @@ export default function ProductManager() {
   }, [])
 
   const handleDelete = async (id) => {
-    if (!confirm('Are you sure you want to delete this product?')) return
+    if (!confirm('Adakah anda pasti mahu memadam produk ini?')) return
     try {
-      await fetch(import.meta.env.VITE_API_URL + `/api/admin/products/${id}`, {
+      const apiUrl = import.meta.env.VITE_API_URL || 'http://localhost:8787'
+      await fetch(`${apiUrl}/api/admin/products/${id}`, {
         method: 'DELETE',
         headers: { 'Authorization': `Bearer ${localStorage.getItem('adminToken')}` }
       })
       fetchProducts()
     } catch (err) {
-      alert('Delete failed')
+      alert('Padam gagal')
     }
   }
 
@@ -52,7 +55,8 @@ export default function ProductManager() {
     e.preventDefault()
     setSaving(true)
     try {
-      const res = await fetch(import.meta.env.VITE_API_URL + '/api/admin/products', {
+      const apiUrl = import.meta.env.VITE_API_URL || 'http://localhost:8787'
+      const res = await fetch(`${apiUrl}/api/admin/products`, {
         method: 'POST',
         headers: { 
           'Content-Type': 'application/json',
@@ -60,128 +64,203 @@ export default function ProductManager() {
         },
         body: JSON.stringify(formData)
       })
-      if (res.status === 401) {
-        localStorage.removeItem('adminToken')
-        window.location.href = '/admin/login'
-        return
-      }
+      
       const data = await res.json()
-      if (!res.ok) throw new Error(data.details || data.error || 'Failed to save')
+      if (!res.ok) throw new Error(data.details || data.error || 'Gagal menyimpan')
       
       setIsModalOpen(false)
       fetchProducts()
     } catch (err) {
-      alert(`Save failed: ${err.message}`)
+      alert(`Simpan gagal: ${err.message}`)
     } finally {
       setSaving(false)
     }
   }
 
   if (loading) {
-    return <div className="flex justify-center py-20"><Loader2 className="w-8 h-8 text-accent animate-spin" /></div>
+    return (
+      <div className="flex flex-col items-center justify-center py-32 space-y-4">
+        <Loader2 className="w-12 h-12 text-pink-500 animate-spin" />
+        <p className="text-indigo-950 font-black uppercase tracking-widest text-xs">Memuatkan Produk...</p>
+      </div>
+    )
   }
 
   return (
-    <div className="space-y-6">
-      <div className="flex justify-between items-center mb-8">
-        <h2 className="text-2xl font-heading font-bold text-slate-800">Product Manager</h2>
+    <div className="space-y-8">
+      <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
+        <div>
+          <h2 className="text-3xl font-black text-indigo-950">Arkib Hadiah</h2>
+          <p className="text-slate-500 font-bold text-sm">Uruskan senarai cadangan hadiah untuk sistem AI.</p>
+        </div>
         <button 
           onClick={() => {
             setFormData({ name: '', description: '', price_range: '', image_url: '', shopee_url: '', gender_target: 'U' })
             setIsModalOpen(true)
           }}
-          className="flex items-center space-x-2 px-4 py-2 bg-purple-600 text-white rounded-lg hover:bg-purple-700 font-medium transition-colors shadow-sm"
+          className="flex items-center space-x-3 px-8 py-4 bg-indigo-950 text-white rounded-2xl hover:bg-pink-500 font-black transition-all shadow-xl hover:-translate-y-1"
         >
-          <Plus className="w-4 h-4" />
-          <span>Add Product</span>
+          <Plus className="w-5 h-5" />
+          <span>Tambah Produk Baru</span>
         </button>
       </div>
 
-      <div className="bg-white rounded-xl shadow-sm border border-slate-200 overflow-hidden">
-        <table className="w-full text-left text-slate-600">
-          <thead className="bg-slate-50 text-slate-500 text-sm border-b border-slate-200">
-            <tr>
-              <th className="px-6 py-4 font-semibold">Image</th>
-              <th className="px-6 py-4 font-semibold">Product Details</th>
-              <th className="px-6 py-4 font-semibold text-right">Actions</th>
-            </tr>
-          </thead>
-          <tbody className="divide-y divide-slate-200">
-            {products.map(p => (
-              <tr key={p.id} className="hover:bg-slate-50 transition-colors">
-                <td className="px-6 py-4">
-                  <img src={p.image_url} alt={p.name} className="w-16 h-16 object-cover rounded-lg border border-slate-200" />
-                </td>
-                <td className="px-6 py-4">
-                  <div className="font-bold text-slate-800">{p.name}</div>
-                  <div className="text-sm text-slate-500">{p.price_range} • Target: {p.gender_target}</div>
-                </td>
-                <td className="px-6 py-4 text-right space-x-2">
-                  <button onClick={() => handleDelete(p.id)} className="p-2 text-slate-400 hover:text-red-500 hover:bg-red-50 rounded-lg transition-colors">
-                    <Trash2 className="w-4 h-4" />
-                  </button>
-                </td>
+      <div className="bg-white/80 backdrop-blur-xl border-2 border-white rounded-[3rem] shadow-2xl overflow-hidden">
+        <div className="overflow-x-auto">
+          <table className="w-full text-left">
+            <thead>
+              <tr className="bg-indigo-950/5 text-indigo-950/50 text-[10px] uppercase font-black tracking-widest border-b border-indigo-950/5">
+                <th className="px-8 py-6">Imej & Nama</th>
+                <th className="px-8 py-6">Kategori & Harga</th>
+                <th className="px-8 py-6 hidden md:table-cell">Deskripsi</th>
+                <th className="px-8 py-6 text-right">Tindakan</th>
               </tr>
-            ))}
-          </tbody>
-        </table>
+            </thead>
+            <tbody className="divide-y divide-indigo-950/5">
+              {products.map((p, idx) => (
+                <motion.tr 
+                  key={p.id}
+                  initial={{ opacity: 0, x: -10 }}
+                  animate={{ opacity: 1, x: 0 }}
+                  transition={{ delay: idx * 0.05 }}
+                  className="hover:bg-pink-50/30 transition-colors group"
+                >
+                  <td className="px-8 py-6">
+                    <div className="flex items-center space-x-4">
+                      <div className="relative w-16 h-16 flex-shrink-0">
+                        <img src={p.image_url} alt={p.name} className="w-full h-full object-contain rounded-xl bg-white p-2 shadow-inner border border-slate-100" />
+                        <div className="absolute -bottom-1 -right-1 w-6 h-6 bg-white rounded-full flex items-center justify-center shadow-md">
+                          <Target className={`w-3 h-3 ${p.gender_target === 'M' ? 'text-blue-500' : p.gender_target === 'F' ? 'text-pink-500' : 'text-purple-500'}`} />
+                        </div>
+                      </div>
+                      <div className="max-w-[150px] md:max-w-xs">
+                        <p className="font-black text-indigo-950 truncate group-hover:text-pink-500 transition-colors">{p.name}</p>
+                        <a href={p.shopee_url} target="_blank" rel="noreferrer" className="text-[10px] font-bold text-slate-400 flex items-center gap-1 hover:text-indigo-950">
+                          Shopee Link <ExternalLink size={10} />
+                        </a>
+                      </div>
+                    </div>
+                  </td>
+                  <td className="px-8 py-6">
+                    <span className="inline-block px-3 py-1 bg-white border border-slate-100 rounded-full text-[10px] font-black text-indigo-950 shadow-sm">
+                      {p.price_range}
+                    </span>
+                    <p className="text-[10px] font-bold text-slate-400 mt-1 uppercase tracking-wider">Target: {p.gender_target === 'U' ? 'Semua' : p.gender_target === 'M' ? 'Lelaki' : 'Perempuan'}</p>
+                  </td>
+                  <td className="px-8 py-6 hidden md:table-cell">
+                    <p className="text-xs text-slate-500 font-medium line-clamp-2 max-w-xs italic">"{p.description}"</p>
+                  </td>
+                  <td className="px-8 py-6 text-right">
+                    <button 
+                      onClick={() => handleDelete(p.id)} 
+                      className="p-3 text-slate-300 hover:text-red-500 hover:bg-red-50 rounded-2xl transition-all"
+                      title="Padam"
+                    >
+                      <Trash2 className="w-5 h-5" />
+                    </button>
+                  </td>
+                </motion.tr>
+              ))}
+              {products.length === 0 && (
+                <tr>
+                  <td colSpan="4" className="px-8 py-20 text-center text-slate-400 font-bold italic">
+                    Tiada produk ditemui. Mula menambah produk pertama anda!
+                  </td>
+                </tr>
+              )}
+            </tbody>
+          </table>
+        </div>
       </div>
 
-      {isModalOpen && (
-        <div className="fixed inset-0 bg-slate-900/40 backdrop-blur-sm flex items-center justify-center p-4 z-50">
-          <div className="bg-white border border-slate-200 rounded-2xl w-full max-w-2xl max-h-[90vh] overflow-y-auto shadow-xl">
-            <div className="flex justify-between items-center p-6 border-b border-slate-200 sticky top-0 bg-white z-10">
-              <h3 className="text-xl font-bold text-slate-800">Add New Product</h3>
-              <button onClick={() => setIsModalOpen(false)} className="text-slate-400 hover:text-slate-600"><X className="w-5 h-5"/></button>
-            </div>
-            
-            <form onSubmit={handleSave} className="p-6 space-y-6">
-              <div className="grid grid-cols-2 gap-4">
-                <div className="space-y-2">
-                  <label className="text-sm font-semibold text-slate-600">Name</label>
-                  <input required value={formData.name} onChange={e => setFormData({...formData, name: e.target.value})} className="w-full bg-slate-50 border border-slate-200 focus:border-purple-400 focus:ring-2 focus:ring-purple-100 rounded-lg px-4 py-2 text-slate-800 outline-none transition-all" />
+      <AnimatePresence>
+        {isModalOpen && (
+          <div className="fixed inset-0 bg-indigo-950/60 backdrop-blur-md flex items-center justify-center p-4 z-50">
+            <motion.div 
+              initial={{ opacity: 0, scale: 0.9, y: 20 }}
+              animate={{ opacity: 1, scale: 1, y: 0 }}
+              exit={{ opacity: 0, scale: 0.9, y: 20 }}
+              className="bg-white border-2 border-white rounded-[3rem] w-full max-w-2xl max-h-[90vh] overflow-hidden shadow-2xl flex flex-col"
+            >
+              <div className="flex justify-between items-center p-8 border-b border-slate-50 bg-slate-50/30">
+                <div className="flex items-center gap-3">
+                  <div className="w-10 h-10 bg-indigo-950 rounded-xl flex items-center justify-center shadow-lg">
+                    <Plus className="w-6 h-6 text-white" />
+                  </div>
+                  <h3 className="text-xl font-black text-indigo-950">Tambah Produk Baharu</h3>
                 </div>
-                <div className="space-y-2">
-                  <label className="text-sm font-semibold text-slate-600">Price Range (e.g. RM 50 - 100)</label>
-                  <input required value={formData.price_range} onChange={e => setFormData({...formData, price_range: e.target.value})} className="w-full bg-slate-50 border border-slate-200 focus:border-purple-400 focus:ring-2 focus:ring-purple-100 rounded-lg px-4 py-2 text-slate-800 outline-none transition-all" />
-                </div>
-              </div>
-
-              <div className="space-y-2">
-                <label className="text-sm font-semibold text-slate-600">Description</label>
-                <textarea required value={formData.description} onChange={e => setFormData({...formData, description: e.target.value})} className="w-full bg-slate-50 border border-slate-200 focus:border-purple-400 focus:ring-2 focus:ring-purple-100 rounded-lg px-4 py-2 text-slate-800 outline-none transition-all h-24" />
-              </div>
-
-              <div className="grid grid-cols-2 gap-4">
-                <div className="space-y-2">
-                  <label className="text-sm font-semibold text-slate-600">Image URL</label>
-                  <input required value={formData.image_url} onChange={e => setFormData({...formData, image_url: e.target.value})} className="w-full bg-slate-50 border border-slate-200 focus:border-purple-400 focus:ring-2 focus:ring-purple-100 rounded-lg px-4 py-2 text-slate-800 outline-none transition-all" />
-                </div>
-                <div className="space-y-2">
-                  <label className="text-sm font-semibold text-slate-600">Store Affiliate URL</label>
-                  <input required value={formData.shopee_url} onChange={e => setFormData({...formData, shopee_url: e.target.value})} className="w-full bg-slate-50 border border-slate-200 focus:border-purple-400 focus:ring-2 focus:ring-purple-100 rounded-lg px-4 py-2 text-slate-800 outline-none transition-all" />
-                </div>
-              </div>
-
-              <div className="space-y-2">
-                <label className="text-sm font-semibold text-slate-600">Gender Target</label>
-                <select value={formData.gender_target} onChange={e => setFormData({...formData, gender_target: e.target.value})} className="w-full bg-slate-50 border border-slate-200 focus:border-purple-400 focus:ring-2 focus:ring-purple-100 rounded-lg px-4 py-2 text-slate-800 outline-none transition-all">
-                  <option value="U">Unisex (All)</option>
-                  <option value="M">Male Only</option>
-                  <option value="F">Female Only</option>
-                </select>
-              </div>
-
-              <div className="pt-4 flex justify-end space-x-3 border-t border-slate-200 mt-6">
-                <button type="button" onClick={() => setIsModalOpen(false)} className="px-4 py-2 text-slate-500 hover:bg-slate-100 rounded-lg font-medium transition-colors">Cancel</button>
-                <button type="submit" disabled={saving} className="px-6 py-2 bg-purple-600 text-white rounded-lg hover:bg-purple-700 font-medium transition-colors shadow-sm disabled:opacity-50">
-                  {saving ? 'Saving...' : 'Save Product'}
+                <button onClick={() => setIsModalOpen(false)} className="w-10 h-10 bg-white rounded-full border border-slate-100 flex items-center justify-center text-slate-400 hover:text-indigo-950 shadow-sm transition-colors">
+                  <X className="w-5 h-5"/>
                 </button>
               </div>
-            </form>
+              
+              <form onSubmit={handleSave} className="p-8 space-y-6 overflow-y-auto">
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                  <div className="space-y-2">
+                    <label className="text-[10px] font-black uppercase tracking-widest text-slate-400 ml-1">Nama Produk</label>
+                    <div className="relative">
+                      <Tag className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-300 w-4 h-4" />
+                      <input required value={formData.name} onChange={e => setFormData({...formData, name: e.target.value})} className="w-full bg-slate-50 border-2 border-slate-50 focus:border-pink-300 rounded-2xl px-12 py-4 text-indigo-950 font-bold outline-none transition-all shadow-inner" placeholder="E.g. Jam Tangan Elegan" />
+                    </div>
+                  </div>
+                  <div className="space-y-2">
+                    <label className="text-[10px] font-black uppercase tracking-widest text-slate-400 ml-1">Julat Harga</label>
+                    <div className="relative">
+                      <ShoppingBag className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-300 w-4 h-4" />
+                      <input required value={formData.price_range} onChange={e => setFormData({...formData, price_range: e.target.value})} className="w-full bg-slate-50 border-2 border-slate-50 focus:border-pink-300 rounded-2xl px-12 py-4 text-indigo-950 font-bold outline-none transition-all shadow-inner" placeholder="E.g. RM 50 - 150" />
+                    </div>
+                  </div>
+                </div>
+
+                <div className="space-y-2">
+                  <label className="text-[10px] font-black uppercase tracking-widest text-slate-400 ml-1">Deskripsi / Alasan Hadiah</label>
+                  <textarea required value={formData.description} onChange={e => setFormData({...formData, description: e.target.value})} className="w-full bg-slate-50 border-2 border-slate-50 focus:border-pink-300 rounded-2xl px-6 py-4 text-indigo-950 font-bold outline-none transition-all shadow-inner min-h-[100px] resize-none" placeholder="Kenapa AI patut pilih hadiah ni?" />
+                </div>
+
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                  <div className="space-y-2">
+                    <label className="text-[10px] font-black uppercase tracking-widest text-slate-400 ml-1">URL Imej</label>
+                    <div className="relative">
+                      <ImageIcon className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-300 w-4 h-4" />
+                      <input required value={formData.image_url} onChange={e => setFormData({...formData, image_url: e.target.value})} className="w-full bg-slate-50 border-2 border-slate-50 focus:border-pink-300 rounded-2xl px-12 py-4 text-indigo-950 font-bold outline-none transition-all shadow-inner" placeholder="https://..." />
+                    </div>
+                  </div>
+                  <div className="space-y-2">
+                    <label className="text-[10px] font-black uppercase tracking-widest text-slate-400 ml-1">URL Shopee / Affiliate</label>
+                    <div className="relative">
+                      <ShoppingBag className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-300 w-4 h-4" />
+                      <input required value={formData.shopee_url} onChange={e => setFormData({...formData, shopee_url: e.target.value})} className="w-full bg-slate-50 border-2 border-slate-50 focus:border-pink-300 rounded-2xl px-12 py-4 text-indigo-950 font-bold outline-none transition-all shadow-inner" placeholder="https://shope.ee/..." />
+                    </div>
+                  </div>
+                </div>
+
+                <div className="space-y-2">
+                  <label className="text-[10px] font-black uppercase tracking-widest text-slate-400 ml-1">Target Jantina</label>
+                  <div className="grid grid-cols-3 gap-3">
+                    {['U', 'M', 'F'].map(target => (
+                      <button
+                        key={target}
+                        type="button"
+                        onClick={() => setFormData({...formData, gender_target: target})}
+                        className={`py-3 rounded-xl font-black text-xs transition-all border-2 ${formData.gender_target === target ? 'bg-indigo-950 text-white border-indigo-950 shadow-lg' : 'bg-white text-slate-400 border-slate-100 hover:border-pink-200'}`}
+                      >
+                        {target === 'U' ? 'Unisex' : target === 'M' ? 'Lelaki' : 'Perempuan'}
+                      </button>
+                    ))}
+                  </div>
+                </div>
+
+                <div className="pt-6 flex gap-4 mt-4">
+                  <button type="button" onClick={() => setIsModalOpen(false)} className="flex-1 py-4 text-slate-400 hover:text-indigo-950 font-black uppercase tracking-widest text-xs transition-colors">Batal</button>
+                  <button type="submit" disabled={saving} className="flex-[2] py-5 bg-indigo-950 text-white rounded-[1.5rem] font-black text-lg shadow-2xl hover:bg-pink-500 transition-all disabled:opacity-50 flex items-center justify-center gap-3">
+                    {saving ? <Loader2 className="w-5 h-5 animate-spin" /> : <><span>Simpan Produk</span> <Sparkles className="w-5 h-5 text-pink-400" /></>}
+                  </button>
+                </div>
+              </form>
+            </motion.div>
           </div>
-        </div>
-      )}
+        )}
+      </AnimatePresence>
     </div>
   )
 }
