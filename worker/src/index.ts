@@ -98,13 +98,14 @@ app.post('/api/generate-traits', async (c) => {
               Gunakan bahasa Melayu pasar/slang Malaysia yang sangat santai dan catchy (contoh: padu teruk, style habis, memang ngam, otak ligat, member kita ni, rileks jap). 
               TEGAS: Dilarang sama sekali guna bahasa Indonesia (contoh: 'banget', 'bisa', 'kamu', 'ingin', 'nggak').
               Hasilkan 3 poin ringkas (max 10-12 patah perkataan setiap poin).
-              Mesti sebut nama "${personName}" dalam setiap poin. 
+              Sebut nama "${personName}" SEKALI SAHAJA (biasanya di poin pertama). 
+              Poin seterusnya, guna kata ganti nama seperti 'dia', 'si dia', atau 'member kita ni'.
               Gaya penulisan mestilah kelakar tapi tepat dengan Zodiak.
               Return HANYA format JSON array string: ["poin 1", "poin 2", "poin 3"]. Dilarang letak teks lain.` 
             },
             { 
               role: 'user', 
-              content: `Nama: ${personName}. Zodiak: ${zodiac}. Jantina: ${gender === 'M' ? 'Lelaki' : 'Perempuan'}. Hubungan: ${relationship}. Hobi: ${hobby}. Acara: ${occasion}. Tulis 3 poin personaliti yang kelakar dan sangat 'Malaysian style'. Gantikan 'dia' dengan "${personName}".` 
+              content: `Nama: ${personName}. Zodiak: ${zodiac}. Jantina: ${gender === 'M' ? 'Lelaki' : 'Perempuan'}. Hubungan: ${relationship}. Hobi: ${hobby}. Acara: ${occasion}. Tulis 3 poin personaliti yang kelakar dan sangat 'Malaysian style'.` 
             }
           ]
         });
