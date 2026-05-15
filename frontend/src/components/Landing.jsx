@@ -1,6 +1,6 @@
 import { useState, useEffect, useRef } from 'react'
 import { motion, useScroll, useSpring, useTransform } from 'framer-motion'
-import { Wand2, Users, Star, Gift, ShoppingBag, ChevronRight } from 'lucide-react'
+import { Wand2, Users, Star, Gift, ShoppingBag, ChevronRight, ChevronDown } from 'lucide-react'
 
 export default function Landing({ onNext }) {
   const containerRef = useRef(null)
@@ -64,9 +64,6 @@ export default function Landing({ onNext }) {
                 <h1 className="text-3xl md:text-6xl font-black text-indigo-950 leading-[0.95] tracking-tight mb-4">
                   Sedang mencari<br/><span className="text-pink-500">hadiah?</span>
                 </h1>
-                <motion.div animate={{ y: [0, 8, 0] }} transition={{ duration: 2, repeat: Infinity }} className="text-slate-400 font-bold text-[10px] md:text-xs">
-                  Skrol ke bawah... ✨
-                </motion.div>
               </motion.div>
 
               <motion.div style={{ opacity: title2Opacity }} className="absolute inset-0 flex flex-col items-center">
@@ -104,6 +101,23 @@ export default function Landing({ onNext }) {
 
               <motion.div style={{ opacity: openOpacity }} className="absolute inset-0 z-10">
                 <img src="/box-open.png" className="w-full h-full object-contain mix-blend-multiply brightness-[1.05]" alt="Open Box" />
+              </motion.div>
+
+              {/* Enhanced Scroll Indicator */}
+              <motion.div 
+                style={{ opacity: title1Opacity }}
+                className="absolute -bottom-24 md:-bottom-32 flex flex-col items-center gap-2"
+              >
+                <motion.div
+                  animate={{ y: [0, 10, 0] }}
+                  transition={{ duration: 1.5, repeat: Infinity, ease: "easeInOut" }}
+                  className="w-10 h-10 bg-white rounded-full shadow-lg border border-pink-50 flex items-center justify-center"
+                >
+                  <ChevronDown className="w-6 h-6 text-pink-500" />
+                </motion.div>
+                <span className="text-indigo-950/40 font-black text-[10px] md:text-xs tracking-[0.2em] uppercase">
+                  .. skrol ke bawah ..
+                </span>
               </motion.div>
             </motion.div>
           </div>
