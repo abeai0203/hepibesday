@@ -434,30 +434,37 @@ app.post('/api/admin/scrape-product', adminAuth, async (c) => {
     }
 
     // 2. AI Polish (Only if we have a name)
-    if (c.env.AI && (name || providedName)) {
+    const seedName = name || providedName || ''
+    if (c.env.AI && seedName) {
       try {
         const aiResponse = await c.env.AI.run('@cf/meta/llama-3-8b-instruct', {
           messages: [
             { 
               role: 'system', 
-              content: 'Anda ialah pakar e-commerce Malaysia. Kemaskan Nama Produk, buat Deskripsi menarik (BM santai), dan BERIKAN 2-3 TAG HOBI (contoh: Gaming, Travel, Beauty). Return JSON: {"name": "...", "description": "...", "tags": "tag1, tag2"}' 
+              content: 'Anda ialah pakar e-commerce Malaysia. Kemaskan Nama Produk, buat Deskripsi menarik (BM santai), dan BERIKAN 2-3 TAG HOBI (contoh: Gaming, Travel, Beauty). Return HANYA JSON: {"name": "...", "description": "...", "tags": "tag1, tag2"}' 
             },
-            { role: 'user', content: `Nama: ${name || providedName}. URL: ${url}` }
+            { role: 'user', content: `Nama: ${seedName}` }
           ]
         })
         const aiText = (aiResponse as any).response;
         const match = aiText.match(/\{.*?\}/s);
         if (match) {
           const parsed = JSON.parse(match[0]);
-          name = parsed.name || name;
+          name = parsed.name || seedName;
           description = parsed.description || '';
           tags = parsed.tags || '';
+        } else {
+          name = seedName;
         }
-      } catch (err) {}
+      } catch (err) {
+        name = seedName;
+      }
+    } else {
+      name = seedName || 'Produk Menarik';
     }
 
     return c.json({
-      name: name || 'Produk Menarik',
+      name: name,
       image_url: imageUrl,
       description: description || 'Hadiah menarik dari Shopee!',
       tags: tags,
