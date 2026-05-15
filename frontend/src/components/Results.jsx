@@ -32,6 +32,7 @@ export default function Results({ sessionData, onRestart }) {
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState(null)
   const [quoteIdx, setQuoteIdx] = useState(0)
+  const [maxBudget, setMaxBudget] = useState(500)
 
   // Cycle through quotes every 3 seconds
   useEffect(() => {
@@ -77,6 +78,16 @@ export default function Results({ sessionData, onRestart }) {
     fetchRecommendations()
     return () => { isMounted = false }
   }, [zodiac, gender, targetName])
+
+  // Parse numerical price from string like "RM 50 - 150"
+  const getMinPrice = (priceStr) => {
+    if (!priceStr) return 0
+    const numbers = priceStr.match(/\d+/g)
+    if (!numbers) return 0
+    return Math.min(...numbers.map(Number))
+  }
+
+  const filteredProducts = products.filter(p => getMinPrice(p.price_range) <= maxBudget)
 
   const handleProductClick = async (productId, url) => {
     fetch(`${API_URL}/api/track-click`, {
@@ -211,7 +222,7 @@ export default function Results({ sessionData, onRestart }) {
       <motion.div
         initial={{ opacity: 0, y: 20 }}
         animate={{ opacity: 1, y: 0 }}
-        className="w-full max-w-2xl mx-auto text-center mb-12 pt-8"
+        className="w-full max-w-2xl mx-auto text-center mb-8 pt-8"
       >
         <div className="inline-flex items-center gap-2 px-5 py-2 rounded-full bg-white shadow-xl border border-pink-50 mb-8">
           <Star className="w-4 h-4 text-orange-400 fill-orange-400" />
@@ -222,64 +233,92 @@ export default function Results({ sessionData, onRestart }) {
           Hadiah Paling Ngam Untuk <br/>
           <span className="text-pink-500 underline decoration-pink-200 underline-offset-8">{targetName || 'Si Dia'}</span>
         </h2>
-        <p className="text-slate-500 font-bold text-lg">
-          Dipilih secara magik mengikut aura personaliti dan bintang {targetName || 'dia'}.
-        </p>
+        
+        {/* Budget Slider */}
+        <div className="mt-12 bg-white/80 backdrop-blur px-8 py-6 rounded-3xl shadow-xl border border-white max-w-lg mx-auto">
+          <div className="flex justify-between items-center mb-4">
+            <span className="text-[10px] font-black text-slate-400 uppercase tracking-widest">Bajet Maksimum</span>
+            <span className="text-xl font-black text-pink-500">RM {maxBudget === 500 ? '500+' : maxBudget}</span>
+          </div>
+          <input 
+            type="range" 
+            min="10" 
+            max="500" 
+            step="10" 
+            value={maxBudget} 
+            onChange={(e) => setMaxBudget(parseInt(e.target.value))}
+            className="w-full h-2 bg-slate-100 rounded-lg appearance-none cursor-pointer accent-pink-500"
+          />
+          <div className="flex justify-between mt-2 text-[8px] font-bold text-slate-400 uppercase tracking-tighter">
+            <span>RM 10</span>
+            <span>RM 500+</span>
+          </div>
+        </div>
       </motion.div>
 
       {/* Products Grid */}
-      <div className="w-full max-w-2xl mx-auto grid grid-cols-1 md:grid-cols-2 gap-8">
-        {products.map((product, index) => (
-          <motion.div
-            key={product.id || index}
-            initial={{ opacity: 0, y: 30 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ delay: index * 0.1 }}
-            className="bg-white border-2 border-white rounded-[2.5rem] overflow-hidden group hover:shadow-2xl hover:-translate-y-2 transition-all duration-500 flex flex-col shadow-xl"
-          >
-            {/* Image Container */}
-            <div className="relative h-64 w-full bg-white p-8 flex items-center justify-center group-hover:scale-105 transition-transform duration-500">
-              <div className="absolute inset-0 bg-gradient-to-br from-pink-50/30 to-purple-50/30 opacity-0 group-hover:opacity-100 transition-opacity" />
-              <img 
-                src={product.image_url} 
-                alt={product.name} 
-                className="max-w-full max-h-full object-contain relative z-10 drop-shadow-2xl"
-              />
-              {product.price_range && (
-                <div className="absolute top-4 right-4 bg-pink-500 text-white text-[10px] font-black px-4 py-2 rounded-full shadow-lg transform rotate-6">
-                  {product.price_range ? (product.price_range.startsWith('RM') ? product.price_range : `RM ${product.price_range}`) : ''}
-                </div>
-              )}
-            </div>
-
-            {/* Content */}
-            <div className="p-8 flex-1 flex flex-col space-y-4">
-              <h3 className="text-2xl font-black text-indigo-950 leading-tight group-hover:text-pink-500 transition-colors">
-                {product.name}
-              </h3>
-              <p className="text-slate-500 font-bold text-sm leading-relaxed flex-1 italic">
-                "{product.reason || 'Pilihan terbaik untuk si dia.'}"
-              </p>
-              
-              <button
-                onClick={() => handleProductClick(product.id, product.shopee_url)}
-                className="w-full py-4 bg-indigo-950 text-white rounded-2xl font-black flex items-center justify-center gap-3 shadow-xl hover:bg-pink-500 transition-all active:scale-95"
+      <div className="w-full max-w-4xl mx-auto">
+        <AnimatePresence mode="popLayout">
+          <motion.div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+            {filteredProducts.map((product, index) => (
+              <motion.div
+                key={product.id || index}
+                layout
+                initial={{ opacity: 0, scale: 0.9 }}
+                animate={{ opacity: 1, scale: 1 }}
+                exit={{ opacity: 0, scale: 0.9 }}
+                transition={{ duration: 0.3 }}
+                className="bg-white border-2 border-white rounded-[2.5rem] overflow-hidden group hover:shadow-2xl hover:-translate-y-2 transition-all duration-500 flex flex-col shadow-xl"
               >
-                <ShoppingBag className="w-5 h-5" />
-                Beli Sekarang
-                <ExternalLink className="w-4 h-4 opacity-50" />
-              </button>
-            </div>
-          </motion.div>
-        ))}
-      </div>
+                {/* Image Container */}
+                <div className="relative h-64 w-full bg-white p-8 flex items-center justify-center group-hover:scale-105 transition-transform duration-500">
+                  <div className="absolute inset-0 bg-gradient-to-br from-pink-50/30 to-purple-50/30 opacity-0 group-hover:opacity-100 transition-opacity" />
+                  <img 
+                    src={product.image_url} 
+                    alt={product.name} 
+                    className="max-w-full max-h-full object-contain relative z-10 drop-shadow-2xl"
+                  />
+                  {product.price_range && (
+                    <div className="absolute top-4 right-4 bg-pink-500 text-white text-[10px] font-black px-4 py-2 rounded-full shadow-lg transform rotate-6">
+                      {product.price_range ? (product.price_range.startsWith('RM') ? product.price_range : `RM ${product.price_range}`) : ''}
+                    </div>
+                  )}
+                </div>
 
-      {products.length === 0 && (
-        <div className="w-full max-w-lg mx-auto bg-white/70 backdrop-blur-xl border-2 border-dashed border-pink-200 rounded-[2.5rem] p-12 text-center shadow-xl">
-          <Gift className="w-16 h-16 text-pink-200 mx-auto mb-4" />
-          <p className="text-indigo-950 font-black text-xl">Alamak, tiada cadangan spesifik buat masa ini. Kami akan cari lagi!</p>
-        </div>
-      )}
+                {/* Content */}
+                <div className="p-8 flex-1 flex flex-col space-y-4">
+                  <h3 className="text-2xl font-black text-indigo-950 leading-tight group-hover:text-pink-500 transition-colors">
+                    {product.name}
+                  </h3>
+                  <p className="text-slate-500 font-bold text-sm leading-relaxed flex-1 italic">
+                    "{product.reason || 'Pilihan terbaik untuk si dia.'}"
+                  </p>
+                  
+                  <button
+                    onClick={() => handleProductClick(product.id, product.shopee_url)}
+                    className="w-full py-4 bg-indigo-950 text-white rounded-2xl font-black flex items-center justify-center gap-3 shadow-xl hover:bg-pink-500 transition-all active:scale-95"
+                  >
+                    <ShoppingBag className="w-5 h-5" />
+                    Beli Sekarang
+                    <ExternalLink className="w-4 h-4 opacity-50" />
+                  </button>
+                </div>
+              </motion.div>
+            ))}
+          </motion.div>
+        </AnimatePresence>
+
+        {filteredProducts.length === 0 && (
+          <motion.div 
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            className="w-full max-w-lg mx-auto bg-white/70 backdrop-blur-xl border-2 border-dashed border-pink-200 rounded-[2.5rem] p-12 text-center shadow-xl mt-8"
+          >
+            <Gift className="w-16 h-16 text-pink-200 mx-auto mb-4" />
+            <p className="text-indigo-950 font-black text-xl">Bajet terlalu rendah? Cuba naikkan slider untuk lihat lebih banyak hadiah!</p>
+          </motion.div>
+        )}
+      </div>
 
       {/* Restart */}
       <div className="mt-16 text-center">
