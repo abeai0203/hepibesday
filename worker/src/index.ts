@@ -46,7 +46,7 @@ app.get('/', (c) => {
 app.post('/api/generate-traits', async (c) => {
   try {
     const body = await c.req.json()
-    const { birthDate, gender, targetName, turnstileToken, relationship = 'U', hobby = '' } = body
+    const { birthDate, gender, targetName, turnstileToken, relationship = 'U', hobby = '', occasion = 'birthday' } = body
 
     if (!birthDate || !gender) {
       return c.json({ error: 'Missing birthDate or gender' }, 400)
@@ -98,7 +98,7 @@ app.post('/api/generate-traits', async (c) => {
             },
             { 
               role: 'user', 
-              content: `Nama: ${personName}. Zodiak: ${zodiac}. Jantina: ${gender === 'M' ? 'Lelaki' : 'Perempuan'}. Hubungan dengan saya: ${relationship}. Hobi: ${hobby}. Tulis 3 poin personaliti yang sangat santai. Gantikan perkataan 'dia' dengan nama "${personName}".` 
+              content: `Nama: ${personName}. Zodiak: ${zodiac}. Jantina: ${gender === 'M' ? 'Lelaki' : 'Perempuan'}. Hubungan: ${relationship}. Hobi: ${hobby}. Acara: ${occasion}. Tulis 3 poin personaliti yang santai & sesuai dengan acara tersebut. Gantikan 'dia' dengan "${personName}".` 
             }
           ]
         });
