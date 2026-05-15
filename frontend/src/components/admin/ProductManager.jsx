@@ -57,14 +57,33 @@ export default function ProductManager() {
     if (!searchQuery) return
     setSearchLoading(true)
     try {
-      const apiUrl = import.meta.env.VITE_API_URL || 'http://localhost:8787'
-      const res = await fetch(`${apiUrl}/api/admin/search-shopee?q=${encodeURIComponent(searchQuery)}`, {
-        headers: { 'Authorization': `Bearer ${localStorage.getItem('adminToken')}` }
-      })
+      // Direct search from frontend via proxy to avoid server IP blocking
+      const targetUrl = `https://shopee.com.my/api/v4/search/search_items?by=relevancy&keyword=${encodeURIComponent(searchQuery)}&limit=12&newest=0&order=desc&page_type=search&scenario=PAGE_GLOBAL_SEARCH&version=2`
+      const proxyUrl = `https://corsproxy.io/?${encodeURIComponent(targetUrl)}`
+      
+      const res = await fetch(proxyUrl)
+      if (!res.ok) throw new Error('Proxy error')
+      
       const data = await res.json()
-      setSearchResults(data.results || [])
+      
+      const items = (data.items || []).map((i) => {
+        const basic = i.item_basic
+        return {
+          id: basic.itemid,
+          shop_id: basic.shopid,
+          name: basic.name,
+          price: (basic.price / 100000).toFixed(2),
+          image_url: `https://down-my.img.susercontent.com/file/${basic.image}`,
+          shopee_url: `https://shopee.com.my/product/${basic.shopid}/${basic.itemid}`,
+          rating: basic.item_rating?.rating_star?.toFixed(1)
+        }
+      })
+      
+      setSearchResults(items)
+      if (items.length === 0) alert('Tiada hasil dijumpai. Cuba keyword lain.')
     } catch (err) {
-      alert('Gagal mencari di Shopee')
+      console.error('Search error:', err)
+      alert('Gagal mencari di Shopee. Sila cuba sebentar lagi.')
     } finally {
       setSearchLoading(false)
     }
