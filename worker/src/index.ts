@@ -331,6 +331,35 @@ app.post('/api/admin/products', adminAuth, async (c) => {
   }
 })
 
+app.post('/api/admin/bulk-products', adminAuth, async (c) => {
+  try {
+    const products = await c.req.json()
+    if (!Array.isArray(products)) return c.json({ error: 'Data mestilah dalam format array' }, 400)
+
+    const statements = products.map(p => {
+      const id = 'p' + Math.random().toString(36).substr(2, 9)
+      return c.env.DB.prepare(
+        'INSERT INTO products (id, name, description, price_range, image_url, shopee_url, gender_target, tags, relationship_target) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)'
+      ).bind(
+        id, 
+        p.name || 'Produk Tanpa Nama', 
+        p.description || '', 
+        p.price_range || 'RM 0', 
+        p.image_url || '', 
+        p.shopee_url || '', 
+        p.gender_target || 'U', 
+        p.tags || '', 
+        p.relationship_target || 'U'
+      )
+    })
+
+    await c.env.DB.batch(statements)
+    return c.json({ success: true, count: products.length })
+  } catch (error) {
+    return c.json({ error: 'Bulk upload gagal', details: (error as Error).message }, 500)
+  }
+})
+
 app.delete('/api/admin/products/:id', adminAuth, async (c) => {
   try {
     const id = c.req.param('id')
