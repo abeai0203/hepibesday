@@ -52,17 +52,27 @@ export default function ProductManager() {
   }, [])
 
   const startMagicImport = async () => {
-    const urls = bulkUrls.split('\n').map(u => u.trim()).filter(u => u.startsWith('http'))
-    if (urls.length === 0) return alert('Sila masukkan sekurang-kurangnya satu link Shopee')
+    const lines = bulkUrls.split('\n').map(l => l.trim()).filter(l => l.length > 0)
+    if (lines.length === 0) return alert('Sila masukkan sekurang-kurangnya satu link atau format Nama | Link')
 
     setIsImporting(true)
-    const initialStatus = urls.map(url => ({ url, status: 'pending' }))
+    const initialStatus = lines.map(line => ({ url: line, status: 'pending' }))
     setImportStatus(initialStatus)
 
     const apiUrl = import.meta.env.VITE_API_URL || 'http://localhost:8787'
 
-    for (let i = 0; i < urls.length; i++) {
-      const url = urls[i]
+    for (let i = 0; i < lines.length; i++) {
+      const line = lines[i]
+      let url = line
+      let manualName = ''
+
+      // Support "Name | Link" format
+      if (line.includes('|')) {
+        const parts = line.split('|')
+        manualName = parts[0].trim()
+        url = parts[1].trim()
+      }
+
       setImportStatus(prev => prev.map((s, idx) => idx === i ? { ...s, status: 'loading' } : s))
 
       try {
@@ -73,7 +83,7 @@ export default function ProductManager() {
             'Content-Type': 'application/json',
             'Authorization': `Bearer ${localStorage.getItem('adminToken')}`
           },
-          body: JSON.stringify({ url })
+          body: JSON.stringify({ url, name: manualName })
         });
         
         const aiData = await aiRes.json();
@@ -87,10 +97,10 @@ export default function ProductManager() {
             'Authorization': `Bearer ${localStorage.getItem('adminToken')}`
           },
           body: JSON.stringify({
-            name: aiData.name,
+            name: aiData.name || manualName || 'Produk Baru',
             description: aiData.description,
-            price_range: aiData.price_range || 'RM 0',
-            image_url: aiData.image_url,
+            price_range: aiData.price_range || 'RM -',
+            image_url: aiData.image_url || 'https://via.placeholder.com/500?text=Sila+Letak+Gambar',
             shopee_url: url,
             gender_target: 'U',
             tags: aiData.tags || '',
@@ -99,7 +109,7 @@ export default function ProductManager() {
         });
 
         if (saveRes.ok) {
-          setImportStatus(prev => prev.map((s, idx) => idx === i ? { ...s, status: 'success', name: aiData.name } : s))
+          setImportStatus(prev => prev.map((s, idx) => idx === i ? { ...s, status: 'success', name: aiData.name || manualName } : s))
         } else {
           throw new Error('Save failed')
         }
