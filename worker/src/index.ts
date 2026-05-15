@@ -419,39 +419,55 @@ app.post('/api/admin/scrape-product', adminAuth, async (c) => {
     let imageUrl = 'https://via.placeholder.com/500?text=Sila+Masukkan+Gambar'
     let priceRange = 'RM -'
 
-    // 1. Scraping Logic with Multi-Proxy Fallback
-    let html = ''
+    // 1. New "Pro" Scraper using Shopee v4 API
     try {
-      // Attempt 1: Primary Proxy
-      const res = await fetch(`https://corsproxy.io/?${encodeURIComponent(url)}`, {
-        headers: { 'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36' }
-      })
-      html = await res.text()
-
-      // Attempt 2: Fallback Proxy if Attempt 1 was blocked
-      if (html.length < 500 || html.toLowerCase().includes('robot check') || html.toLowerCase().includes('shopee') && html.length < 2000) {
-        const res2 = await fetch(`https://api.allorigins.win/get?url=${encodeURIComponent(url)}`)
-        const data2 = await res2.json() as any
-        html = data2.contents || ''
+      // Extract ShopID and ItemID from URL
+      // Pattern: shopee.com.my/product/SHOPID/ITEMID
+      const idMatch = url.match(/product\/(\d+)\/(\d+)/)
+      if (idMatch) {
+        const shopId = idMatch[1]
+        const itemId = idMatch[2]
+        const apiUrl = `https://shopee.com.my/api/v4/item/get?itemid=${itemId}&shopid=${shopId}`
+        
+        const apiRes = await fetch(`https://corsproxy.io/?${encodeURIComponent(apiUrl)}`, {
+          headers: { 'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36' }
+        })
+        const apiData = await apiRes.json() as any
+        
+        if (apiData?.data) {
+          const item = apiData.data
+          name = item.name || ''
+          description = item.description || ''
+          
+          // Get highest resolution image
+          if (item.image) {
+            imageUrl = `https://down-my.img.susercontent.com/file/${item.image}`
+          }
+          
+          if (item.price_min) {
+            priceRange = `RM ${(item.price_min / 100000).toFixed(2)}`
+            if (item.price_max && item.price_max !== item.price_min) {
+              priceRange += ` - RM ${(item.price_max / 100000).toFixed(2)}`
+            }
+          }
+        }
       }
-    } catch (e) {}
+    } catch (e) {
+      console.error("API Scrape failed, falling back to Meta:", e)
+    }
 
-    if (html) {
-      // Enhanced Metadata Extraction
-      const ogTitle = html.match(/property="og:title"\s+content="(.*?)"/i)?.[1] || 
-                      html.match(/name="twitter:title"\s+content="(.*?)"/i)?.[1] ||
-                      html.match(/<title>(.*?)<\/title>/i)?.[1]
-      
-      if (ogTitle && ogTitle.toLowerCase() !== 'shopee') {
-        name = ogTitle.split('|')[0].split('-')[0].replace('Google Translate', '').trim()
-      }
-
-      const ogImage = html.match(/property="og:image"\s+content="(.*?)"/i)?.[1] || 
-                      html.match(/name="twitter:image"\s+content="(.*?)"/i)?.[1]
-      if (ogImage) imageUrl = ogImage
-
-      const priceMatch = html.match(/"price":\s*"(\d+)"/i) || html.match(/"price":\s*(\d+)/i) || html.match(/RM\s*(\d+\.?\d*)/i)
-      if (priceMatch) priceRange = `RM ${priceMatch[1]}`
+    // Fallback to Meta Scraping if API fails or No IDs found
+    if (!name) {
+      try {
+        const res = await fetch(`https://corsproxy.io/?${encodeURIComponent(url)}`)
+        const html = await res.text()
+        const ogTitle = html.match(/property="og:title"\s+content="(.*?)"/i)?.[1] || html.match(/<title>(.*?)<\/title>/i)?.[1]
+        if (ogTitle && ogTitle.toLowerCase() !== 'shopee') {
+          name = ogTitle.split('|')[0].trim()
+        }
+        const ogImage = html.match(/property="og:image"\s+content="(.*?)"/i)?.[1]
+        if (ogImage) imageUrl = ogImage
+      } catch (e) {}
     }
 
     // 2. AI Polish
@@ -472,17 +488,20 @@ app.post('/api/admin/scrape-product', adminAuth, async (c) => {
         if (match) {
           const parsed = JSON.parse(match[0]);
           name = parsed.name || seedName;
-          description = parsed.description || '';
+          description = parsed.description || description || '';
           tags = parsed.tags || '';
-        } else {
-          name = seedName;
         }
-      } catch (err) {
-        name = seedName;
-      }
-    } else {
-      name = seedName || 'Produk Baru (Sila Edit)';
+      } catch (err) {}
     }
+
+    return c.json({
+      name: name || seedName || 'Produk Baru (Sila Edit)',
+      image_url: imageUrl,
+      description: description || 'Hadiah menarik dari Shopee!',
+      tags: tags,
+      price_range: priceRange,
+      shopee_url: url
+    })
 
     return c.json({
       name: name,
