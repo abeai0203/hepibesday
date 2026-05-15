@@ -1,5 +1,5 @@
 import { useState, useEffect, useRef } from 'react'
-import { Plus, Trash2, Loader2, X, ShoppingBag, Image as ImageIcon, Target, Tag, ExternalLink, Wand2, FileSpreadsheet, Download, Search, Sparkles, CheckCircle2, ListPlus } from 'lucide-react'
+import { Plus, Trash2, Loader2, X, ShoppingBag, Image as ImageIcon, Target, Tag, ExternalLink, Wand2, FileSpreadsheet, Download, Search, Sparkles, CheckCircle2, ListPlus, Edit3, Save } from 'lucide-react'
 import { motion, AnimatePresence } from 'framer-motion'
 
 export default function ProductManager() {
@@ -7,12 +7,13 @@ export default function ProductManager() {
   const [loading, setLoading] = useState(true)
   const [activeTab, setActiveTab] = useState('inventory') // 'inventory' or 'magic'
   const [isModalOpen, setIsModalOpen] = useState(false)
+  const [editingId, setEditingId] = useState(null)
   const [saving, setSaving] = useState(false)
   const [bulkLoading, setBulkLoading] = useState(false)
   
   // Magic Importer State
   const [bulkUrls, setBulkUrls] = useState('')
-  const [importStatus, setImportStatus] = useState([]) // {url, status: 'pending'|'loading'|'success'|'error', name?: string}
+  const [importStatus, setImportStatus] = useState([]) 
   const [isImporting, setIsImporting] = useState(false)
   
   const fileInputRef = useRef(null)
@@ -51,6 +52,51 @@ export default function ProductManager() {
     }
   }, [])
 
+  const handleEdit = (product) => {
+    setEditingId(product.id)
+    setFormData({
+      name: product.name,
+      description: product.description,
+      price_range: product.price_range,
+      image_url: product.image_url,
+      shopee_url: product.shopee_url,
+      gender_target: product.gender_target || 'U',
+      tags: product.tags || '',
+      relationship_target: product.relationship_target || 'U'
+    })
+    setIsModalOpen(true)
+  }
+
+  const handleSave = async () => {
+    setSaving(true)
+    try {
+      const apiUrl = import.meta.env.VITE_API_URL || 'http://localhost:8787'
+      const method = editingId ? 'PUT' : 'POST'
+      const url = editingId ? `${apiUrl}/api/admin/products/${editingId}` : `${apiUrl}/api/admin/products`
+      
+      const res = await fetch(url, {
+        method,
+        headers: { 
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${localStorage.getItem('adminToken')}`
+        },
+        body: JSON.stringify(formData)
+      })
+
+      if (res.ok) {
+        setIsModalOpen(false)
+        setEditingId(null)
+        fetchProducts()
+      } else {
+        alert('Gagal simpan')
+      }
+    } catch (err) {
+      alert('Ralat rangkaian')
+    } finally {
+      setSaving(false)
+    }
+  }
+
   const startMagicImport = async () => {
     const lines = bulkUrls.split('\n').map(l => l.trim()).filter(l => l.length > 0)
     if (lines.length === 0) return alert('Sila masukkan sekurang-kurangnya satu link atau format Nama | Link')
@@ -66,7 +112,6 @@ export default function ProductManager() {
       let url = line
       let manualName = ''
 
-      // Support "Name | Link" format
       if (line.includes('|')) {
         const parts = line.split('|')
         manualName = parts[0].trim()
@@ -76,7 +121,6 @@ export default function ProductManager() {
       setImportStatus(prev => prev.map((s, idx) => idx === i ? { ...s, status: 'loading' } : s))
 
       try {
-        // 1. Scrape & AI Polish
         const aiRes = await fetch(`${apiUrl}/api/admin/scrape-product`, {
           method: 'POST',
           headers: { 
@@ -87,9 +131,6 @@ export default function ProductManager() {
         });
         
         const aiData = await aiRes.json();
-        if (!aiRes.ok) throw new Error('Failed to scrape')
-
-        // 2. Save to DB
         const saveRes = await fetch(`${apiUrl}/api/admin/products`, {
           method: 'POST',
           headers: { 
@@ -117,7 +158,6 @@ export default function ProductManager() {
         setImportStatus(prev => prev.map((s, idx) => idx === i ? { ...s, status: 'error' } : s))
       }
     }
-
     setIsImporting(false)
     fetchProducts()
   }
@@ -184,7 +224,7 @@ export default function ProductManager() {
   }
 
   const handleDelete = async (id) => {
-    if (!confirm('Pasti?')) return
+    if (!confirm('Hapus produk ini?')) return
     try {
       const apiUrl = import.meta.env.VITE_API_URL || 'http://localhost:8787'
       await fetch(`${apiUrl}/api/admin/products/${id}`, {
@@ -239,7 +279,7 @@ export default function ProductManager() {
             <button onClick={downloadTemplate} className="p-4 bg-white border-2 border-indigo-950/10 text-indigo-950 rounded-2xl hover:border-indigo-950 transition-all shadow-sm">
               <Download className="w-5 h-5" />
             </button>
-            <button onClick={() => { setFormData({ name: '', description: '', price_range: 'RM ', image_url: '', shopee_url: '', gender_target: 'U', tags: '', relationship_target: 'U' }); setIsModalOpen(true); }} className="px-8 py-4 bg-indigo-950 text-white rounded-2xl hover:bg-pink-500 font-black transition-all shadow-xl hover:-translate-y-1">
+            <button onClick={() => { setEditingId(null); setFormData({ name: '', description: '', price_range: 'RM ', image_url: '', shopee_url: '', gender_target: 'U', tags: '', relationship_target: 'U' }); setIsModalOpen(true); }} className="px-8 py-4 bg-indigo-950 text-white rounded-2xl hover:bg-pink-500 font-black transition-all shadow-xl hover:-translate-y-1">
               + Tambah Manual
             </button>
           </div>
@@ -253,7 +293,7 @@ export default function ProductManager() {
               <thead>
                 <tr className="bg-indigo-950/5 text-indigo-950/50 text-[10px] uppercase font-black tracking-widest border-b border-indigo-950/5">
                   <th className="px-8 py-6">Imej & Nama</th>
-                  <th className="px-8 py-6">Kategori & Harga</th>
+                  <th className="px-8 py-6">Target & Harga</th>
                   <th className="px-8 py-6 hidden md:table-cell">Deskripsi</th>
                   <th className="px-8 py-6 text-right">Tindakan</th>
                 </tr>
@@ -265,9 +305,6 @@ export default function ProductManager() {
                       <div className="flex items-center space-x-4">
                         <div className="relative w-14 h-14 flex-shrink-0">
                           <img src={p.image_url} alt={p.name} className="w-full h-full object-contain rounded-xl bg-white p-2 shadow-inner border border-slate-100" />
-                          <div className="absolute -bottom-1 -right-1 w-5 h-5 bg-white rounded-full flex items-center justify-center shadow-md border border-slate-50">
-                            <Target className={`w-2.5 h-2.5 ${p.gender_target === 'M' ? 'text-blue-500' : p.gender_target === 'F' ? 'text-pink-500' : 'text-purple-500'}`} />
-                          </div>
                         </div>
                         <div className="max-w-[150px] md:max-w-xs">
                           <p className="font-black text-indigo-950 text-sm truncate group-hover:text-pink-500 transition-colors">{p.name}</p>
@@ -278,15 +315,28 @@ export default function ProductManager() {
                       </div>
                     </td>
                     <td className="px-8 py-6">
-                      <span className="inline-block px-3 py-1 bg-white border border-slate-100 rounded-full text-[9px] font-black text-indigo-950 shadow-sm">
-                        {p.price_range ? (p.price_range.startsWith('RM') ? p.price_range : `RM ${p.price_range}`) : 'RM -'}
-                      </span>
+                      <div className="flex flex-col gap-1">
+                        <div className="flex gap-1">
+                          <span className={`px-2 py-0.5 rounded text-[8px] font-black text-white ${p.gender_target === 'M' ? 'bg-blue-400' : p.gender_target === 'F' ? 'bg-pink-400' : 'bg-purple-400'}`}>
+                            {p.gender_target === 'M' ? 'LELAKI' : p.gender_target === 'F' ? 'WANITA' : 'UNISEX'}
+                          </span>
+                          <span className="px-2 py-0.5 rounded bg-indigo-950/10 text-[8px] font-black text-indigo-950">
+                            {p.relationship_target === 'P' ? 'PASANGAN' : p.relationship_target === 'K' ? 'KAWAN' : p.relationship_target === 'F' ? 'KELUARGA' : 'SEMUA'}
+                          </span>
+                        </div>
+                        <span className="font-black text-indigo-950 text-xs">
+                          {p.price_range ? (p.price_range.startsWith('RM') ? p.price_range : `RM ${p.price_range}`) : 'RM -'}
+                        </span>
+                      </div>
                     </td>
                     <td className="px-8 py-6 hidden md:table-cell">
                       <p className="text-[10px] text-slate-500 font-medium line-clamp-2 max-w-xs italic leading-relaxed">"{p.description}"</p>
                     </td>
                     <td className="px-8 py-6 text-right">
-                      <button onClick={() => handleDelete(p.id)} className="p-3 text-slate-200 hover:text-red-500 hover:bg-red-50 rounded-2xl transition-all"><Trash2 className="w-5 h-5" /></button>
+                      <div className="flex justify-end gap-1">
+                        <button onClick={() => handleEdit(p)} className="p-3 text-slate-300 hover:text-indigo-950 hover:bg-white rounded-2xl transition-all shadow-sm"><Edit3 className="w-5 h-5" /></button>
+                        <button onClick={() => handleDelete(p.id)} className="p-3 text-slate-300 hover:text-red-500 hover:bg-red-50 rounded-2xl transition-all shadow-sm"><Trash2 className="w-5 h-5" /></button>
+                      </div>
                     </td>
                   </tr>
                 ))}
@@ -303,14 +353,14 @@ export default function ProductManager() {
               </div>
               <div>
                 <h3 className="text-xl font-black text-indigo-950">Magic Bulk Importer</h3>
-                <p className="text-slate-400 text-xs font-bold uppercase tracking-widest">Tampal link Shopee & AI akan uruskan</p>
+                <p className="text-slate-400 text-xs font-bold uppercase tracking-widest">Guna format: Nama Produk | Link Affiliate</p>
               </div>
             </div>
 
             <textarea 
               value={bulkUrls}
               onChange={e => setBulkUrls(e.target.value)}
-              placeholder="https://shopee.com.my/product-1&#10;https://shopee.com.my/product-2&#10;..."
+              placeholder="Mug Kucing | https://shope.ee/abc123&#10;Smartwatch | https://shope.ee/xyz456"
               className="w-full bg-slate-50 border-2 border-slate-50 focus:border-pink-200 rounded-[2rem] p-8 text-sm font-bold text-indigo-950 outline-none transition-all min-h-[250px] shadow-inner"
             />
 
@@ -324,7 +374,6 @@ export default function ProductManager() {
             </button>
           </div>
 
-          {/* Import Status List */}
           {importStatus.length > 0 && (
             <div className="bg-white/50 backdrop-blur-xl border-2 border-white rounded-[3rem] p-8 shadow-xl">
               <h4 className="text-xs font-black text-indigo-950 uppercase tracking-widest mb-6">Status Magic Import</h4>
@@ -335,9 +384,7 @@ export default function ProductManager() {
                       <div className="w-8 h-8 rounded-full bg-slate-50 flex items-center justify-center text-[10px] font-black text-slate-400">
                         {idx + 1}
                       </div>
-                      <p className="text-xs font-bold text-indigo-950 truncate max-w-md">
-                        {s.name || s.url}
-                      </p>
+                      <p className="text-xs font-bold text-indigo-950 truncate max-w-md">{s.name || s.url}</p>
                     </div>
                     <div>
                       {s.status === 'loading' && <Loader2 className="w-5 h-5 text-indigo-950 animate-spin" />}
@@ -353,39 +400,74 @@ export default function ProductManager() {
         </motion.div>
       )}
 
-      {/* Manual Add Modal */}
+      {/* Edit/Add Modal */}
       <AnimatePresence>
         {isModalOpen && (
           <div className="fixed inset-0 bg-indigo-950/60 backdrop-blur-md flex items-center justify-center p-4 z-50">
             <motion.div initial={{ opacity: 0, scale: 0.9 }} animate={{ opacity: 1, scale: 1 }} className="bg-white rounded-[3rem] w-full max-w-2xl max-h-[90vh] overflow-hidden shadow-2xl flex flex-col">
-              <div className="p-8 border-b border-slate-50 flex justify-between items-center">
-                <h3 className="text-xl font-black text-indigo-950">Tambah Manual</h3>
-                <button onClick={() => setIsModalOpen(false)}><X /></button>
+              <div className="p-8 border-b border-slate-50 flex justify-between items-center bg-indigo-950/5">
+                <h3 className="text-xl font-black text-indigo-950">{editingId ? 'Edit Produk' : 'Tambah Manual'}</h3>
+                <button onClick={() => { setIsModalOpen(false); setEditingId(null); }} className="p-2 hover:bg-white rounded-full transition-all"><X /></button>
               </div>
-              <div className="p-8 overflow-y-auto">
-                <div className="space-y-6">
-                    <input value={formData.name} onChange={e => setFormData({...formData, name: e.target.value})} placeholder="Nama Produk" className="w-full p-4 bg-slate-50 rounded-2xl font-bold" />
-                    <input value={formData.price_range} onChange={e => setFormData({...formData, price_range: e.target.value})} placeholder="Harga (RM)" className="w-full p-4 bg-slate-50 rounded-2xl font-bold" />
-                    <textarea value={formData.description} onChange={e => setFormData({...formData, description: e.target.value})} placeholder="Deskripsi" className="w-full p-4 bg-slate-50 rounded-2xl font-bold h-32" />
-                    <input value={formData.image_url} onChange={e => setFormData({...formData, image_url: e.target.value})} placeholder="URL Imej" className="w-full p-4 bg-slate-50 rounded-2xl font-bold" />
-                    <input value={formData.shopee_url} onChange={e => setFormData({...formData, shopee_url: e.target.value})} placeholder="URL Shopee" className="w-full p-4 bg-slate-50 rounded-2xl font-bold" />
+              <div className="p-8 overflow-y-auto space-y-6">
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                  <div className="space-y-1.5">
+                    <label className="text-[10px] font-black text-indigo-950/40 uppercase tracking-widest ml-1">Nama Produk</label>
+                    <input value={formData.name} onChange={e => setFormData({...formData, name: e.target.value})} className="w-full p-4 bg-slate-50 rounded-2xl font-bold border-2 border-slate-50 focus:border-pink-200 outline-none transition-all" />
+                  </div>
+                  <div className="space-y-1.5">
+                    <label className="text-[10px] font-black text-indigo-950/40 uppercase tracking-widest ml-1">Harga (RM)</label>
+                    <input value={formData.price_range} onChange={e => setFormData({...formData, price_range: e.target.value})} className="w-full p-4 bg-slate-50 rounded-2xl font-bold border-2 border-slate-50 focus:border-pink-200 outline-none transition-all" />
+                  </div>
                 </div>
+
+                <div className="space-y-1.5">
+                  <label className="text-[10px] font-black text-indigo-950/40 uppercase tracking-widest ml-1">Deskripsi & Alasan AI</label>
+                  <textarea value={formData.description} onChange={e => setFormData({...formData, description: e.target.value})} className="w-full p-4 bg-slate-50 rounded-2xl font-bold h-32 border-2 border-slate-50 focus:border-pink-200 outline-none transition-all" />
+                </div>
+
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                  <div className="space-y-1.5">
+                    <label className="text-[10px] font-black text-indigo-950/40 uppercase tracking-widest ml-1">Jantina Target</label>
+                    <select value={formData.gender_target} onChange={e => setFormData({...formData, gender_target: e.target.value})} className="w-full p-4 bg-slate-50 rounded-2xl font-bold border-2 border-slate-50 focus:border-pink-200 outline-none transition-all appearance-none">
+                      <option value="U">Unisex</option>
+                      <option value="M">Lelaki</option>
+                      <option value="F">Wanita</option>
+                    </select>
+                  </div>
+                  <div className="space-y-1.5">
+                    <label className="text-[10px] font-black text-indigo-950/40 uppercase tracking-widest ml-1">Hubungan Target</label>
+                    <select value={formData.relationship_target} onChange={e => setFormData({...formData, relationship_target: e.target.value})} className="w-full p-4 bg-slate-50 rounded-2xl font-bold border-2 border-slate-50 focus:border-pink-200 outline-none transition-all appearance-none">
+                      <option value="U">Semua (General)</option>
+                      <option value="P">Pasangan</option>
+                      <option value="K">Kawan</option>
+                      <option value="F">Keluarga</option>
+                    </select>
+                  </div>
+                </div>
+
+                <div className="space-y-1.5">
+                  <label className="text-[10px] font-black text-indigo-950/40 uppercase tracking-widest ml-1">Tags (Hobi) - Pisahkan dengan koma</label>
+                  <input value={formData.tags} onChange={e => setFormData({...formData, tags: e.target.value})} placeholder="Gaming, Travel, Coffee" className="w-full p-4 bg-slate-50 rounded-2xl font-bold border-2 border-slate-50 focus:border-pink-200 outline-none transition-all" />
+                </div>
+
+                <div className="space-y-1.5">
+                  <label className="text-[10px] font-black text-indigo-950/40 uppercase tracking-widest ml-1">URL Imej</label>
+                  <input value={formData.image_url} onChange={e => setFormData({...formData, image_url: e.target.value})} className="w-full p-4 bg-slate-50 rounded-2xl font-bold border-2 border-slate-50 focus:border-pink-200 outline-none transition-all" />
+                </div>
+
+                <div className="space-y-1.5">
+                  <label className="text-[10px] font-black text-indigo-950/40 uppercase tracking-widest ml-1">URL Shopee / Affiliate</label>
+                  <input value={formData.shopee_url} onChange={e => setFormData({...formData, shopee_url: e.target.value})} className="w-full p-4 bg-slate-50 rounded-2xl font-bold border-2 border-slate-50 focus:border-pink-200 outline-none transition-all" />
+                </div>
+
                 <button 
-                  onClick={async () => {
-                    setSaving(true);
-                    const apiUrl = import.meta.env.VITE_API_URL || 'http://localhost:8787'
-                    await fetch(`${apiUrl}/api/admin/products`, {
-                        method: 'POST',
-                        headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${localStorage.getItem('adminToken')}` },
-                        body: JSON.stringify(formData)
-                    });
-                    setSaving(false);
-                    setIsModalOpen(false);
-                    fetchProducts();
-                  }}
-                  className="w-full py-5 bg-indigo-950 text-white rounded-[2rem] font-black text-lg mt-8 shadow-xl hover:bg-pink-500 transition-all"
+                  onClick={handleSave}
+                  disabled={saving}
+                  className="w-full py-6 bg-indigo-950 text-white rounded-[2.5rem] font-black text-xl mt-4 shadow-2xl hover:bg-pink-500 transition-all flex items-center justify-center gap-3"
                 >
-                  {saving ? <Loader2 className="animate-spin mx-auto" /> : 'SIMPAN SEKARANG'}
+                  {saving ? <Loader2 className="animate-spin" /> : editingId ? <Save className="w-6 h-6" /> : <Plus className="w-6 h-6" />}
+                  {saving ? 'SAVING...' : editingId ? 'KEMASKINI SEKARANG' : 'TAMBAH PRODUK'}
                 </button>
               </div>
             </motion.div>
