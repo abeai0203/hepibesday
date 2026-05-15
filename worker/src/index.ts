@@ -401,33 +401,40 @@ app.post('/api/admin/scrape-product', adminAuth, async (c) => {
     let imageUrl = 'https://via.placeholder.com/500?text=Sila+Masukkan+Gambar'
     let priceRange = 'RM -'
 
-    // Resolve Redirects for Affiliate Links
+    // 1. Fetch via Proxy to bypass blocking
     try {
-      const res = await fetch(url, { 
-        method: 'GET',
-        redirect: 'follow',
+      const proxyUrl = `https://corsproxy.io/?${encodeURIComponent(url)}`
+      const res = await fetch(proxyUrl, {
         headers: {
-          'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36'
+          'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36',
+          'Accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,image/apng,*/*;q=0.8'
         }
       })
       
-      // Try to extract basic info from final HTML
       const html = await res.text()
+      
+      // Extract OG Metadata
       const ogTitleMatch = html.match(/property="og:title"\s+content="(.*?)"/i) || html.match(/<title>(.*?)<\/title>/i)
       const ogImageMatch = html.match(/property="og:image"\s+content="(.*?)"/i)
       
-      if (ogTitleMatch) name = ogTitleMatch[1].split('|')[0].split('-')[0].replace('Google Translate', '').trim()
+      if (ogTitleMatch) {
+        name = ogTitleMatch[1].split('|')[0].split('-')[0].replace('Google Translate', '').trim()
+        if (name.toLowerCase() === 'shopee') name = '' // Reset if it just says 'Shopee'
+      }
       if (ogImageMatch) imageUrl = ogImageMatch[1]
       
-      const priceMatch = html.match(/"price":\s*(\d+)/i) || html.match(/price_range":"(.*?)"/i)
+      // Improved Price Extraction
+      const priceMatch = html.match(/"price":\s*"(\d+)"/i) || html.match(/"price":\s*(\d+)/i) || html.match(/price_range":"(.*?)"/i)
       if (priceMatch) {
         const p = priceMatch[1]
         priceRange = p.length > 5 ? `RM ${(parseInt(p)/100000).toFixed(0)}` : `RM ${p}`
       }
-    } catch (e) {}
+    } catch (e) {
+      console.error("Scrape failed:", e)
+    }
 
-    // AI Polish
-    if (c.env.AI && name) {
+    // 2. AI Polish (Only if we have a name)
+    if (c.env.AI && (name || providedName)) {
       try {
         const aiResponse = await c.env.AI.run('@cf/meta/llama-3-8b-instruct', {
           messages: [
@@ -435,7 +442,7 @@ app.post('/api/admin/scrape-product', adminAuth, async (c) => {
               role: 'system', 
               content: 'Anda ialah pakar e-commerce Malaysia. Kemaskan Nama Produk, buat Deskripsi menarik (BM santai), dan BERIKAN 2-3 TAG HOBI (contoh: Gaming, Travel, Beauty). Return JSON: {"name": "...", "description": "...", "tags": "tag1, tag2"}' 
             },
-            { role: 'user', content: `Nama: ${name}` }
+            { role: 'user', content: `Nama: ${name || providedName}. URL: ${url}` }
           ]
         })
         const aiText = (aiResponse as any).response;
@@ -450,7 +457,7 @@ app.post('/api/admin/scrape-product', adminAuth, async (c) => {
     }
 
     return c.json({
-      name: name,
+      name: name || 'Produk Menarik',
       image_url: imageUrl,
       description: description || 'Hadiah menarik dari Shopee!',
       tags: tags,
