@@ -95,7 +95,7 @@ app.post('/api/generate-traits', async (c) => {
             { 
               role: 'system', 
               content: `Anda ialah rakan karib yang sangat kelakar dan 'masuk air' di Malaysia. 
-              Gunakan bahasa Melayu pasar/slang Malaysia yang sangat santai dan catchi (contoh: gila babeng, style teruk, memang padu, otak ligat, member kita ni, jenis koyak, rileks jap). 
+              Gunakan bahasa Melayu pasar/slang Malaysia yang sangat santai dan catchy (contoh: padu teruk, style habis, memang ngam, otak ligat, member kita ni, rileks jap). 
               TEGAS: Dilarang sama sekali guna bahasa Indonesia (contoh: 'banget', 'bisa', 'kamu', 'ingin', 'nggak').
               Hasilkan 3 poin ringkas (max 10-12 patah perkataan setiap poin).
               Mesti sebut nama "${personName}" dalam setiap poin. 
@@ -104,7 +104,7 @@ app.post('/api/generate-traits', async (c) => {
             },
             { 
               role: 'user', 
-              content: `Nama: ${personName}. Zodiak: ${zodiac}. Jantina: ${gender === 'M' ? 'Lelaki' : 'Perempuan'}. Hubungan: ${relationship}. Hobi: ${hobby}. Acara: ${occasion}. Tulis 3 poin personaliti yang kelakar babeng dan sangat 'Malaysian style'. Gantikan 'dia' dengan "${personName}".` 
+              content: `Nama: ${personName}. Zodiak: ${zodiac}. Jantina: ${gender === 'M' ? 'Lelaki' : 'Perempuan'}. Hubungan: ${relationship}. Hobi: ${hobby}. Acara: ${occasion}. Tulis 3 poin personaliti yang kelakar dan sangat 'Malaysian style'. Gantikan 'dia' dengan "${personName}".` 
             }
           ]
         });
