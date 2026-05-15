@@ -419,47 +419,50 @@ app.post('/api/admin/scrape-product', adminAuth, async (c) => {
     let imageUrl = 'https://via.placeholder.com/500?text=Sila+Masukkan+Gambar'
     let priceRange = 'RM -'
 
-    // 1. Fetch via Proxy to bypass blocking
+    // 1. Scraping Logic with Multi-Proxy Fallback
+    let html = ''
     try {
-      const proxyUrl = `https://corsproxy.io/?${encodeURIComponent(url)}`
-      const res = await fetch(proxyUrl, {
-        headers: {
-          'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36',
-          'Accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,image/apng,*/*;q=0.8'
-        }
+      // Attempt 1: Primary Proxy
+      const res = await fetch(`https://corsproxy.io/?${encodeURIComponent(url)}`, {
+        headers: { 'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36' }
       })
-      
-      const html = await res.text()
-      
-      // Extract OG Metadata
-      const ogTitleMatch = html.match(/property="og:title"\s+content="(.*?)"/i) || html.match(/<title>(.*?)<\/title>/i)
-      const ogImageMatch = html.match(/property="og:image"\s+content="(.*?)"/i)
-      
-      if (ogTitleMatch) {
-        name = ogTitleMatch[1].split('|')[0].split('-')[0].replace('Google Translate', '').trim()
-        if (name.toLowerCase() === 'shopee') name = '' // Reset if it just says 'Shopee'
+      html = await res.text()
+
+      // Attempt 2: Fallback Proxy if Attempt 1 was blocked
+      if (html.length < 500 || html.toLowerCase().includes('robot check') || html.toLowerCase().includes('shopee') && html.length < 2000) {
+        const res2 = await fetch(`https://api.allorigins.win/get?url=${encodeURIComponent(url)}`)
+        const data2 = await res2.json() as any
+        html = data2.contents || ''
       }
-      if (ogImageMatch) imageUrl = ogImageMatch[1]
+    } catch (e) {}
+
+    if (html) {
+      // Enhanced Metadata Extraction
+      const ogTitle = html.match(/property="og:title"\s+content="(.*?)"/i)?.[1] || 
+                      html.match(/name="twitter:title"\s+content="(.*?)"/i)?.[1] ||
+                      html.match(/<title>(.*?)<\/title>/i)?.[1]
       
-      // Improved Price Extraction
-      const priceMatch = html.match(/"price":\s*"(\d+)"/i) || html.match(/"price":\s*(\d+)/i) || html.match(/price_range":"(.*?)"/i)
-      if (priceMatch) {
-        const p = priceMatch[1]
-        priceRange = p.length > 5 ? `RM ${(parseInt(p)/100000).toFixed(0)}` : `RM ${p}`
+      if (ogTitle && ogTitle.toLowerCase() !== 'shopee') {
+        name = ogTitle.split('|')[0].split('-')[0].replace('Google Translate', '').trim()
       }
-    } catch (e) {
-      console.error("Scrape failed:", e)
+
+      const ogImage = html.match(/property="og:image"\s+content="(.*?)"/i)?.[1] || 
+                      html.match(/name="twitter:image"\s+content="(.*?)"/i)?.[1]
+      if (ogImage) imageUrl = ogImage
+
+      const priceMatch = html.match(/"price":\s*"(\d+)"/i) || html.match(/"price":\s*(\d+)/i) || html.match(/RM\s*(\d+\.?\d*)/i)
+      if (priceMatch) priceRange = `RM ${priceMatch[1]}`
     }
 
-    // 2. AI Polish (Only if we have a name)
+    // 2. AI Polish
     const seedName = name || providedName || ''
-    if (c.env.AI && seedName) {
+    if (c.env.AI && seedName && seedName.toLowerCase() !== 'shopee') {
       try {
         const aiResponse = await c.env.AI.run('@cf/meta/llama-3-8b-instruct', {
           messages: [
             { 
               role: 'system', 
-              content: 'Anda ialah pakar e-commerce Malaysia. Kemaskan Nama Produk, buat Deskripsi menarik (BM santai), dan BERIKAN 2-3 TAG HOBI (contoh: Gaming, Travel, Beauty). Return HANYA JSON: {"name": "...", "description": "...", "tags": "tag1, tag2"}' 
+              content: 'Anda pakar hadiah Malaysia. Kemaskan Nama Produk, buat Deskripsi menarik dlm BM santai, dan berikan 2-3 tag hobi. Return JSON: {"name": "...", "description": "...", "tags": "tag1, tag2"}' 
             },
             { role: 'user', content: `Nama: ${seedName}` }
           ]
@@ -478,7 +481,7 @@ app.post('/api/admin/scrape-product', adminAuth, async (c) => {
         name = seedName;
       }
     } else {
-      name = seedName || 'Produk Menarik';
+      name = seedName || 'Produk Baru (Sila Edit)';
     }
 
     return c.json({
