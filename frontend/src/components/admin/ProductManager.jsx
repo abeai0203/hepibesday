@@ -10,7 +10,7 @@ export default function ProductManager() {
   
   // Form State
   const [formData, setFormData] = useState({
-    name: '', description: '', price_range: '', image_url: '', shopee_url: '', gender_target: 'U'
+    name: '', description: '', price_range: '', image_url: '', shopee_url: '', gender_target: 'U', tags: '', relationship_target: 'U'
   })
 
   const fetchProducts = async () => {
@@ -95,7 +95,7 @@ export default function ProductManager() {
         </div>
         <button 
           onClick={() => {
-            setFormData({ name: '', description: '', price_range: 'RM ', image_url: '', shopee_url: '', gender_target: 'U' })
+            setFormData({ name: '', description: '', price_range: 'RM ', image_url: '', shopee_url: '', gender_target: 'U', tags: '', relationship_target: 'U' })
             setIsModalOpen(true)
           }}
           className="flex items-center space-x-3 px-8 py-4 bg-indigo-950 text-white rounded-2xl hover:bg-pink-500 font-black transition-all shadow-xl hover:-translate-y-1"
@@ -210,34 +210,57 @@ export default function ProductManager() {
                         btn.innerHTML = '<span class="animate-spin">🌀</span>';
 
                         try {
+                          let html = '';
+                          
+                          // Try Proxy 1: corsproxy.io
+                          try {
+                            const res = await fetch(`https://corsproxy.io/?${encodeURIComponent(url)}`);
+                            html = await res.text();
+                          } catch (e) {
+                            // Try Proxy 2: allorigins.win
+                            const res = await fetch(`https://api.allorigins.win/get?url=${encodeURIComponent(url)}`);
+                            const data = await res.json();
+                            html = data.contents;
+                          }
+
+                          if (!html) throw new Error('Gagal mengambil data dari Shopee');
+                          
+                          // Extract Metadata from HTML
+                          const ogTitleMatch = html.match(/property="og:title"\s+content="(.*?)"/i) || html.match(/<title>(.*?)<\/title>/i);
+                          const ogImageMatch = html.match(/property="og:image"\s+content="(.*?)"/i);
+                          
+                          let extractedName = ogTitleMatch ? ogTitleMatch[1].split('|')[0].split('-')[0].replace('Google Translate', '').trim() : '';
+                          let extractedImage = ogImageMatch ? ogImageMatch[1] : '';
+
+                          if (!extractedName || extractedName.toLowerCase().includes('shopee.com.my')) {
+                            throw new Error('Nama produk tidak dijumpai. Sila guna pautan panjang.');
+                          }
+
+                          // Send to backend for AI Polish
                           const currentOrigin = window.location.origin;
-                          // Use relative path if possible, otherwise fallback to the worker URL
                           const apiUrl = import.meta.env.VITE_API_URL || (currentOrigin.includes('localhost') ? 'http://localhost:8787' : 'https://hepibesday-api.abeai0203.workers.dev');
                           
-                          const fetchUrl = apiUrl ? `${apiUrl}/api/admin/scrape-product` : '/api/admin/scrape-product';
-                          
-                          const res = await fetch(fetchUrl, {
+                          const aiRes = await fetch(`${apiUrl}/api/admin/scrape-product`, {
                             method: 'POST',
                             headers: { 
                               'Content-Type': 'application/json',
                               'Authorization': `Bearer ${localStorage.getItem('adminToken')}`
                             },
-                            body: JSON.stringify({ url })
+                            body: JSON.stringify({ url, name: extractedName })
                           });
-                          const data = await res.json();
-                          if (res.ok) {
-                            setFormData(prev => ({
-                              ...prev,
-                              name: data.name || prev.name,
-                              image_url: data.image_url || prev.image_url,
-                              description: data.description || prev.description,
-                              shopee_url: data.shopee_url || url
-                            }));
-                          } else {
-                            alert(data.error || 'Gagal menarik data');
-                          }
+                          
+                          const aiData = await aiRes.json();
+                          setFormData(prev => ({
+                            ...prev,
+                            name: aiData.name || extractedName,
+                            image_url: extractedImage || aiData.image_url,
+                            description: aiData.description || 'Hadiah menarik dari Shopee!',
+                            tags: aiData.tags || prev.tags,
+                            shopee_url: url
+                          }));
+
                         } catch (err) {
-                          alert('Ralat teknikal semasa menarik data');
+                          alert(err.message || 'Gagal menarik data. Sila isi secara manual.');
                         } finally {
                           btn.disabled = false;
                           btn.innerHTML = originalText;
@@ -248,7 +271,7 @@ export default function ProductManager() {
                       <span>🪄 Autofill</span>
                     </button>
                   </div>
-                  <p className="text-[9px] text-indigo-400 font-bold italic">Sistem akan automatik tarik Nama, Gambar & Deskripsi menggunakan AI.</p>
+                  <p className="text-[9px] text-indigo-400 font-bold italic">Sistem akan automatik tarik Nama, Gambar, Tags & Deskripsi menggunakan AI.</p>
                 </div>
 
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
@@ -265,6 +288,14 @@ export default function ProductManager() {
                       <ShoppingBag className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-300 w-4 h-4" />
                       <input required value={formData.price_range} onChange={e => setFormData({...formData, price_range: e.target.value})} className="w-full bg-slate-50 border-2 border-slate-50 focus:border-pink-300 rounded-2xl px-12 py-4 text-indigo-950 font-bold outline-none transition-all shadow-inner" placeholder="E.g. RM 50 - 150" />
                     </div>
+                  </div>
+                </div>
+
+                <div className="space-y-2">
+                  <label className="text-[10px] font-black uppercase tracking-widest text-slate-400 ml-1">Hobi / Minat (Tags)</label>
+                  <div className="relative">
+                    <Tag className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-300 w-4 h-4" />
+                    <input value={formData.tags} onChange={e => setFormData({...formData, tags: e.target.value})} className="w-full bg-slate-50 border-2 border-slate-50 focus:border-pink-300 rounded-2xl px-12 py-4 text-indigo-950 font-bold outline-none transition-all shadow-inner" placeholder="E.g. Gaming, Travel, Beauty" />
                   </div>
                 </div>
 
@@ -290,19 +321,42 @@ export default function ProductManager() {
                   </div>
                 </div>
 
-                <div className="space-y-2">
-                  <label className="text-[10px] font-black uppercase tracking-widest text-slate-400 ml-1">Target Jantina</label>
-                  <div className="grid grid-cols-3 gap-3">
-                    {['U', 'M', 'F'].map(target => (
-                      <button
-                        key={target}
-                        type="button"
-                        onClick={() => setFormData({...formData, gender_target: target})}
-                        className={`py-3 rounded-xl font-black text-xs transition-all border-2 ${formData.gender_target === target ? 'bg-indigo-950 text-white border-indigo-950 shadow-lg' : 'bg-white text-slate-400 border-slate-100 hover:border-pink-200'}`}
-                      >
-                        {target === 'U' ? 'Unisex' : target === 'M' ? 'Lelaki' : 'Perempuan'}
-                      </button>
-                    ))}
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                  <div className="space-y-2">
+                    <label className="text-[10px] font-black uppercase tracking-widest text-slate-400 ml-1">Target Jantina</label>
+                    <div className="grid grid-cols-3 gap-2">
+                      {['U', 'M', 'F'].map(target => (
+                        <button
+                          key={target}
+                          type="button"
+                          onClick={() => setFormData({...formData, gender_target: target})}
+                          className={`py-3 rounded-xl font-black text-[10px] transition-all border-2 ${formData.gender_target === target ? 'bg-indigo-950 text-white border-indigo-950 shadow-lg' : 'bg-white text-slate-400 border-slate-100 hover:border-pink-200'}`}
+                        >
+                          {target === 'U' ? 'UNISEX' : target === 'M' ? 'LELAKI' : 'WANITA'}
+                        </button>
+                      ))}
+                    </div>
+                  </div>
+
+                  <div className="space-y-2">
+                    <label className="text-[10px] font-black uppercase tracking-widest text-slate-400 ml-1">Target Hubungan</label>
+                    <div className="grid grid-cols-4 gap-2">
+                      {[
+                        {id: 'U', label: 'SEMUA'},
+                        {id: 'P', label: 'PASANGAN'},
+                        {id: 'K', label: 'KAWAN'},
+                        {id: 'F', label: 'KELUARGA'}
+                      ].map(r => (
+                        <button
+                          key={r.id}
+                          type="button"
+                          onClick={() => setFormData({...formData, relationship_target: r.id})}
+                          className={`py-3 rounded-xl font-black text-[9px] transition-all border-2 ${formData.relationship_target === r.id ? 'bg-indigo-950 text-white border-indigo-950 shadow-lg' : 'bg-white text-slate-400 border-slate-100 hover:border-pink-200'}`}
+                        >
+                          {r.label}
+                        </button>
+                      ))}
+                    </div>
                   </div>
                 </div>
 

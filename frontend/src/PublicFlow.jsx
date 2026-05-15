@@ -3,6 +3,8 @@ import Landing from './components/Landing'
 import NameSelection from './components/NameSelection'
 import GenderSelection from './components/GenderSelection'
 import DateSelection from './components/DateSelection'
+import RelationshipSelection from './components/RelationshipSelection'
+import HobbySelection from './components/HobbySelection'
 import Analyzing from './components/Analyzing'
 import Traits from './components/Traits'
 import Results from './components/Results'
@@ -17,6 +19,8 @@ function PublicFlow() {
       name: 'Siapa si dia? - Hepibesday',
       gender: 'Lelaki atau Perempuan? - Hepibesday',
       date: 'Tarikh Lahir - Hepibesday',
+      relationship: 'Jenis Hubungan - Hepibesday',
+      hobby: 'Minat & Hobi - Hepibesday',
       analyzing: 'Mencari Magik... - Hepibesday',
       traits: 'Analisis Personaliti - Hepibesday',
       results: 'Hadiah Terbaik! - Hepibesday'
@@ -27,6 +31,8 @@ function PublicFlow() {
     targetName: null,
     gender: null,
     birthDate: null,
+    relationship: 'U',
+    hobby: '',
     sessionId: null,
     zodiac: null,
     traits: []
@@ -43,9 +49,11 @@ function PublicFlow() {
         {step === 'landing' && <Landing onNext={() => handleNext('name')} />}
         {step === 'name' && <NameSelection onNext={(targetName) => handleNext('gender', { targetName })} onBack={() => setStep('landing')} />}
         {step === 'gender' && <GenderSelection targetName={sessionData.targetName} onNext={(gender) => handleNext('date', { gender })} onBack={() => setStep('name')} />}
-        {step === 'date' && <DateSelection targetName={sessionData.targetName} onNext={(data) => handleNext('analyzing', data)} onBack={() => setStep('gender')} />}
+        {step === 'date' && <DateSelection targetName={sessionData.targetName} onNext={(data) => handleNext('relationship', data)} onBack={() => setStep('gender')} />}
+        {step === 'relationship' && <RelationshipSelection targetName={sessionData.targetName} onNext={(relationship) => handleNext('hobby', { relationship })} onBack={() => setStep('date')} />}
+        {step === 'hobby' && <HobbySelection targetName={sessionData.targetName} onNext={(hobby) => handleNext('analyzing', { hobby })} onBack={() => setStep('relationship')} />}
         {step === 'analyzing' && <Analyzing sessionData={sessionData} onComplete={(data) => handleNext('traits', data)} />}
-        {step === 'traits' && <Traits sessionData={sessionData} onNext={() => handleNext('results')} onRetry={() => setStep('analyzing')} onBack={() => setStep('date')} />}
+        {step === 'traits' && <Traits sessionData={sessionData} onNext={() => handleNext('results')} onRetry={() => setStep('analyzing')} onBack={() => setStep('hobby')} />}
         {step === 'results' && <Results sessionData={sessionData} onRestart={() => setStep('landing')} />}
       </main>
     </div>
