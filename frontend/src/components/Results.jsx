@@ -257,9 +257,9 @@ export default function Results({ sessionData, onRestart }) {
       </motion.div>
 
       {/* Products Grid */}
-      <div className="w-full max-w-4xl mx-auto">
+      <div className="w-full max-w-6xl mx-auto px-2">
         <AnimatePresence mode="popLayout">
-          <motion.div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+          <motion.div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4 md:gap-6">
             {filteredProducts.map((product, index) => (
               <motion.div
                 key={product.id || index}
@@ -268,39 +268,38 @@ export default function Results({ sessionData, onRestart }) {
                 animate={{ opacity: 1, scale: 1 }}
                 exit={{ opacity: 0, scale: 0.9 }}
                 transition={{ duration: 0.3 }}
-                className="bg-white border-2 border-white rounded-[2.5rem] overflow-hidden group hover:shadow-2xl hover:-translate-y-2 transition-all duration-500 flex flex-col shadow-xl"
+                className="bg-white border-2 border-white rounded-[2rem] overflow-hidden group hover:shadow-2xl hover:-translate-y-1 transition-all duration-500 flex flex-col shadow-lg"
               >
-                {/* Image Container */}
-                <div className="relative h-64 w-full bg-white p-8 flex items-center justify-center group-hover:scale-105 transition-transform duration-500">
+                {/* Image Container - More compact height */}
+                <div className="relative h-44 md:h-52 w-full bg-white p-4 flex items-center justify-center group-hover:scale-105 transition-transform duration-500">
                   <div className="absolute inset-0 bg-gradient-to-br from-pink-50/30 to-purple-50/30 opacity-0 group-hover:opacity-100 transition-opacity" />
                   <img 
                     src={product.image_url} 
                     alt={product.name} 
-                    className="max-w-full max-h-full object-contain relative z-10 drop-shadow-2xl"
+                    className="max-w-full max-h-full object-contain relative z-10 drop-shadow-xl"
                   />
                   {product.price_range && (
-                    <div className="absolute top-4 right-4 bg-pink-500 text-white text-[10px] font-black px-4 py-2 rounded-full shadow-lg transform rotate-6">
+                    <div className="absolute top-2 right-2 bg-pink-500 text-white text-[8px] md:text-[9px] font-black px-3 py-1.5 rounded-full shadow-md transform rotate-3">
                       {product.price_range ? (product.price_range.startsWith('RM') ? product.price_range : `RM ${product.price_range}`) : ''}
                     </div>
                   )}
                 </div>
 
-                {/* Content */}
-                <div className="p-8 flex-1 flex flex-col space-y-4">
-                  <h3 className="text-2xl font-black text-indigo-950 leading-tight group-hover:text-pink-500 transition-colors">
+                {/* Content - Compact padding */}
+                <div className="p-4 md:p-6 flex-1 flex flex-col space-y-3">
+                  <h3 className="text-base md:text-lg font-black text-indigo-950 leading-tight group-hover:text-pink-500 transition-colors line-clamp-2">
                     {product.name}
                   </h3>
-                  <p className="text-slate-500 font-bold text-sm leading-relaxed flex-1 italic">
+                  <p className="text-slate-500 font-bold text-[10px] md:text-xs leading-relaxed flex-1 italic line-clamp-3">
                     "{product.reason || 'Pilihan terbaik untuk si dia.'}"
                   </p>
                   
                   <button
                     onClick={() => handleProductClick(product.id, product.shopee_url)}
-                    className="w-full py-4 bg-indigo-950 text-white rounded-2xl font-black flex items-center justify-center gap-3 shadow-xl hover:bg-pink-500 transition-all active:scale-95"
+                    className="w-full py-3 bg-indigo-950 text-white rounded-xl font-black text-xs flex items-center justify-center gap-2 shadow-md hover:bg-pink-500 transition-all active:scale-95"
                   >
-                    <ShoppingBag className="w-5 h-5" />
+                    <ShoppingBag className="w-4 h-4" />
                     Beli Sekarang
-                    <ExternalLink className="w-4 h-4 opacity-50" />
                   </button>
                 </div>
               </motion.div>
