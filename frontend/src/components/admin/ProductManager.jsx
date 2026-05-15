@@ -1,5 +1,5 @@
-import { useState, useEffect } from 'react'
-import { Plus, Trash2, Loader2, X, ShoppingBag, Image as ImageIcon, Target, Tag, ExternalLink, Wand2 } from 'lucide-react'
+import { useState, useEffect, useRef } from 'react'
+import { Plus, Trash2, Loader2, X, ShoppingBag, Image as ImageIcon, Target, Tag, ExternalLink, Wand2, FileSpreadsheet, Download } from 'lucide-react'
 import { motion, AnimatePresence } from 'framer-motion'
 
 export default function ProductManager() {
@@ -7,6 +7,8 @@ export default function ProductManager() {
   const [loading, setLoading] = useState(true)
   const [isModalOpen, setIsModalOpen] = useState(false)
   const [saving, setSaving] = useState(false)
+  const [bulkLoading, setBulkLoading] = useState(false)
+  const fileInputRef = useRef(null)
   
   // Form State
   const [formData, setFormData] = useState({
@@ -35,7 +37,87 @@ export default function ProductManager() {
 
   useEffect(() => {
     fetchProducts()
+    
+    // Load XLSX library from CDN
+    if (!window.XLSX) {
+      const script = document.createElement('script')
+      script.src = "https://cdn.sheetjs.com/xlsx-0.20.1/package/dist/xlsx.full.min.js"
+      document.head.appendChild(script)
+    }
   }, [])
+
+  const handleBulkUpload = async (e) => {
+    const file = e.target.files[0]
+    if (!file) return
+
+    setBulkLoading(true)
+    const reader = new FileReader()
+    
+    reader.onload = async (evt) => {
+      try {
+        const bstr = evt.target.result
+        const wb = window.XLSX.read(bstr, { type: 'binary' })
+        const wsname = wb.SheetNames[0]
+        const ws = wb.Sheets[wsname]
+        const data = window.XLSX.utils.sheet_to_json(ws)
+
+        if (data.length === 0) throw new Error('Fail Excel kosong')
+
+        // Normalize headers
+        const normalizedData = data.map(item => ({
+          name: item.name || item['Nama'] || item['Nama Produk'] || '',
+          description: item.description || item['Deskripsi'] || item['Description'] || '',
+          price_range: item.price_range || item['Harga'] || item['Price'] || '',
+          image_url: item.image_url || item['Gambar'] || item['Image URL'] || '',
+          shopee_url: item.shopee_url || item['Link Shopee'] || item['URL'] || '',
+          gender_target: item.gender_target || item['Jantina'] || 'U',
+          tags: item.tags || item['Tags'] || item['Hobi'] || '',
+          relationship_target: item.relationship_target || item['Hubungan'] || 'U'
+        }))
+
+        const apiUrl = import.meta.env.VITE_API_URL || 'http://localhost:8787'
+        const res = await fetch(`${apiUrl}/api/admin/bulk-products`, {
+          method: 'POST',
+          headers: { 
+            'Content-Type': 'application/json',
+            'Authorization': `Bearer ${localStorage.getItem('adminToken')}` 
+          },
+          body: JSON.stringify(normalizedData)
+        })
+
+        if (!res.ok) throw new Error('Gagal upload ke server')
+        
+        alert(`Berjaya upload ${normalizedData.length} produk!`)
+        fetchProducts()
+      } catch (err) {
+        alert(`Upload Gagal: ${err.message}`)
+      } finally {
+        setBulkLoading(false)
+        e.target.value = null // Reset input
+      }
+    }
+    
+    reader.readAsBinaryString(file)
+  }
+
+  const downloadTemplate = () => {
+    const template = [
+      {
+        name: 'Contoh Produk',
+        description: 'Deskripsi menarik di sini',
+        price_range: 'RM 50 - 150',
+        image_url: 'https://link-gambar.com/img.jpg',
+        shopee_url: 'https://shope.ee/abc',
+        gender_target: 'M (Lelaki), F (Wanita), U (Unisex)',
+        tags: 'Gaming, Travel',
+        relationship_target: 'P (Pasangan), K (Kawan), F (Family), U (Semua)'
+      }
+    ]
+    const ws = window.XLSX.utils.json_to_sheet(template)
+    const wb = window.XLSX.utils.book_new()
+    window.XLSX.utils.book_append_sheet(wb, ws, "Template")
+    window.XLSX.writeFile(wb, "Hepibesday_Template_Bulk.xlsx")
+  }
 
   const handleDelete = async (id) => {
     if (!confirm('Adakah anda pasti mahu memadam produk ini?')) return
@@ -87,22 +169,50 @@ export default function ProductManager() {
   }
 
   return (
-    <div className="space-y-8">
-      <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
+    <div className="space-y-8 pb-20">
+      <div className="flex flex-col lg:flex-row justify-between items-start lg:items-center gap-6">
         <div>
-          <h2 className="text-3xl font-black text-indigo-950">Arkib Hadiah</h2>
-          <p className="text-slate-500 font-bold text-sm">Uruskan senarai cadangan hadiah untuk sistem AI.</p>
+          <h2 className="text-4xl font-black text-indigo-950 tracking-tight">Arkib Hadiah</h2>
+          <p className="text-slate-500 font-bold text-sm mt-1">Uruskan senarai cadangan hadiah untuk sistem AI.</p>
         </div>
-        <button 
-          onClick={() => {
-            setFormData({ name: '', description: '', price_range: 'RM ', image_url: '', shopee_url: '', gender_target: 'U', tags: '', relationship_target: 'U' })
-            setIsModalOpen(true)
-          }}
-          className="flex items-center space-x-3 px-8 py-4 bg-indigo-950 text-white rounded-2xl hover:bg-pink-500 font-black transition-all shadow-xl hover:-translate-y-1"
-        >
-          <Plus className="w-5 h-5" />
-          <span>Tambah Produk Baru</span>
-        </button>
+        
+        <div className="flex flex-wrap gap-3">
+          {/* Bulk Upload Button */}
+          <input 
+            type="file" 
+            ref={fileInputRef} 
+            onChange={handleBulkUpload} 
+            accept=".xlsx, .xls, .csv" 
+            className="hidden" 
+          />
+          <button 
+            onClick={() => fileInputRef.current?.click()}
+            disabled={bulkLoading}
+            className="flex items-center space-x-3 px-6 py-4 bg-white border-2 border-indigo-950/10 text-indigo-950 rounded-2xl hover:border-indigo-950 font-black transition-all shadow-sm disabled:opacity-50"
+          >
+            {bulkLoading ? <Loader2 className="w-5 h-5 animate-spin" /> : <FileSpreadsheet className="w-5 h-5 text-green-600" />}
+            <span>{bulkLoading ? 'Uploading...' : 'Import Excel'}</span>
+          </button>
+
+          <button 
+            onClick={downloadTemplate}
+            className="p-4 bg-white border-2 border-indigo-950/10 text-indigo-950 rounded-2xl hover:border-indigo-950 transition-all shadow-sm"
+            title="Download Template Excel"
+          >
+            <Download className="w-5 h-5" />
+          </button>
+
+          <button 
+            onClick={() => {
+              setFormData({ name: '', description: '', price_range: 'RM ', image_url: '', shopee_url: '', gender_target: 'U', tags: '', relationship_target: 'U' })
+              setIsModalOpen(true)
+            }}
+            className="flex items-center space-x-3 px-8 py-4 bg-indigo-950 text-white rounded-2xl hover:bg-pink-500 font-black transition-all shadow-xl hover:-translate-y-1"
+          >
+            <Plus className="w-5 h-5" />
+            <span>Tambah Manual</span>
+          </button>
+        </div>
       </div>
 
       <div className="bg-white/80 backdrop-blur-xl border-2 border-white rounded-[3rem] shadow-2xl overflow-hidden">
@@ -126,7 +236,7 @@ export default function ProductManager() {
                     <div className="flex items-center space-x-4">
                       <div className="relative w-16 h-16 flex-shrink-0">
                         <img src={p.image_url} alt={p.name} className="w-full h-full object-contain rounded-xl bg-white p-2 shadow-inner border border-slate-100" />
-                        <div className="absolute -bottom-1 -right-1 w-6 h-6 bg-white rounded-full flex items-center justify-center shadow-md">
+                        <div className="absolute -bottom-1 -right-1 w-6 h-6 bg-white rounded-full flex items-center justify-center shadow-md border border-slate-50">
                           <Target className={`w-3 h-3 ${p.gender_target === 'M' ? 'text-blue-500' : p.gender_target === 'F' ? 'text-pink-500' : 'text-purple-500'}`} />
                         </div>
                       </div>
@@ -142,7 +252,13 @@ export default function ProductManager() {
                     <span className="inline-block px-3 py-1 bg-white border border-slate-100 rounded-full text-[10px] font-black text-indigo-950 shadow-sm">
                       {p.price_range ? (p.price_range.startsWith('RM') ? p.price_range : `RM ${p.price_range}`) : 'RM -'}
                     </span>
-                    <p className="text-[10px] font-bold text-slate-400 mt-1 uppercase tracking-wider">Target: {p.gender_target === 'U' ? 'Semua' : p.gender_target === 'M' ? 'Lelaki' : 'Perempuan'}</p>
+                    <div className="flex gap-1 mt-1">
+                        {p.tags && p.tags.split(',').slice(0, 2).map(tag => (
+                            <span key={tag} className="text-[8px] font-bold text-pink-400 uppercase tracking-tighter bg-pink-50 px-1.5 py-0.5 rounded">
+                                {tag.trim()}
+                            </span>
+                        ))}
+                    </div>
                   </td>
                   <td className="px-8 py-6 hidden md:table-cell">
                     <p className="text-xs text-slate-500 font-medium line-clamp-2 max-w-xs italic">"{p.description}"</p>
@@ -150,7 +266,7 @@ export default function ProductManager() {
                   <td className="px-8 py-6 text-right">
                     <button 
                       onClick={() => handleDelete(p.id)} 
-                      className="p-3 text-slate-300 hover:text-red-500 hover:bg-red-50 rounded-2xl transition-all"
+                      className="p-3 text-slate-200 hover:text-red-500 hover:bg-red-50 rounded-2xl transition-all"
                       title="Padam"
                     >
                       <Trash2 className="w-5 h-5" />
@@ -212,12 +328,10 @@ export default function ProductManager() {
                         try {
                           let html = '';
                           
-                          // Try Proxy 1: corsproxy.io
                           try {
                             const res = await fetch(`https://corsproxy.io/?${encodeURIComponent(url)}`);
                             html = await res.text();
                           } catch (e) {
-                            // Try Proxy 2: allorigins.win
                             const res = await fetch(`https://api.allorigins.win/get?url=${encodeURIComponent(url)}`);
                             const data = await res.json();
                             html = data.contents;
@@ -225,7 +339,6 @@ export default function ProductManager() {
 
                           if (!html) throw new Error('Gagal mengambil data dari Shopee');
                           
-                          // Extract Metadata from HTML
                           const ogTitleMatch = html.match(/property="og:title"\s+content="(.*?)"/i) || html.match(/<title>(.*?)<\/title>/i);
                           const ogImageMatch = html.match(/property="og:image"\s+content="(.*?)"/i);
                           
@@ -236,10 +349,7 @@ export default function ProductManager() {
                             throw new Error('Nama produk tidak dijumpai. Sila guna pautan panjang.');
                           }
 
-                          // Send to backend for AI Polish
-                          const currentOrigin = window.location.origin;
-                          const apiUrl = import.meta.env.VITE_API_URL || (currentOrigin.includes('localhost') ? 'http://localhost:8787' : 'https://hepibesday-api.abeai0203.workers.dev');
-                          
+                          const apiUrl = import.meta.env.VITE_API_URL || 'http://localhost:8787'
                           const aiRes = await fetch(`${apiUrl}/api/admin/scrape-product`, {
                             method: 'POST',
                             headers: { 
@@ -271,7 +381,6 @@ export default function ProductManager() {
                       <span>🪄 Autofill</span>
                     </button>
                   </div>
-                  <p className="text-[9px] text-indigo-400 font-bold italic">Sistem akan automatik tarik Nama, Gambar, Tags & Deskripsi menggunakan AI.</p>
                 </div>
 
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
