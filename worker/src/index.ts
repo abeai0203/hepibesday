@@ -379,6 +379,24 @@ app.post('/api/admin/products', adminAuth, async (c) => {
   }
 })
 
+app.put('/api/admin/products/:id', adminAuth, async (c) => {
+  try {
+    const id = c.req.param('id')
+    const body = await c.req.json()
+    const { name, description, price_range, image_url, shopee_url, gender_target, tags, relationship_target } = body
+
+    await c.env.DB.prepare(`
+      UPDATE products 
+      SET name = ?, description = ?, price_range = ?, image_url = ?, shopee_url = ?, gender_target = ?, tags = ?, relationship_target = ?
+      WHERE id = ?
+    `).bind(name, description, price_range, image_url, shopee_url, gender_target, tags, relationship_target, id).run()
+
+    return c.json({ success: true })
+  } catch (error) {
+    return c.json({ error: 'Database error', details: (error as Error).message }, 500)
+  }
+})
+
 app.delete('/api/admin/products/:id', adminAuth, async (c) => {
   try {
     const id = c.req.param('id')
