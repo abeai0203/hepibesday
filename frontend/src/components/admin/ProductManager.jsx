@@ -1,20 +1,19 @@
 import { useState, useEffect, useRef } from 'react'
-import { Plus, Trash2, Loader2, X, ShoppingBag, Image as ImageIcon, Target, Tag, ExternalLink, Wand2, FileSpreadsheet, Download, Search, Sparkles, CheckCircle2 } from 'lucide-react'
+import { Plus, Trash2, Loader2, X, ShoppingBag, Image as ImageIcon, Target, Tag, ExternalLink, Wand2, FileSpreadsheet, Download, Search, Sparkles, CheckCircle2, ListPlus } from 'lucide-react'
 import { motion, AnimatePresence } from 'framer-motion'
 
 export default function ProductManager() {
   const [products, setProducts] = useState([])
   const [loading, setLoading] = useState(true)
-  const [activeTab, setActiveTab] = useState('inventory') // 'inventory' or 'hunter'
+  const [activeTab, setActiveTab] = useState('inventory') // 'inventory' or 'magic'
   const [isModalOpen, setIsModalOpen] = useState(false)
   const [saving, setSaving] = useState(false)
   const [bulkLoading, setBulkLoading] = useState(false)
   
-  // Shopee Hunter State
-  const [searchQuery, setSearchQuery] = useState('')
-  const [searchLoading, setSearchLoading] = useState(false)
-  const [searchResults, setSearchResults] = useState([])
-  const [importingId, setImportingId] = useState(null)
+  // Magic Importer State
+  const [bulkUrls, setBulkUrls] = useState('')
+  const [importStatus, setImportStatus] = useState([]) // {url, status: 'pending'|'loading'|'success'|'error', name?: string}
+  const [isImporting, setIsImporting] = useState(false)
   
   const fileInputRef = useRef(null)
   
@@ -52,90 +51,65 @@ export default function ProductManager() {
     }
   }, [])
 
-  const handleShopeeSearch = async (e) => {
-    e.preventDefault()
-    if (!searchQuery) return
-    setSearchLoading(true)
-    try {
-      // Direct search from frontend via proxy to avoid server IP blocking
-      const targetUrl = `https://shopee.com.my/api/v4/search/search_items?by=relevancy&keyword=${encodeURIComponent(searchQuery)}&limit=12&newest=0&order=desc&page_type=search&scenario=PAGE_GLOBAL_SEARCH&version=2`
-      const proxyUrl = `https://corsproxy.io/?${encodeURIComponent(targetUrl)}`
-      
-      const res = await fetch(proxyUrl)
-      if (!res.ok) throw new Error('Proxy error')
-      
-      const data = await res.json()
-      
-      const items = (data.items || []).map((i) => {
-        const basic = i.item_basic
-        return {
-          id: basic.itemid,
-          shop_id: basic.shopid,
-          name: basic.name,
-          price: (basic.price / 100000).toFixed(2),
-          image_url: `https://down-my.img.susercontent.com/file/${basic.image}`,
-          shopee_url: `https://shopee.com.my/product/${basic.shopid}/${basic.itemid}`,
-          rating: basic.item_rating?.rating_star?.toFixed(1)
+  const startMagicImport = async () => {
+    const urls = bulkUrls.split('\n').map(u => u.trim()).filter(u => u.startsWith('http'))
+    if (urls.length === 0) return alert('Sila masukkan sekurang-kurangnya satu link Shopee')
+
+    setIsImporting(true)
+    const initialStatus = urls.map(url => ({ url, status: 'pending' }))
+    setImportStatus(initialStatus)
+
+    const apiUrl = import.meta.env.VITE_API_URL || 'http://localhost:8787'
+
+    for (let i = 0; i < urls.length; i++) {
+      const url = urls[i]
+      setImportStatus(prev => prev.map((s, idx) => idx === i ? { ...s, status: 'loading' } : s))
+
+      try {
+        // 1. Scrape & AI Polish
+        const aiRes = await fetch(`${apiUrl}/api/admin/scrape-product`, {
+          method: 'POST',
+          headers: { 
+            'Content-Type': 'application/json',
+            'Authorization': `Bearer ${localStorage.getItem('adminToken')}`
+          },
+          body: JSON.stringify({ url })
+        });
+        
+        const aiData = await aiRes.json();
+        if (!aiRes.ok) throw new Error('Failed to scrape')
+
+        // 2. Save to DB
+        const saveRes = await fetch(`${apiUrl}/api/admin/products`, {
+          method: 'POST',
+          headers: { 
+            'Content-Type': 'application/json',
+            'Authorization': `Bearer ${localStorage.getItem('adminToken')}`
+          },
+          body: JSON.stringify({
+            name: aiData.name,
+            description: aiData.description,
+            price_range: aiData.price_range || 'RM 0',
+            image_url: aiData.image_url,
+            shopee_url: url,
+            gender_target: 'U',
+            tags: aiData.tags || '',
+            relationship_target: 'U'
+          })
+        });
+
+        if (saveRes.ok) {
+          setImportStatus(prev => prev.map((s, idx) => idx === i ? { ...s, status: 'success', name: aiData.name } : s))
+        } else {
+          throw new Error('Save failed')
         }
-      })
-      
-      setSearchResults(items)
-      if (items.length === 0) alert('Tiada hasil dijumpai. Cuba keyword lain.')
-    } catch (err) {
-      console.error('Search error:', err)
-      alert('Gagal mencari di Shopee. Sila cuba sebentar lagi.')
-    } finally {
-      setSearchLoading(false)
-    }
-  }
-
-  const handleImportProduct = async (shopeeItem) => {
-    setImportingId(shopeeItem.id)
-    try {
-      const apiUrl = import.meta.env.VITE_API_URL || 'http://localhost:8787'
-      
-      // 1. Get AI Polish for the product
-      const aiRes = await fetch(`${apiUrl}/api/admin/scrape-product`, {
-        method: 'POST',
-        headers: { 
-          'Content-Type': 'application/json',
-          'Authorization': `Bearer ${localStorage.getItem('adminToken')}`
-        },
-        body: JSON.stringify({ url: shopeeItem.shopee_url, name: shopeeItem.name })
-      });
-      
-      const aiData = await aiRes.json();
-      
-      // 2. Save to our database
-      const saveRes = await fetch(`${apiUrl}/api/admin/products`, {
-        method: 'POST',
-        headers: { 
-          'Content-Type': 'application/json',
-          'Authorization': `Bearer ${localStorage.getItem('adminToken')}`
-        },
-        body: JSON.stringify({
-          name: aiData.name || shopeeItem.name,
-          description: aiData.description || 'Hadiah menarik dari Shopee!',
-          price_range: `RM ${shopeeItem.price}`,
-          image_url: shopeeItem.image_url,
-          shopee_url: shopeeItem.shopee_url,
-          gender_target: 'U',
-          tags: aiData.tags || '',
-          relationship_target: 'U'
-        })
-      });
-
-      if (saveRes.ok) {
-        setSearchResults(prev => prev.map(item => item.id === shopeeItem.id ? { ...item, imported: true } : item))
-        fetchProducts()
-      } else {
-        throw new Error('Gagal simpan ke database')
+      } catch (err) {
+        setImportStatus(prev => prev.map((s, idx) => idx === i ? { ...s, status: 'error' } : s))
       }
-    } catch (err) {
-      alert(`Gagal import: ${err.message}`)
-    } finally {
-      setImportingId(null)
     }
+
+    setIsImporting(false)
+    fetchProducts()
   }
 
   const handleBulkUpload = async (e) => {
@@ -236,11 +210,11 @@ export default function ProductManager() {
               Inventory ({products.length})
             </button>
             <button 
-              onClick={() => setActiveTab('hunter')}
-              className={`px-6 py-3 rounded-2xl font-black text-sm transition-all flex items-center gap-2 ${activeTab === 'hunter' ? 'bg-pink-500 text-white shadow-lg' : 'bg-white text-indigo-950/40 hover:bg-pink-50'}`}
+              onClick={() => setActiveTab('magic')}
+              className={`px-6 py-3 rounded-2xl font-black text-sm transition-all flex items-center gap-2 ${activeTab === 'magic' ? 'bg-pink-500 text-white shadow-lg' : 'bg-white text-indigo-950/40 hover:bg-pink-50'}`}
             >
-              <Search className="w-4 h-4" />
-              Shopee Hunter
+              <Wand2 className="w-4 h-4" />
+              Magic Bulk Importer
             </button>
           </div>
         </div>
@@ -311,84 +285,65 @@ export default function ProductManager() {
           </div>
         </motion.div>
       ) : (
-        <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} className="space-y-8">
-          {/* Hunter Search Bar */}
-          <div className="max-w-2xl mx-auto">
-            <form onSubmit={handleShopeeSearch} className="relative">
-              <Search className="absolute left-6 top-1/2 -translate-y-1/2 text-indigo-950/20 w-6 h-6" />
-              <input 
-                type="text" 
-                value={searchQuery}
-                onChange={e => setSearchQuery(e.target.value)}
-                placeholder="Cari apa-apa barang kat Shopee... (cth: Moon Lamp)" 
-                className="w-full bg-white border-4 border-white rounded-[2.5rem] px-16 py-6 text-lg font-black text-indigo-950 shadow-2xl focus:border-pink-200 outline-none transition-all placeholder:text-indigo-950/10"
-              />
-              <button 
-                type="submit"
-                disabled={searchLoading}
-                className="absolute right-4 top-1/2 -translate-y-1/2 bg-indigo-950 text-white px-8 py-3 rounded-2xl font-black text-sm hover:bg-pink-500 transition-all disabled:opacity-50"
-              >
-                {searchLoading ? <Loader2 className="w-4 h-4 animate-spin" /> : 'BURU!'}
-              </button>
-            </form>
+        <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} className="max-w-4xl mx-auto space-y-8">
+          <div className="bg-white border-2 border-white rounded-[3rem] p-8 shadow-2xl space-y-6">
+            <div className="flex items-center gap-4">
+              <div className="w-12 h-12 bg-pink-500 text-white rounded-2xl flex items-center justify-center shadow-lg">
+                <ListPlus className="w-6 h-6" />
+              </div>
+              <div>
+                <h3 className="text-xl font-black text-indigo-950">Magic Bulk Importer</h3>
+                <p className="text-slate-400 text-xs font-bold uppercase tracking-widest">Tampal link Shopee & AI akan uruskan</p>
+              </div>
+            </div>
+
+            <textarea 
+              value={bulkUrls}
+              onChange={e => setBulkUrls(e.target.value)}
+              placeholder="https://shopee.com.my/product-1&#10;https://shopee.com.my/product-2&#10;..."
+              className="w-full bg-slate-50 border-2 border-slate-50 focus:border-pink-200 rounded-[2rem] p-8 text-sm font-bold text-indigo-950 outline-none transition-all min-h-[250px] shadow-inner"
+            />
+
+            <button 
+              onClick={startMagicImport}
+              disabled={isImporting || !bulkUrls}
+              className="w-full py-6 bg-indigo-950 text-white rounded-[2rem] font-black text-lg hover:bg-pink-500 transition-all shadow-2xl flex items-center justify-center gap-3 disabled:opacity-50"
+            >
+              {isImporting ? <Loader2 className="w-6 h-6 animate-spin" /> : <Sparkles className="w-6 h-6" />}
+              {isImporting ? 'MAGIC PROCESSING...' : 'START MAGIC IMPORT'}
+            </button>
           </div>
 
-          {/* Hunter Results */}
-          <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6">
-            <AnimatePresence mode="popLayout">
-              {searchResults.map((item, idx) => (
-                <motion.div 
-                  key={item.id}
-                  layout
-                  initial={{ opacity: 0, scale: 0.9 }}
-                  animate={{ opacity: 1, scale: 1 }}
-                  transition={{ delay: idx * 0.05 }}
-                  className="bg-white border-2 border-white rounded-[2.5rem] overflow-hidden group shadow-xl hover:-translate-y-1 transition-all duration-300 flex flex-col"
-                >
-                  <div className="relative h-44 bg-slate-50 p-4">
-                    <img src={item.image_url} alt={item.name} className="w-full h-full object-contain group-hover:scale-110 transition-transform duration-500" />
-                    <div className="absolute top-3 right-3 bg-pink-500 text-white text-[9px] font-black px-3 py-1.5 rounded-full shadow-lg">
-                      RM {item.price}
+          {/* Import Status List */}
+          {importStatus.length > 0 && (
+            <div className="bg-white/50 backdrop-blur-xl border-2 border-white rounded-[3rem] p-8 shadow-xl">
+              <h4 className="text-xs font-black text-indigo-950 uppercase tracking-widest mb-6">Status Magic Import</h4>
+              <div className="space-y-3">
+                {importStatus.map((s, idx) => (
+                  <div key={idx} className="flex items-center justify-between p-4 bg-white rounded-2xl border border-slate-50 shadow-sm">
+                    <div className="flex items-center gap-4 truncate mr-4">
+                      <div className="w-8 h-8 rounded-full bg-slate-50 flex items-center justify-center text-[10px] font-black text-slate-400">
+                        {idx + 1}
+                      </div>
+                      <p className="text-xs font-bold text-indigo-950 truncate max-w-md">
+                        {s.name || s.url}
+                      </p>
                     </div>
-                    {item.rating > 0 && (
-                      <div className="absolute bottom-3 left-3 bg-white/90 backdrop-blur px-2 py-1 rounded-lg text-[8px] font-black text-indigo-950 shadow-sm flex items-center gap-1">
-                        ⭐ {item.rating}
-                      </div>
-                    )}
+                    <div>
+                      {s.status === 'loading' && <Loader2 className="w-5 h-5 text-indigo-950 animate-spin" />}
+                      {s.status === 'success' && <CheckCircle2 className="w-5 h-5 text-green-500" />}
+                      {s.status === 'error' && <X className="w-5 h-5 text-red-500" />}
+                      {s.status === 'pending' && <div className="w-2 h-2 rounded-full bg-slate-200" />}
+                    </div>
                   </div>
-                  <div className="p-5 flex-1 flex flex-col justify-between gap-4">
-                    <h4 className="text-xs font-black text-indigo-950 line-clamp-2 leading-tight">{item.name}</h4>
-                    
-                    {item.imported ? (
-                      <div className="w-full py-3 bg-green-50 text-green-600 rounded-xl font-black text-[10px] flex items-center justify-center gap-2">
-                        <CheckCircle2 className="w-4 h-4" /> IMPORTED
-                      </div>
-                    ) : (
-                      <button 
-                        onClick={() => handleImportProduct(item)}
-                        disabled={importingId === item.id}
-                        className="w-full py-3 bg-indigo-50 text-indigo-950 rounded-xl font-black text-[10px] hover:bg-pink-500 hover:text-white transition-all flex items-center justify-center gap-2"
-                      >
-                        {importingId === item.id ? <Loader2 className="w-3 h-3 animate-spin" /> : <Plus className="w-3 h-3" />}
-                        IMPORT MAGIK
-                      </button>
-                    )}
-                  </div>
-                </motion.div>
-              ))}
-            </AnimatePresence>
-          </div>
-
-          {searchResults.length === 0 && !searchLoading && (
-            <div className="text-center py-20 bg-indigo-950/5 rounded-[3rem] border-4 border-dashed border-indigo-950/10">
-              <ShoppingBag className="w-16 h-16 text-indigo-950/10 mx-auto mb-4" />
-              <p className="text-indigo-950/30 font-black uppercase tracking-widest text-sm">Sedia untuk memburu hadiah unik...</p>
+                ))}
+              </div>
             </div>
           )}
         </motion.div>
       )}
 
-      {/* Manual Add Modal (Existing) */}
+      {/* Manual Add Modal */}
       <AnimatePresence>
         {isModalOpen && (
           <div className="fixed inset-0 bg-indigo-950/60 backdrop-blur-md flex items-center justify-center p-4 z-50">
@@ -398,8 +353,6 @@ export default function ProductManager() {
                 <button onClick={() => setIsModalOpen(false)}><X /></button>
               </div>
               <div className="p-8 overflow-y-auto">
-                {/* Re-using existing form fields here... */}
-                <p className="text-xs text-slate-400 mb-8 italic text-center">Isi borang di bawah untuk masukkan produk secara manual.</p>
                 <div className="space-y-6">
                     <input value={formData.name} onChange={e => setFormData({...formData, name: e.target.value})} placeholder="Nama Produk" className="w-full p-4 bg-slate-50 rounded-2xl font-bold" />
                     <input value={formData.price_range} onChange={e => setFormData({...formData, price_range: e.target.value})} placeholder="Harga (RM)" className="w-full p-4 bg-slate-50 rounded-2xl font-bold" />
