@@ -336,14 +336,21 @@ app.get('/api/admin/search-shopee', adminAuth, async (c) => {
     const keyword = c.req.query('q')
     if (!keyword) return c.json({ error: 'Keyword diperlukan' }, 400)
 
-    const searchUrl = `https://shopee.com.my/api/v4/search/search_items?by=relevancy&keyword=${encodeURIComponent(keyword)}&limit=12&newest=0&order=desc&page_type=search&scenario=PAGE_GLOBAL_SEARCH&version=2`
+    // Using corsproxy.io as a bridge to bypass IP blocking
+    const targetUrl = `https://shopee.com.my/api/v4/search/search_items?by=relevancy&keyword=${encodeURIComponent(keyword)}&limit=12&newest=0&order=desc&page_type=search&scenario=PAGE_GLOBAL_SEARCH&version=2`
+    const proxyUrl = `https://corsproxy.io/?${encodeURIComponent(targetUrl)}`
     
-    const res = await fetch(searchUrl, {
+    const res = await fetch(proxyUrl, {
       headers: {
-        'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/119.0.0.0 Safari/537.36',
-        'Referer': 'https://shopee.com.my/'
+        'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36',
+        'Accept': 'application/json',
+        'X-Requested-With': 'XMLHttpRequest'
       }
     })
+
+    if (!res.ok) {
+      throw new Error(`Shopee API responded with ${res.status}`)
+    }
 
     const data: any = await res.json()
     const items = (data.items || []).map((i: any) => {
