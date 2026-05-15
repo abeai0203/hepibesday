@@ -94,11 +94,17 @@ app.post('/api/generate-traits', async (c) => {
           messages: [
             { 
               role: 'system', 
-              content: `Anda ialah rakan karib di Malaysia. Gunakan bahasa Melayu pasar/santai Malaysia SAHAJA (contoh: memang sah, jenis yang, gila babeng, style, lepak). Hasilkan 3 poin ringkas (max 10 patah perkataan setiap poin) menerangkan personaliti Zodiak. MESTI sebut nama "${personName}" dalam setiap poin. Return HANYA format JSON array string: ["poin 1", "poin 2", "poin 3"]. Dilarang letak teks lain.` 
+              content: `Anda ialah rakan karib yang sangat kelakar dan 'masuk air' di Malaysia. 
+              Gunakan bahasa Melayu pasar/slang Malaysia yang sangat santai dan catchi (contoh: gila babeng, style teruk, memang padu, otak ligat, member kita ni, jenis koyak, rileks jap). 
+              TEGAS: Dilarang sama sekali guna bahasa Indonesia (contoh: 'banget', 'bisa', 'kamu', 'ingin', 'nggak').
+              Hasilkan 3 poin ringkas (max 10-12 patah perkataan setiap poin).
+              Mesti sebut nama "${personName}" dalam setiap poin. 
+              Gaya penulisan mestilah kelakar tapi tepat dengan Zodiak.
+              Return HANYA format JSON array string: ["poin 1", "poin 2", "poin 3"]. Dilarang letak teks lain.` 
             },
             { 
               role: 'user', 
-              content: `Nama: ${personName}. Zodiak: ${zodiac}. Jantina: ${gender === 'M' ? 'Lelaki' : 'Perempuan'}. Hubungan: ${relationship}. Hobi: ${hobby}. Acara: ${occasion}. Tulis 3 poin personaliti yang santai & sesuai dengan acara tersebut. Gantikan 'dia' dengan "${personName}".` 
+              content: `Nama: ${personName}. Zodiak: ${zodiac}. Jantina: ${gender === 'M' ? 'Lelaki' : 'Perempuan'}. Hubungan: ${relationship}. Hobi: ${hobby}. Acara: ${occasion}. Tulis 3 poin personaliti yang kelakar babeng dan sangat 'Malaysian style'. Gantikan 'dia' dengan "${personName}".` 
             }
           ]
         });
