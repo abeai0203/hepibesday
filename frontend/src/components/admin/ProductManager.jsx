@@ -63,16 +63,16 @@ export default function ProductManager() {
 
         if (data.length === 0) throw new Error('Fail Excel kosong')
 
-        // Normalize headers
+        // Normalize headers to match template
         const normalizedData = data.map(item => ({
-          name: item.name || item['Nama'] || item['Nama Produk'] || '',
-          description: item.description || item['Deskripsi'] || item['Description'] || '',
-          price_range: item.price_range || item['Harga'] || item['Price'] || '',
-          image_url: item.image_url || item['Gambar'] || item['Image URL'] || '',
-          shopee_url: item.shopee_url || item['Link Shopee'] || item['URL'] || '',
-          gender_target: item.gender_target || item['Jantina'] || 'U',
-          tags: item.tags || item['Tags'] || item['Hobi'] || '',
-          relationship_target: item.relationship_target || item['Hubungan'] || 'U'
+          name: item['Nama Produk'] || item.name || '',
+          description: item['Deskripsi'] || item.description || '',
+          price_range: item['Harga'] || item.price_range || 'RM ',
+          image_url: item['Gambar'] || item.image_url || '',
+          shopee_url: item['URL'] || item.shopee_url || '',
+          gender_target: item['Target Jantina'] || item.gender_target || 'U',
+          tags: item['Tags (Hobi)'] || item.tags || '',
+          relationship_target: item['Target Hubungan'] || item.relationship_target || 'U'
         }))
 
         const apiUrl = import.meta.env.VITE_API_URL || 'http://localhost:8787'
@@ -103,20 +103,48 @@ export default function ProductManager() {
   const downloadTemplate = () => {
     const template = [
       {
-        name: 'Contoh Produk',
-        description: 'Deskripsi menarik di sini',
-        price_range: 'RM 50 - 150',
-        image_url: 'https://link-gambar.com/img.jpg',
-        shopee_url: 'https://shope.ee/abc',
-        gender_target: 'M (Lelaki), F (Wanita), U (Unisex)',
-        tags: 'Gaming, Travel',
-        relationship_target: 'P (Pasangan), K (Kawan), F (Family), U (Semua)'
+        'Nama Produk': 'Contoh Produk',
+        'Deskripsi': 'Hadiah ni memang style sebab...',
+        'Harga': 'RM 50 - 150',
+        'Gambar': 'https://link-gambar.com/produk.jpg',
+        'URL': 'https://shope.ee/abc',
+        'Target Jantina': 'U',
+        'Tags (Hobi)': 'Gaming, Travel',
+        'Target Hubungan': 'U'
+      },
+      {
+        'Nama Produk': '', 'Deskripsi': '', 'Harga': 'RM ', 'Gambar': '', 'URL': '', 'Target Jantina': '', 'Tags (Hobi)': '', 'Target Hubungan': ''
       }
     ]
+
     const ws = window.XLSX.utils.json_to_sheet(template)
+    
+    // Add Data Validation (Dropdowns)
+    // Note: Standard XLSX library has limited support for validation via json_to_sheet, 
+    // but we can add a 'Rujukan' sheet to help the user.
     const wb = window.XLSX.utils.book_new()
-    window.XLSX.utils.book_append_sheet(wb, ws, "Template")
+    window.XLSX.utils.book_append_sheet(wb, ws, "Produk")
+
+    // Reference Sheet
+    const refData = [
+      { 'Kategori': 'Target Jantina', 'Kod': 'M', 'Maksud': 'Lelaki' },
+      { 'Kategori': 'Target Jantina', 'Kod': 'F', 'Maksud': 'Wanita' },
+      { 'Kategori': 'Target Jantina', 'Kod': 'U', 'Maksud': 'Unisex' },
+      { 'Kategori': '', 'Kod': '', 'Maksud': '' },
+      { 'Kategori': 'Target Hubungan', 'Kod': 'P', 'Maksud': 'Pasangan' },
+      { 'Kategori': 'Target Hubungan', 'Kod': 'K', 'Maksud': 'Kawan' },
+      { 'Kategori': 'Target Hubungan', 'Kod': 'F', 'Maksud': 'Keluarga' },
+      { 'Kategori': 'Target Hubungan', 'Kod': 'U', 'Maksud': 'Semua (General)' },
+      { 'Kategori': '', 'Kod': '', 'Maksud': '' },
+      { 'Kategori': 'Tags (Hobi) Contoh', 'Kod': 'Gaming', 'Maksud': 'Suka main game' },
+      { 'Kategori': 'Tags (Hobi) Contoh', 'Kod': 'Travel', 'Maksud': 'Suka melancong' },
+      { 'Kategori': 'Tags (Hobi) Contoh', 'Kod': 'Beauty', 'Maksud': 'Suka mekap/skincare' }
+    ]
+    const wsRef = window.XLSX.utils.json_to_sheet(refData)
+    window.XLSX.utils.book_append_sheet(wb, wsRef, "Rujukan_Kod")
+
     window.XLSX.writeFile(wb, "Hepibesday_Template_Bulk.xlsx")
+    alert('Template dimuat turun! Sila rujuk sheet "Rujukan_Kod" untuk pilihan Jantina & Hubungan.')
   }
 
   const handleDelete = async (id) => {
