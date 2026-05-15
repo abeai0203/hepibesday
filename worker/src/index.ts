@@ -419,58 +419,47 @@ app.post('/api/admin/scrape-product', adminAuth, async (c) => {
     let imageUrl = 'https://via.placeholder.com/500?text=Sila+Masukkan+Gambar'
     let priceRange = 'RM -'
 
-    // 1. New "Pro" Scraper using Shopee v4 API
+    // 1. "Ninja Scraper" - Multi-Proxy & Google Translate Bridge
     try {
-      // Extract ShopID and ItemID from URL
-      // Pattern: shopee.com.my/product/SHOPID/ITEMID
+      // Step A: Try Shopee API v4 first (Fastest if it works)
       const idMatch = url.match(/product\/(\d+)\/(\d+)/)
       if (idMatch) {
         const shopId = idMatch[1]
         const itemId = idMatch[2]
-        const apiUrl = `https://shopee.com.my/api/v4/item/get?itemid=${itemId}&shopid=${shopId}`
-        
-        const apiRes = await fetch(`https://corsproxy.io/?${encodeURIComponent(apiUrl)}`, {
-          headers: { 'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36' }
-        })
+        const shopeeApi = `https://shopee.com.my/api/v4/item/get?itemid=${itemId}&shopid=${shopId}`
+        const apiRes = await fetch(`https://corsproxy.io/?${encodeURIComponent(shopeeApi)}`)
         const apiData = await apiRes.json() as any
-        
         if (apiData?.data) {
           const item = apiData.data
           name = item.name || ''
           description = item.description || ''
-          
-          // Get highest resolution image
-          if (item.image) {
-            imageUrl = `https://down-my.img.susercontent.com/file/${item.image}`
-          }
-          
-          if (item.price_min) {
-            priceRange = `RM ${(item.price_min / 100000).toFixed(2)}`
-            if (item.price_max && item.price_max !== item.price_min) {
-              priceRange += ` - RM ${(item.price_max / 100000).toFixed(2)}`
-            }
-          }
+          imageUrl = item.image ? `https://down-my.img.susercontent.com/file/${item.image}` : imageUrl
+          if (item.price_min) priceRange = `RM ${(item.price_min / 100000).toFixed(2)}`
         }
       }
-    } catch (e) {
-      console.error("API Scrape failed, falling back to Meta:", e)
-    }
 
-    // Fallback to Meta Scraping if API fails or No IDs found
-    if (!name) {
-      try {
-        const res = await fetch(`https://corsproxy.io/?${encodeURIComponent(url)}`)
-        const html = await res.text()
-        const ogTitle = html.match(/property="og:title"\s+content="(.*?)"/i)?.[1] || html.match(/<title>(.*?)<\/title>/i)?.[1]
-        if (ogTitle && ogTitle.toLowerCase() !== 'shopee') {
-          name = ogTitle.split('|')[0].trim()
+      // Step B: If API fails, try Google Translate Proxy (High Success Rate)
+      if (!name) {
+        const googleProxy = `https://translate.google.com/translate?sl=auto&tl=en&u=${encodeURIComponent(url)}`
+        const gRes = await fetch(googleProxy, {
+          headers: { 'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36' }
+        })
+        const gHtml = await gRes.text()
+        
+        // Extract from Google's wrapper
+        const titleMatch = gHtml.match(/<title>(.*?)<\/title>/i)
+        if (titleMatch && !titleMatch[1].toLowerCase().includes('translate')) {
+          name = titleMatch[1].replace('Google Translate', '').replace(/\|\s*Shopee.*/gi, '').trim()
         }
-        const ogImage = html.match(/property="og:image"\s+content="(.*?)"/i)?.[1]
-        if (ogImage) imageUrl = ogImage
-      } catch (e) {}
+        
+        const imgMatch = gHtml.match(/property="og:image"\s+content="(.*?)"/i)
+        if (imgMatch) imageUrl = imgMatch[1]
+      }
+    } catch (e) {
+      console.error("Ninja Scrape Error:", e)
     }
 
-    // 2. AI Polish
+    // 2. AI Polish (Cleanup and description)
     const seedName = name || providedName || ''
     if (c.env.AI && seedName && seedName.toLowerCase() !== 'shopee') {
       try {
@@ -480,7 +469,7 @@ app.post('/api/admin/scrape-product', adminAuth, async (c) => {
               role: 'system', 
               content: 'Anda pakar hadiah Malaysia. Kemaskan Nama Produk, buat Deskripsi menarik dlm BM santai, dan berikan 2-3 tag hobi. Return JSON: {"name": "...", "description": "...", "tags": "tag1, tag2"}' 
             },
-            { role: 'user', content: `Nama: ${seedName}` }
+            { role: 'user', content: `Nama: ${seedName}. URL: ${url}` }
           ]
         })
         const aiText = (aiResponse as any).response;
