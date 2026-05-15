@@ -38,6 +38,7 @@ export default function Analyzing({ sessionData, onComplete }) {
             gender: sessionData.gender,
             targetName: sessionData.targetName,
             relationship: sessionData.relationship,
+            occasion: sessionData.occasion,
             hobby: sessionData.hobby,
             turnstileToken: sessionData.turnstileToken
           }),

@@ -4,6 +4,7 @@ import NameSelection from './components/NameSelection'
 import GenderSelection from './components/GenderSelection'
 import DateSelection from './components/DateSelection'
 import RelationshipSelection from './components/RelationshipSelection'
+import OccasionSelection from './components/OccasionSelection'
 import HobbySelection from './components/HobbySelection'
 import Analyzing from './components/Analyzing'
 import Traits from './components/Traits'
@@ -20,6 +21,7 @@ function PublicFlow() {
       gender: 'Lelaki atau Perempuan? - Hepibesday',
       date: 'Tarikh Lahir - Hepibesday',
       relationship: 'Jenis Hubungan - Hepibesday',
+      occasion: 'Acara & Tujuan - Hepibesday',
       hobby: 'Minat & Hobi - Hepibesday',
       analyzing: 'Mencari Magik... - Hepibesday',
       traits: 'Analisis Personaliti - Hepibesday',
@@ -32,6 +34,7 @@ function PublicFlow() {
     gender: null,
     birthDate: null,
     relationship: 'U',
+    occasion: 'birthday',
     hobby: '',
     sessionId: null,
     zodiac: null,
@@ -50,8 +53,9 @@ function PublicFlow() {
         {step === 'name' && <NameSelection onNext={(targetName) => handleNext('gender', { targetName })} onBack={() => setStep('landing')} />}
         {step === 'gender' && <GenderSelection targetName={sessionData.targetName} onNext={(gender) => handleNext('date', { gender })} onBack={() => setStep('name')} />}
         {step === 'date' && <DateSelection targetName={sessionData.targetName} onNext={(data) => handleNext('relationship', data)} onBack={() => setStep('gender')} />}
-        {step === 'relationship' && <RelationshipSelection targetName={sessionData.targetName} onNext={(relationship) => handleNext('hobby', { relationship })} onBack={() => setStep('date')} />}
-        {step === 'hobby' && <HobbySelection targetName={sessionData.targetName} onNext={(hobby) => handleNext('analyzing', { hobby })} onBack={() => setStep('relationship')} />}
+        {step === 'relationship' && <RelationshipSelection targetName={sessionData.targetName} onNext={(relationship) => handleNext('occasion', { relationship })} onBack={() => setStep('date')} />}
+        {step === 'occasion' && <OccasionSelection targetName={sessionData.targetName} onNext={(occasion) => handleNext('hobby', { occasion })} onBack={() => setStep('relationship')} />}
+        {step === 'hobby' && <HobbySelection targetName={sessionData.targetName} onNext={(hobby) => handleNext('analyzing', { hobby })} onBack={() => setStep('occasion')} />}
         {step === 'analyzing' && <Analyzing sessionData={sessionData} onComplete={(data) => handleNext('traits', data)} />}
         {step === 'traits' && <Traits sessionData={sessionData} onNext={() => handleNext('results')} onRetry={() => setStep('analyzing')} onBack={() => setStep('hobby')} />}
         {step === 'results' && <Results sessionData={sessionData} onRestart={() => setStep('landing')} />}
