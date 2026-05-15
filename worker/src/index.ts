@@ -331,6 +331,40 @@ app.post('/api/admin/products', adminAuth, async (c) => {
   }
 })
 
+app.get('/api/admin/search-shopee', adminAuth, async (c) => {
+  try {
+    const keyword = c.req.query('q')
+    if (!keyword) return c.json({ error: 'Keyword diperlukan' }, 400)
+
+    const searchUrl = `https://shopee.com.my/api/v4/search/search_items?by=relevancy&keyword=${encodeURIComponent(keyword)}&limit=12&newest=0&order=desc&page_type=search&scenario=PAGE_GLOBAL_SEARCH&version=2`
+    
+    const res = await fetch(searchUrl, {
+      headers: {
+        'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/119.0.0.0 Safari/537.36',
+        'Referer': 'https://shopee.com.my/'
+      }
+    })
+
+    const data: any = await res.json()
+    const items = (data.items || []).map((i: any) => {
+      const basic = i.item_basic
+      return {
+        id: basic.itemid,
+        shop_id: basic.shopid,
+        name: basic.name,
+        price: (basic.price / 100000).toFixed(2),
+        image_url: `https://down-my.img.susercontent.com/file/${basic.image}`,
+        shopee_url: `https://shopee.com.my/product/${basic.shopid}/${basic.itemid}`,
+        rating: basic.item_rating?.rating_star?.toFixed(1)
+      }
+    })
+
+    return c.json({ results: items })
+  } catch (error) {
+    return c.json({ error: 'Gagal mencari di Shopee', details: (error as Error).message }, 500)
+  }
+})
+
 app.post('/api/admin/bulk-products', adminAuth, async (c) => {
   try {
     const products = await c.req.json()
