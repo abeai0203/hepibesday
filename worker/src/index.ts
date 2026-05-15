@@ -1,6 +1,5 @@
 import { Hono } from 'hono'
 import { cors } from 'hono/cors'
-
 import { sign, verify } from 'hono/jwt'
 
 type Bindings = {
@@ -110,7 +109,6 @@ app.post('/api/generate-traits', async (c) => {
           ]
         });
         
-        // Extract JSON array from response string safely
         const aiText = (aiResponse as any).response;
         const match = aiText.match(/\[.*?\]/s);
         if (match) {
@@ -124,7 +122,6 @@ app.post('/api/generate-traits', async (c) => {
       }
     }
 
-    // Create a session in DB
     const sessionId = crypto.randomUUID()
     await c.env.DB.prepare(
       'INSERT INTO sessions (id, zodiac_sign, gender) VALUES (?, ?, ?)'
@@ -145,7 +142,6 @@ app.post('/api/recommendations', async (c) => {
       return c.json({ error: 'Missing zodiac' }, 400)
     }
 
-    // 1. Get products matching gender and relationship
     const { results: dbProducts } = await c.env.DB.prepare(`
       SELECT id, name, price_range, image_url, shopee_url, tags, relationship_target 
       FROM products 
@@ -160,13 +156,11 @@ app.post('/api/recommendations', async (c) => {
       return c.json({ products: [] })
     }
 
-    // Default fallback
     let finalProducts = dbProducts.slice(0, 3).map(p => ({
       ...p,
       reason: `Pilihan yang memang ngam dengan gaya ${targetName}.`
     }))
 
-    // 2. AI Selection using Traits, Hobby, and Relationship
     if (c.env.AI && (traits.length > 0 || hobby) && dbProducts.length > 0) {
       try {
         const catalog = dbProducts.map(p => ({ id: p.id, name: p.name, tags: p.tags }))
@@ -234,7 +228,6 @@ app.post('/api/admin/login', async (c) => {
     return c.json({ error: 'Unauthorized' }, 401)
   }
 
-  // Issue JWT valid for 24 hours
   const payload = { admin: true, exp: Math.floor(Date.now() / 1000) + 60 * 60 * 24 }
   const secret = c.env.JWT_SECRET || 'fallback_secret_for_local_dev'
   const token = await sign(payload, secret, 'HS256')
@@ -242,7 +235,6 @@ app.post('/api/admin/login', async (c) => {
   return c.json({ token })
 })
 
-// Admin Middleware
 const adminAuth = async (c: any, next: any) => {
   const authHeader = c.req.header('Authorization')
   if (!authHeader || !authHeader.startsWith('Bearer ')) {
@@ -264,7 +256,6 @@ app.get('/api/admin/stats', adminAuth, async (c) => {
     const sessionCount = await c.env.DB.prepare('SELECT COUNT(*) as count FROM sessions').first('count')
     const clickCount = await c.env.DB.prepare('SELECT COUNT(*) as count FROM affiliate_clicks').first('count')
     
-    // Top Zodiacs
     const { results: topZodiacs } = await c.env.DB.prepare(`
       SELECT zodiac_sign, COUNT(*) as count 
       FROM sessions 
@@ -273,7 +264,6 @@ app.get('/api/admin/stats', adminAuth, async (c) => {
       LIMIT 3
     `).all()
 
-    // Top Products
     const { results: topProducts } = await c.env.DB.prepare(`
       SELECT p.name, COUNT(*) as count 
       FROM affiliate_clicks ac
@@ -303,7 +293,6 @@ app.get('/api/admin/products', adminAuth, async (c) => {
       GROUP BY p.id
     `).all()
     
-    // Parse the JSON array string from SQLite
     const parsedResults = results.map(r => ({
       ...r,
       zodiac_tags: JSON.parse(r.zodiac_tags as string)
@@ -315,28 +304,11 @@ app.get('/api/admin/products', adminAuth, async (c) => {
   }
 })
 
-app.post('/api/admin/products', adminAuth, async (c) => {
-  try {
-    const body = await c.req.json()
-    const { name, description, price_range, image_url, shopee_url, gender_target, tags, relationship_target } = body
-    const id = 'p' + Date.now()
-
-    await c.env.DB.prepare(
-      'INSERT INTO products (id, name, description, price_range, image_url, shopee_url, gender_target, tags, relationship_target) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)'
-    ).bind(id, name, description, price_range, image_url, shopee_url, gender_target, tags, relationship_target || 'U').run()
-
-    return c.json({ success: true, id })
-  } catch (error) {
-    return c.json({ error: 'Database error', details: (error as Error).message }, 500)
-  }
-})
-
 app.get('/api/admin/search-shopee', adminAuth, async (c) => {
   try {
     const keyword = c.req.query('q')
     if (!keyword) return c.json({ error: 'Keyword diperlukan' }, 400)
 
-    // Using corsproxy.io as a bridge to bypass IP blocking
     const targetUrl = `https://shopee.com.my/api/v4/search/search_items?by=relevancy&keyword=${encodeURIComponent(keyword)}&limit=12&newest=0&order=desc&page_type=search&scenario=PAGE_GLOBAL_SEARCH&version=2`
     const proxyUrl = `https://corsproxy.io/?${encodeURIComponent(targetUrl)}`
     
@@ -348,9 +320,7 @@ app.get('/api/admin/search-shopee', adminAuth, async (c) => {
       }
     })
 
-    if (!res.ok) {
-      throw new Error(`Shopee API responded with ${res.status}`)
-    }
+    if (!res.ok) throw new Error(`Shopee API responded with ${res.status}`)
 
     const data: any = await res.json()
     const items = (data.items || []).map((i: any) => {
@@ -382,15 +352,7 @@ app.post('/api/admin/bulk-products', adminAuth, async (c) => {
       return c.env.DB.prepare(
         'INSERT INTO products (id, name, description, price_range, image_url, shopee_url, gender_target, tags, relationship_target) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)'
       ).bind(
-        id, 
-        p.name || 'Produk Tanpa Nama', 
-        p.description || '', 
-        p.price_range || 'RM 0', 
-        p.image_url || '', 
-        p.shopee_url || '', 
-        p.gender_target || 'U', 
-        p.tags || '', 
-        p.relationship_target || 'U'
+        id, p.name || 'Produk Tanpa Nama', p.description || '', p.price_range || 'RM 0', p.image_url || '', p.shopee_url || '', p.gender_target || 'U', p.tags || '', p.relationship_target || 'U'
       )
     })
 
@@ -398,6 +360,22 @@ app.post('/api/admin/bulk-products', adminAuth, async (c) => {
     return c.json({ success: true, count: products.length })
   } catch (error) {
     return c.json({ error: 'Bulk upload gagal', details: (error as Error).message }, 500)
+  }
+})
+
+app.post('/api/admin/products', adminAuth, async (c) => {
+  try {
+    const body = await c.req.json()
+    const { name, description, price_range, image_url, shopee_url, gender_target, tags, relationship_target } = body
+    const id = 'p' + Date.now()
+
+    await c.env.DB.prepare(
+      'INSERT INTO products (id, name, description, price_range, image_url, shopee_url, gender_target, tags, relationship_target) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)'
+    ).bind(id, name, description, price_range, image_url, shopee_url, gender_target, tags, relationship_target || 'U').run()
+
+    return c.json({ success: true, id })
+  } catch (error) {
+    return c.json({ error: 'Database error', details: (error as Error).message }, 500)
   }
 })
 
@@ -412,18 +390,44 @@ app.delete('/api/admin/products/:id', adminAuth, async (c) => {
   }
 })
 
-app.on(['GET', 'POST'], '/api/admin/scrape-product', adminAuth, async (c) => {
+app.post('/api/admin/scrape-product', adminAuth, async (c) => {
   try {
-    const { url, name: providedName } = c.req.method === 'POST' ? await c.req.json() : c.req.query();
-    
-    if (!url && !providedName) return c.json({ error: 'URL atau Nama diperlukan' }, 400)
+    const { url, name: providedName } = await c.req.json()
+    if (!url) return c.json({ error: 'URL diperlukan' }, 400)
 
     let name = providedName || ''
     let description = ''
     let tags = ''
-    let imageUrl = 'https://via.placeholder.com/500?text=Masukkan+Gambar+Produk'
+    let imageUrl = 'https://via.placeholder.com/500?text=Sila+Masukkan+Gambar'
+    let priceRange = 'RM -'
 
-    if (c.env.AI && name && name.length > 3) {
+    // Resolve Redirects for Affiliate Links
+    try {
+      const res = await fetch(url, { 
+        method: 'GET',
+        redirect: 'follow',
+        headers: {
+          'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36'
+        }
+      })
+      
+      // Try to extract basic info from final HTML
+      const html = await res.text()
+      const ogTitleMatch = html.match(/property="og:title"\s+content="(.*?)"/i) || html.match(/<title>(.*?)<\/title>/i)
+      const ogImageMatch = html.match(/property="og:image"\s+content="(.*?)"/i)
+      
+      if (ogTitleMatch) name = ogTitleMatch[1].split('|')[0].split('-')[0].replace('Google Translate', '').trim()
+      if (ogImageMatch) imageUrl = ogImageMatch[1]
+      
+      const priceMatch = html.match(/"price":\s*(\d+)/i) || html.match(/price_range":"(.*?)"/i)
+      if (priceMatch) {
+        const p = priceMatch[1]
+        priceRange = p.length > 5 ? `RM ${(parseInt(p)/100000).toFixed(0)}` : `RM ${p}`
+      }
+    } catch (e) {}
+
+    // AI Polish
+    if (c.env.AI && name) {
       try {
         const aiResponse = await c.env.AI.run('@cf/meta/llama-3-8b-instruct', {
           messages: [
@@ -450,7 +454,8 @@ app.on(['GET', 'POST'], '/api/admin/scrape-product', adminAuth, async (c) => {
       image_url: imageUrl,
       description: description || 'Hadiah menarik dari Shopee!',
       tags: tags,
-      shopee_url: url || ''
+      price_range: priceRange,
+      shopee_url: url
     })
   } catch (error: any) {
     return c.json({ error: 'Gagal memproses data', details: error.message }, 500)
