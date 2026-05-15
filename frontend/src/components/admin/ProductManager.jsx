@@ -99,7 +99,7 @@ export default function ProductManager() {
 
   const startMagicImport = async () => {
     const lines = bulkUrls.split('\n').map(l => l.trim()).filter(l => l.length > 0)
-    if (lines.length === 0) return alert('Sila masukkan sekurang-kurangnya satu link atau format Nama | Link')
+    if (lines.length === 0) return alert('Sila masukkan sekurang-kurangnya satu baris Link Affiliate | Link Original')
 
     setIsImporting(true)
     const initialStatus = lines.map(line => ({ url: line, status: 'pending' }))
@@ -109,28 +109,54 @@ export default function ProductManager() {
 
     for (let i = 0; i < lines.length; i++) {
       const line = lines[i]
-      let url = line
-      let manualName = ''
+      let affiliateUrl = line
+      let scrapeUrl = line
 
       if (line.includes('|')) {
-        const parts = line.split('|')
-        manualName = parts[0].trim()
-        url = parts[1].trim()
+        const parts = line.split('|').map(p => p.trim())
+        affiliateUrl = parts[0]
+        scrapeUrl = parts[1] || parts[0]
       }
 
       setImportStatus(prev => prev.map((s, idx) => idx === i ? { ...s, status: 'loading' } : s))
 
       try {
+        // Try Frontend Scrape first via allorigins proxy (often more reliable than server)
+        let scrapedData = null
+        try {
+          const proxyUrl = `https://api.allorigins.win/get?url=${encodeURIComponent(scrapeUrl)}`
+          const proxyRes = await fetch(proxyUrl)
+          const proxyJson = await proxyRes.json()
+          const html = proxyJson.contents
+          
+          const ogTitle = html.match(/property="og:title"\s+content="(.*?)"/i)?.[1] || html.match(/<title>(.*?)<\/title>/i)?.[1]
+          const ogImage = html.match(/property="og:image"\s+content="(.*?)"/i)?.[1]
+          
+          if (ogTitle && ogTitle.toLowerCase() !== 'shopee') {
+            scrapedData = {
+              name: ogTitle.split('|')[0].split('-')[0].trim(),
+              image_url: ogImage
+            }
+          }
+        } catch (e) {
+          console.log("Frontend scrape failed, falling back to worker")
+        }
+
+        // Call backend for AI Polish and DB Save
         const aiRes = await fetch(`${apiUrl}/api/admin/scrape-product`, {
           method: 'POST',
           headers: { 
             'Content-Type': 'application/json',
             'Authorization': `Bearer ${localStorage.getItem('adminToken')}`
           },
-          body: JSON.stringify({ url, name: manualName })
+          body: JSON.stringify({ 
+            url: scrapeUrl, 
+            name: scrapedData?.name || '' // Pass what we found to AI
+          })
         });
         
         const aiData = await aiRes.json();
+
         const saveRes = await fetch(`${apiUrl}/api/admin/products`, {
           method: 'POST',
           headers: { 
@@ -138,11 +164,11 @@ export default function ProductManager() {
             'Authorization': `Bearer ${localStorage.getItem('adminToken')}`
           },
           body: JSON.stringify({
-            name: aiData.name || manualName || 'Produk Baru',
+            name: aiData.name || scrapedData?.name || 'Produk Baru',
             description: aiData.description,
             price_range: aiData.price_range || 'RM -',
-            image_url: aiData.image_url || 'https://via.placeholder.com/500?text=Sila+Letak+Gambar',
-            shopee_url: url,
+            image_url: scrapedData?.image_url || aiData.image_url,
+            shopee_url: affiliateUrl,
             gender_target: 'U',
             tags: aiData.tags || '',
             relationship_target: 'U'
@@ -150,7 +176,7 @@ export default function ProductManager() {
         });
 
         if (saveRes.ok) {
-          setImportStatus(prev => prev.map((s, idx) => idx === i ? { ...s, status: 'success', name: aiData.name || manualName } : s))
+          setImportStatus(prev => prev.map((s, idx) => idx === i ? { ...s, status: 'success', name: aiData.name || scrapedData?.name } : s))
         } else {
           throw new Error('Save failed')
         }
@@ -352,15 +378,15 @@ export default function ProductManager() {
                 <ListPlus className="w-6 h-6" />
               </div>
               <div>
-                <h3 className="text-xl font-black text-indigo-950">Magic Bulk Importer</h3>
-                <p className="text-slate-400 text-xs font-bold uppercase tracking-widest">Guna format: Nama Produk | Link Affiliate</p>
+                <h3 className="text-xl font-black text-indigo-950">Magic Bulk Importer 2.0</h3>
+                <p className="text-slate-400 text-xs font-bold uppercase tracking-widest">Format: Link Affiliate | Link Shopee Biasa</p>
               </div>
             </div>
 
             <textarea 
               value={bulkUrls}
               onChange={e => setBulkUrls(e.target.value)}
-              placeholder="Mug Kucing | https://shope.ee/abc123&#10;Smartwatch | https://shope.ee/xyz456"
+              placeholder="https://shope.ee/aff-link | https://shopee.com.my/real-product-link"
               className="w-full bg-slate-50 border-2 border-slate-50 focus:border-pink-200 rounded-[2rem] p-8 text-sm font-bold text-indigo-950 outline-none transition-all min-h-[250px] shadow-inner"
             />
 
@@ -370,7 +396,7 @@ export default function ProductManager() {
               className="w-full py-6 bg-indigo-950 text-white rounded-[2rem] font-black text-lg hover:bg-pink-500 transition-all shadow-2xl flex items-center justify-center gap-3 disabled:opacity-50"
             >
               {isImporting ? <Loader2 className="w-6 h-6 animate-spin" /> : <Sparkles className="w-6 h-6" />}
-              {isImporting ? 'MAGIC PROCESSING...' : 'START MAGIC IMPORT'}
+              {isImporting ? 'MAGIC SEARCHING...' : 'START AUTO-IMPORTER'}
             </button>
           </div>
 
