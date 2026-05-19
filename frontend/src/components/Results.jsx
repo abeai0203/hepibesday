@@ -2,7 +2,7 @@ import { useEffect, useState } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
 import { ExternalLink, RefreshCw, Gift, Star, ShoppingBag, Heart, Sparkles, Wand2 } from 'lucide-react'
 
-const API_URL = import.meta.env.VITE_API_URL || (window.location.origin.includes('localhost') ? 'http://localhost:8787' : 'https://hepibesday-api.abeai0203.workers.dev')
+const API_URL = import.meta.env.VITE_API_URL || (window.location.origin.includes('localhost') ? 'http://localhost:8787' : 'https://api.hepibesday.com')
 
 const waitingQuotes = [
   "Kejap ya, tengah tanya kawan-kawan dia...",

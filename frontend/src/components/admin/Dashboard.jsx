@@ -14,7 +14,7 @@ export default function Dashboard() {
     const fetchStats = async () => {
       try {
         const currentOrigin = window.location.origin;
-        const apiUrl = import.meta.env.VITE_API_URL || (currentOrigin.includes('localhost') ? 'http://localhost:8787' : 'https://hepibesday-api.abeai0203.workers.dev');
+        const apiUrl = import.meta.env.VITE_API_URL || (currentOrigin.includes('localhost') ? 'http://localhost:8787' : 'https://api.hepibesday.com');
         const res = await fetch(`${apiUrl}/api/admin/stats`, {
           headers: { 'Authorization': `Bearer ${localStorage.getItem('adminToken')}` }
         })

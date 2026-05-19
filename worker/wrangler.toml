@@ -10,3 +10,7 @@ migrations_dir = "migrations"
 
 [ai]
 binding = "AI"
+
+[[routes]]
+pattern = "api.hepibesday.com"
+custom_domain = true
