@@ -68,7 +68,7 @@ export default function Landing({ onNext }) {
                   <Star className="w-3.5 h-3.5 md:w-4 md:h-4 text-orange-400 fill-orange-400" />
                   <span className="text-[10px] md:text-xs font-black text-pink-500 uppercase tracking-wide">Pening pilih hadiah?</span>
                 </div>
-                <h1 className="text-3xl md:text-6xl font-black text-indigo-950 leading-[0.95] tracking-tight mb-4">
+                <h1 className="text-[42px] md:text-6xl font-black text-indigo-950 leading-[0.95] tracking-tight mb-4">
                   Sedang mencari<br/><span className="text-pink-500">hadiah?</span>
                 </h1>
               </motion.div>
@@ -78,7 +78,7 @@ export default function Landing({ onNext }) {
                   <Wand2 className="w-3.5 h-3.5 md:w-4 md:h-4 text-pink-500" />
                   <span className="text-[10px] md:text-xs font-black text-pink-500 uppercase tracking-wide">Kami Sedia Membantu</span>
                 </div>
-                <h1 className="text-3xl md:text-6xl font-black text-indigo-950 leading-[0.95] tracking-tight">
+                <h1 className="text-[42px] md:text-6xl font-black text-indigo-950 leading-[0.95] tracking-tight">
                   Kami akan<br/><span className="text-pink-500">bantu anda!</span>
                 </h1>
               </motion.div>
