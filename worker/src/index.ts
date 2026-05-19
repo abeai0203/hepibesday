@@ -333,7 +333,7 @@ app.get('/api/admin/search-shopee', adminAuth, async (c) => {
     }
 
     // Try Proxy 2 (allorigins.win) if proxy 1 failed or returned invalid data
-    if (!rawJson || !rawJson.items) {
+    if (!rawJson || !rawJson.items || rawJson.error || rawJson.action_type) {
       try {
         const res2 = await fetch(`https://api.allorigins.win/get?url=${encodeURIComponent(targetUrl)}`)
         if (res2.ok) {
@@ -347,25 +347,79 @@ app.get('/api/admin/search-shopee', adminAuth, async (c) => {
       }
     }
 
-    if (!rawJson || !rawJson.items) {
-      throw new Error(scrapeError || 'Shopee search is temporarily unavailable (Rate Limited)')
+    let items: any[] = []
+
+    if (rawJson && rawJson.items && !rawJson.error && !rawJson.action_type) {
+      items = (rawJson.items || []).map((i: any) => {
+        const basic = i.item_basic
+        if (!basic) return null
+        return {
+          id: basic.itemid,
+          shop_id: basic.shopid,
+          name: basic.name,
+          price: (basic.price / 100000).toFixed(2),
+          image_url: `https://down-my.img.susercontent.com/file/${basic.image}`,
+          shopee_url: `https://shopee.com.my/product/${basic.shopid}/${basic.itemid}`,
+          rating: basic.item_rating?.rating_star?.toFixed(1) || '4.8'
+        }
+      }).filter(Boolean)
     }
 
-    const items = (rawJson.items || []).map((i: any) => {
-      const basic = i.item_basic
-      if (!basic) return null
-      return {
-        id: basic.itemid,
-        shop_id: basic.shopid,
-        name: basic.name,
-        price: (basic.price / 100000).toFixed(2),
-        image_url: `https://down-my.img.susercontent.com/file/${basic.image}`,
-        shopee_url: `https://shopee.com.my/product/${basic.shopid}/${basic.itemid}`,
-        rating: basic.item_rating?.rating_star?.toFixed(1)
-      }
-    }).filter(Boolean)
+    // Try DDG HTML fallback if Shopee API failed/was blocked
+    if (items.length === 0) {
+      try {
+        const ddgUrl = `https://html.duckduckgo.com/html/?q=site:shopee.com.my+${encodeURIComponent(keyword)}`
+        const ddgRes = await fetch(ddgUrl, {
+          headers: {
+            'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36'
+          }
+        })
+        if (ddgRes.ok) {
+          const html = await ddgRes.text()
+          const regex = /\/l\/\?uddg=(https%3A%2F%2Fshopee\.com\.my%2F[^&"]+)/gi
+          let match
+          const seen = new Set()
+          while ((match = regex.exec(html)) !== null) {
+            const rawUrl = match[1]
+            const decodedUrl = decodeURIComponent(rawUrl)
+            if (decodedUrl.includes('-i.') && !seen.has(decodedUrl)) {
+              seen.add(decodedUrl)
+              const idMatch = decodedUrl.match(/-i\.(\d+)\.(\d+)/)
+              const shopId = idMatch ? idMatch[1] : ''
+              const itemId = idMatch ? idMatch[2] : ''
+              
+              // Parse a readable name from URL slug
+              const urlParts = decodedUrl.split('/')
+              const lastPart = urlParts[urlParts.length - 1]
+              const namePart = lastPart.split('-i.')[0].replace(/-/g, ' ')
+              const name = decodeURIComponent(namePart) || 'Produk Shopee'
 
-    return c.json({ results: items })
+              items.push({
+                id: itemId,
+                shop_id: shopId,
+                name: name,
+                price: '-',
+                image_url: 'https://img.icons8.com/color/96/shopee.png',
+                shopee_url: decodedUrl,
+                rating: '4.8'
+              })
+            }
+          }
+        }
+      } catch (ddgErr) {
+        console.error('DDG fallback failed:', ddgErr)
+      }
+    }
+
+    if (items.length === 0) {
+      return c.json({
+        success: false,
+        error: 'antibot_active',
+        message: 'Antibot Shopee sedang aktif. Sila salin URL produk secara manual dari web/app Shopee, kemudian tampalkan di kotak "Import URL" di atas.'
+      }, 200)
+    }
+
+    return c.json({ success: true, results: items })
   } catch (error) {
     return c.json({ error: 'Gagal mencari di Shopee', details: (error as Error).message }, 500)
   }
@@ -476,9 +530,14 @@ app.post('/api/admin/scrape-product', adminAuth, async (c) => {
         const gHtml = await gRes.text()
         
         // Extract from Google's wrapper
-        const titleMatch = gHtml.match(/<title>(.*?)<\/title>/i)
-        if (titleMatch && !titleMatch[1].toLowerCase().includes('translate')) {
-          name = titleMatch[1].replace('Google Translate', '').replace(/\|\s*Shopee.*/gi, '').trim()
+        const ogTitleMatch = gHtml.match(/property="og:title"\s+content="(.*?)"/i) || gHtml.match(/content="(.*?)"\s+property="og:title"/i)
+        if (ogTitleMatch) {
+          name = ogTitleMatch[1].replace(/\|\s*Shopee.*/gi, '').trim()
+        } else {
+          const titleMatch = gHtml.match(/<title>(.*?)<\/title>/i)
+          if (titleMatch && !titleMatch[1].toLowerCase().includes('translate')) {
+            name = titleMatch[1].replace('Google Translate', '').replace(/\|\s*Shopee.*/gi, '').trim()
+          }
         }
         
         const imgMatch = gHtml.match(/property="og:image"\s+content="(.*?)"/i)

@@ -295,9 +295,13 @@ export default function ProductManager() {
       })
       const data = await res.json()
       if (res.ok) {
-        setSearchResults(data.results || [])
-        if (!data.results || data.results.length === 0) {
-          setSearchError('Tiada hasil carian ditemui. Cuba kata kunci lain.')
+        if (data.success === false) {
+          setSearchError(data.message || 'Gagal mencari produk.')
+        } else {
+          setSearchResults(data.results || [])
+          if (!data.results || data.results.length === 0) {
+            setSearchError('Tiada hasil carian ditemui. Cuba kata kunci lain.')
+          }
         }
       } else {
         setSearchError(data.error || 'Gagal mencari produk')
