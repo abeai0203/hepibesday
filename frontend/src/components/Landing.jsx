@@ -25,6 +25,13 @@ export default function Landing({ onNext }) {
   const footerY = useTransform(smoothProgress, [0.4, 0.6], [80, 0])
   const footerOpacity = useTransform(smoothProgress, [0.4, 0.6], [0, 1])
 
+  const handleScrollDown = () => {
+    window.scrollTo({
+      top: window.innerHeight * 0.8,
+      behavior: 'smooth'
+    })
+  }
+
   const steps = [
     { icon: <Users className="w-7 h-7 text-pink-500" />, title: 'Kenali dia', color: 'bg-pink-50' },
     { icon: <Star className="w-7 h-7 text-purple-500" />, title: 'Bintang dedah', color: 'bg-purple-50' },
@@ -95,7 +102,11 @@ export default function Landing({ onNext }) {
                 <img src="/q-mark.png" className="w-full h-full object-contain mix-blend-multiply brightness-[1.1] contrast-[1.1]" alt="?" />
               </motion.div>
 
-              <motion.div style={{ opacity: closedOpacity }} className="absolute inset-0 z-20">
+              <motion.div 
+                style={{ opacity: closedOpacity }} 
+                onClick={handleScrollDown}
+                className="absolute inset-0 z-20 pointer-events-auto cursor-pointer"
+              >
                 <img src="/box-closed.png" className="w-full h-full object-contain mix-blend-multiply brightness-[1.05]" alt="Closed Box" />
               </motion.div>
 
@@ -106,7 +117,8 @@ export default function Landing({ onNext }) {
               {/* Enhanced Scroll Indicator */}
               <motion.div 
                 style={{ opacity: title1Opacity }}
-                className="absolute -bottom-24 md:-bottom-32 flex flex-col items-center gap-2"
+                onClick={handleScrollDown}
+                className="absolute -bottom-24 md:-bottom-32 flex flex-col items-center gap-2 pointer-events-auto cursor-pointer"
               >
                 <motion.div
                   animate={{ y: [0, 10, 0] }}
