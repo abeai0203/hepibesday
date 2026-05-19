@@ -120,9 +120,9 @@ export default function Landing({ onNext }) {
 
   const steps = [
     { icon: <Users className="w-7 h-7 text-pink-500" />, title: 'Kenali dia', color: 'bg-pink-50' },
-    { icon: <Star className="w-7 h-7 text-purple-500" />, title: 'Bintang dedah', color: 'bg-purple-50' },
-    { icon: <Gift className="w-7 h-7 text-yellow-500" />, title: 'Terima 5 hadiah', color: 'bg-yellow-50' },
-    { icon: <ShoppingBag className="w-7 h-7 text-indigo-500" />, title: 'Klik & beli', color: 'bg-indigo-50' },
+    { icon: <Star className="w-7 h-7 text-purple-500" />, title: 'Personaliti', color: 'bg-purple-50' },
+    { icon: <Gift className="w-7 h-7 text-yellow-500" />, title: 'Cadangan', color: 'bg-yellow-50' },
+    { icon: <ShoppingBag className="w-7 h-7 text-indigo-500" />, title: 'Beli!', color: 'bg-indigo-50' },
   ]
 
   return (
