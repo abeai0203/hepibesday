@@ -61,7 +61,7 @@ app.post('/api/generate-traits', async (c) => {
         method: 'POST',
         body: formData,
       })
-      const turnstileData = await turnstileRes.json()
+      const turnstileData = await turnstileRes.json() as any
       if (!turnstileData.success) {
         return c.json({ error: 'Bot verification failed' }, 403)
       }
@@ -310,21 +310,50 @@ app.get('/api/admin/search-shopee', adminAuth, async (c) => {
     if (!keyword) return c.json({ error: 'Keyword diperlukan' }, 400)
 
     const targetUrl = `https://shopee.com.my/api/v4/search/search_items?by=relevancy&keyword=${encodeURIComponent(keyword)}&limit=12&newest=0&order=desc&page_type=search&scenario=PAGE_GLOBAL_SEARCH&version=2`
-    const proxyUrl = `https://corsproxy.io/?${encodeURIComponent(targetUrl)}`
     
-    const res = await fetch(proxyUrl, {
-      headers: {
-        'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36',
-        'Accept': 'application/json',
-        'X-Requested-With': 'XMLHttpRequest'
+    let rawJson: any = null
+    let scrapeError = null
+
+    // Try Proxy 1 (corsproxy.io)
+    try {
+      const res = await fetch(`https://corsproxy.io/?${encodeURIComponent(targetUrl)}`, {
+        headers: {
+          'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36',
+          'Accept': 'application/json',
+          'X-Requested-With': 'XMLHttpRequest'
+        }
+      })
+      if (res.ok) {
+        rawJson = await res.json()
+      } else {
+        throw new Error(`Corsproxy failed: ${res.status}`)
       }
-    })
+    } catch (e: any) {
+      scrapeError = e.message
+    }
 
-    if (!res.ok) throw new Error(`Shopee API responded with ${res.status}`)
+    // Try Proxy 2 (allorigins.win) if proxy 1 failed or returned invalid data
+    if (!rawJson || !rawJson.items) {
+      try {
+        const res2 = await fetch(`https://api.allorigins.win/get?url=${encodeURIComponent(targetUrl)}`)
+        if (res2.ok) {
+          const data2 = await res2.json() as any
+          if (data2.contents) {
+            rawJson = JSON.parse(data2.contents)
+          }
+        }
+      } catch (e: any) {
+        scrapeError = e.message
+      }
+    }
 
-    const data: any = await res.json()
-    const items = (data.items || []).map((i: any) => {
+    if (!rawJson || !rawJson.items) {
+      throw new Error(scrapeError || 'Shopee search is temporarily unavailable (Rate Limited)')
+    }
+
+    const items = (rawJson.items || []).map((i: any) => {
       const basic = i.item_basic
+      if (!basic) return null
       return {
         id: basic.itemid,
         shop_id: basic.shopid,
@@ -334,7 +363,7 @@ app.get('/api/admin/search-shopee', adminAuth, async (c) => {
         shopee_url: `https://shopee.com.my/product/${basic.shopid}/${basic.itemid}`,
         rating: basic.item_rating?.rating_star?.toFixed(1)
       }
-    })
+    }).filter(Boolean)
 
     return c.json({ results: items })
   } catch (error) {
@@ -485,15 +514,6 @@ app.post('/api/admin/scrape-product', adminAuth, async (c) => {
 
     return c.json({
       name: name || seedName || 'Produk Baru (Sila Edit)',
-      image_url: imageUrl,
-      description: description || 'Hadiah menarik dari Shopee!',
-      tags: tags,
-      price_range: priceRange,
-      shopee_url: url
-    })
-
-    return c.json({
-      name: name,
       image_url: imageUrl,
       description: description || 'Hadiah menarik dari Shopee!',
       tags: tags,

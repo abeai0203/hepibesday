@@ -23,6 +23,25 @@ export default function ProductManager() {
     name: '', description: '', price_range: '', image_url: '', shopee_url: '', gender_target: 'U', tags: '', relationship_target: 'U'
   })
 
+  // Shopee Search State
+  const [searchQuery, setSearchQuery] = useState('')
+  const [searchResults, setSearchResults] = useState([])
+  const [searchLoading, setSearchLoading] = useState(false)
+  const [searchError, setSearchError] = useState(null)
+  const [isImportModalOpen, setIsImportModalOpen] = useState(false)
+  const [importFormData, setImportFormData] = useState({
+    name: '', price_range: '', image_url: '', shopee_url: '', gender_target: 'U', tags: '', relationship_target: 'U'
+  })
+  const [isImportingItem, setIsImportingItem] = useState(false)
+
+  const uniquePresets = [
+    { label: '🎁 Hadiah Kelakar', query: 'funny creative gift' },
+    { label: '✨ Aesthetic Deco', query: 'aesthetic room decoration' },
+    { label: '🧸 Customized Gift', query: 'customized gift' },
+    { label: '💡 Gadget Kreatif', query: 'creative smart gadget' },
+    { label: '🎮 Desk Toy / Keycap', query: 'funny desk toy' }
+  ]
+
   const fetchProducts = async () => {
     try {
       const apiUrl = import.meta.env.VITE_API_URL || 'http://localhost:8787'
@@ -261,6 +280,107 @@ export default function ProductManager() {
     } catch (err) {}
   }
 
+  const handleSearch = async (queryToSearch) => {
+    const q = queryToSearch !== undefined ? queryToSearch : searchQuery
+    if (!q || !q.trim()) return alert('Sila masukkan kata kunci carian')
+    
+    setSearchLoading(true)
+    setSearchError(null)
+    setSearchResults([])
+
+    try {
+      const apiUrl = import.meta.env.VITE_API_URL || 'http://localhost:8787'
+      const res = await fetch(`${apiUrl}/api/admin/search-shopee?q=${encodeURIComponent(q)}`, {
+        headers: { 'Authorization': `Bearer ${localStorage.getItem('adminToken')}` }
+      })
+      const data = await res.json()
+      if (res.ok) {
+        setSearchResults(data.results || [])
+        if (!data.results || data.results.length === 0) {
+          setSearchError('Tiada hasil carian ditemui. Cuba kata kunci lain.')
+        }
+      } else {
+        setSearchError(data.error || 'Gagal mencari produk')
+      }
+    } catch (err) {
+      setSearchError('Masalah rangkaian. Sila cuba lagi.')
+    } finally {
+      setSearchLoading(false)
+    }
+  }
+
+  const triggerImport = (item) => {
+    setImportFormData({
+      name: item.name,
+      price_range: `RM ${item.price}`,
+      image_url: item.image_url,
+      shopee_url: item.shopee_url,
+      gender_target: 'U',
+      relationship_target: 'U',
+      tags: ''
+    })
+    setIsImportModalOpen(true)
+  }
+
+  const handleImportSave = async () => {
+    setIsImportingItem(true)
+    try {
+      const apiUrl = import.meta.env.VITE_API_URL || 'http://localhost:8787'
+      
+      // Step 1: Run AI Polish to generate descriptions & clean up tags
+      const aiRes = await fetch(`${apiUrl}/api/admin/scrape-product`, {
+        method: 'POST',
+        headers: { 
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${localStorage.getItem('adminToken')}`
+        },
+        body: JSON.stringify({ 
+          url: importFormData.shopee_url, 
+          name: importFormData.name 
+        })
+      });
+      
+      const aiData = await aiRes.json();
+      
+      // Combine user manual settings with AI output
+      const finalTags = [
+        importFormData.tags,
+        aiData.tags
+      ].filter(Boolean).join(', ')
+
+      // Step 2: Save to DB
+      const saveRes = await fetch(`${apiUrl}/api/admin/products`, {
+        method: 'POST',
+        headers: { 
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${localStorage.getItem('adminToken')}`
+        },
+        body: JSON.stringify({
+          name: importFormData.name || aiData.name || 'Produk Baru',
+          description: aiData.description || 'Hadiah menarik dari Shopee!',
+          price_range: importFormData.price_range || aiData.price_range || 'RM -',
+          image_url: importFormData.image_url || aiData.image_url,
+          shopee_url: importFormData.shopee_url,
+          gender_target: importFormData.gender_target,
+          tags: finalTags,
+          relationship_target: importFormData.relationship_target
+        })
+      });
+
+      if (saveRes.ok) {
+        setIsImportModalOpen(false)
+        alert('Berjaya import produk ke dalam Inventory!')
+        fetchProducts()
+      } else {
+        alert('Gagal menyimpan produk')
+      }
+    } catch (err) {
+      alert('Masalah memproses data. Cuba lagi.')
+    } finally {
+      setIsImportingItem(false)
+    }
+  }
+
   if (loading) {
     return (
       <div className="flex flex-col items-center justify-center py-32 space-y-4">
@@ -287,10 +407,17 @@ export default function ProductManager() {
             </button>
             <button 
               onClick={() => setActiveTab('magic')}
-              className={`px-6 py-3 rounded-2xl font-black text-sm transition-all flex items-center gap-2 ${activeTab === 'magic' ? 'bg-pink-500 text-white shadow-lg' : 'bg-white text-indigo-950/40 hover:bg-pink-50'}`}
+              className={`px-6 py-3 rounded-2xl font-black text-sm transition-all flex items-center gap-2 ${activeTab === 'magic' ? 'bg-indigo-950 text-white shadow-lg' : 'bg-white text-indigo-950/40 hover:bg-indigo-50'}`}
             >
               <Wand2 className="w-4 h-4" />
               Magic Bulk Importer
+            </button>
+            <button 
+              onClick={() => setActiveTab('search')}
+              className={`px-6 py-3 rounded-2xl font-black text-sm transition-all flex items-center gap-2 ${activeTab === 'search' ? 'bg-pink-500 text-white shadow-lg' : 'bg-white text-indigo-950/40 hover:bg-pink-50'}`}
+            >
+              <Search className="w-4 h-4" />
+              Cari di Shopee
             </button>
           </div>
         </div>
@@ -312,7 +439,7 @@ export default function ProductManager() {
         )}
       </div>
 
-      {activeTab === 'inventory' ? (
+      {activeTab === 'inventory' && (
         <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} className="bg-white/80 backdrop-blur-xl border-2 border-white rounded-[3rem] shadow-2xl overflow-hidden">
           <div className="overflow-x-auto">
             <table className="w-full text-left">
@@ -370,7 +497,9 @@ export default function ProductManager() {
             </table>
           </div>
         </motion.div>
-      ) : (
+      )}
+
+      {activeTab === 'magic' && (
         <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} className="max-w-4xl mx-auto space-y-8">
           <div className="bg-white border-2 border-white rounded-[3rem] p-8 shadow-2xl space-y-6">
             <div className="flex items-center gap-4">
@@ -417,6 +546,121 @@ export default function ProductManager() {
                       {s.status === 'success' && <CheckCircle2 className="w-5 h-5 text-green-500" />}
                       {s.status === 'error' && <X className="w-5 h-5 text-red-500" />}
                       {s.status === 'pending' && <div className="w-2 h-2 rounded-full bg-slate-200" />}
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </div>
+          )}
+        </motion.div>
+      )}
+
+      {activeTab === 'search' && (
+        <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} className="max-w-6xl mx-auto space-y-8">
+          {/* Carian Box */}
+          <div className="bg-white border-2 border-white rounded-[3rem] p-8 shadow-2xl space-y-6">
+            <div className="flex items-center gap-4">
+              <div className="w-12 h-12 bg-pink-500 text-white rounded-2xl flex items-center justify-center shadow-lg">
+                <Search className="w-6 h-6" />
+              </div>
+              <div>
+                <h3 className="text-xl font-black text-indigo-950">Shopee Direct Search 🔍</h3>
+                <p className="text-slate-400 text-xs font-bold uppercase tracking-widest">Cari & Import Hadiah Unik Terus dari Shopee Malaysia</p>
+              </div>
+            </div>
+
+            {/* Input Carian */}
+            <div className="flex flex-col md:flex-row gap-4">
+              <input
+                type="text"
+                value={searchQuery}
+                onChange={e => setSearchQuery(e.target.value)}
+                onKeyDown={e => e.key === 'Enter' && handleSearch()}
+                placeholder="Taip kata kunci (contoh: tabung kucing pelik, cawan aesthetic)..."
+                className="flex-1 bg-slate-50 border-2 border-slate-50 focus:border-pink-200 rounded-2xl px-6 py-4 text-sm font-bold text-indigo-950 outline-none transition-all shadow-inner"
+              />
+              <button
+                onClick={() => handleSearch()}
+                disabled={searchLoading}
+                className="px-8 py-4 bg-indigo-950 text-white rounded-2xl font-black hover:bg-pink-500 transition-all shadow-lg flex items-center justify-center gap-2 disabled:opacity-50"
+              >
+                {searchLoading ? <Loader2 className="w-5 h-5 animate-spin" /> : <Search className="w-5 h-5" />}
+                CARI HADIAH
+              </button>
+            </div>
+
+            {/* Preset Buttons for Unique Gifts */}
+            <div className="space-y-2">
+              <p className="text-[10px] font-black text-indigo-950/40 uppercase tracking-widest ml-1">Inspirasi Hadiah Unik:</p>
+              <div className="flex flex-wrap gap-2">
+                {uniquePresets.map((preset, idx) => (
+                  <button
+                    key={idx}
+                    onClick={() => {
+                      setSearchQuery(preset.query)
+                      handleSearch(preset.query)
+                    }}
+                    className="px-4 py-2 bg-pink-50 hover:bg-pink-100 text-pink-600 rounded-xl text-xs font-black transition-all border border-pink-100 flex items-center gap-1.5"
+                  >
+                    <Sparkles className="w-3.5 h-3.5" />
+                    {preset.label}
+                  </button>
+                ))}
+              </div>
+            </div>
+          </div>
+
+          {/* Error Message */}
+          {searchError && (
+            <div className="bg-red-50 border border-red-100 rounded-2xl p-6 text-center text-red-500 font-bold text-sm">
+              {searchError}
+            </div>
+          )}
+
+          {/* Search Results Grid */}
+          {searchResults.length > 0 && (
+            <div className="space-y-6">
+              <h4 className="text-xs font-black text-indigo-950 uppercase tracking-widest mb-2">Hasil Carian Shopee ({searchResults.length})</h4>
+              <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6">
+                {searchResults.map((item, idx) => (
+                  <div key={item.id || idx} className="bg-white border-2 border-white rounded-[2rem] overflow-hidden group hover:shadow-2xl transition-all duration-300 flex flex-col shadow-lg">
+                    {/* Image Container */}
+                    <div className="relative h-44 w-full bg-white p-4 flex items-center justify-center border-b border-slate-50">
+                      <img src={item.image_url} alt={item.name} className="max-w-full max-h-full object-contain group-hover:scale-105 transition-transform duration-300" />
+                      <div className="absolute top-2 right-2 bg-pink-500 text-white text-[9px] font-black px-2 py-1 rounded-full shadow">
+                        RM {item.price}
+                      </div>
+                      {item.rating && (
+                        <div className="absolute bottom-2 left-2 bg-indigo-950/80 backdrop-blur text-white text-[8px] font-black px-2 py-0.5 rounded flex items-center gap-0.5">
+                          ⭐ {item.rating}
+                        </div>
+                      )}
+                    </div>
+
+                    {/* Content */}
+                    <div className="p-4 flex-1 flex flex-col justify-between gap-3">
+                      <h5 className="font-black text-indigo-950 text-xs leading-tight line-clamp-2" title={item.name}>
+                        {item.name}
+                      </h5>
+
+                      <div className="space-y-2">
+                        <button
+                          onClick={() => triggerImport(item)}
+                          className="w-full py-2.5 bg-indigo-950 text-white rounded-xl font-black text-[10px] flex items-center justify-center gap-1.5 hover:bg-pink-500 transition-colors shadow-sm"
+                        >
+                          <Plus className="w-3.5 h-3.5" />
+                          IMPORT MAGIK
+                        </button>
+                        
+                        <a
+                          href={item.shopee_url}
+                          target="_blank"
+                          rel="noreferrer"
+                          className="w-full py-1.5 text-center text-slate-400 hover:text-indigo-950 font-black text-[9px] flex items-center justify-center gap-1 uppercase tracking-wider"
+                        >
+                          Tengok Shopee <ExternalLink size={8} />
+                        </a>
+                      </div>
                     </div>
                   </div>
                 ))}
@@ -494,6 +738,70 @@ export default function ProductManager() {
                 >
                   {saving ? <Loader2 className="animate-spin" /> : editingId ? <Save className="w-6 h-6" /> : <Plus className="w-6 h-6" />}
                   {saving ? 'SAVING...' : editingId ? 'KEMASKINI SEKARANG' : 'TAMBAH PRODUK'}
+                </button>
+              </div>
+            </motion.div>
+          </div>
+        )}
+      </AnimatePresence>
+
+      {/* Import Confirmation Modal */}
+      <AnimatePresence>
+        {isImportModalOpen && (
+          <div className="fixed inset-0 bg-indigo-950/60 backdrop-blur-md flex items-center justify-center p-4 z-50">
+            <motion.div initial={{ opacity: 0, scale: 0.9 }} animate={{ opacity: 1, scale: 1 }} className="bg-white rounded-[3rem] w-full max-w-2xl max-h-[90vh] overflow-hidden shadow-2xl flex flex-col">
+              <div className="p-8 border-b border-slate-50 flex justify-between items-center bg-indigo-950/5">
+                <h3 className="text-xl font-black text-indigo-950 flex items-center gap-2">
+                  <Sparkles className="text-pink-500 w-5 h-5" /> Import Produk Dengan AI
+                </h3>
+                <button onClick={() => setIsImportModalOpen(false)} className="p-2 hover:bg-white rounded-full transition-all"><X /></button>
+              </div>
+              <div className="p-8 overflow-y-auto space-y-6">
+                <div className="flex items-center gap-4 bg-slate-50 p-4 rounded-2xl">
+                  <img src={importFormData.image_url} alt={importFormData.name} className="w-16 h-16 object-contain bg-white rounded-xl p-1 shadow-sm border border-slate-100 flex-shrink-0" />
+                  <div className="min-w-0">
+                    <p className="font-black text-indigo-950 text-sm truncate">{importFormData.name}</p>
+                    <p className="text-xs font-black text-pink-500 mt-1">{importFormData.price_range}</p>
+                  </div>
+                </div>
+
+                <div className="space-y-1.5">
+                  <label className="text-[10px] font-black text-indigo-950/40 uppercase tracking-widest ml-1">Nama Produk (Boleh Edit)</label>
+                  <input value={importFormData.name} onChange={e => setImportFormData({...importFormData, name: e.target.value})} className="w-full p-4 bg-slate-50 rounded-2xl font-bold border-2 border-slate-50 focus:border-pink-200 outline-none transition-all" />
+                </div>
+
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                  <div className="space-y-1.5">
+                    <label className="text-[10px] font-black text-indigo-950/40 uppercase tracking-widest ml-1">Jantina Target</label>
+                    <select value={importFormData.gender_target} onChange={e => setImportFormData({...importFormData, gender_target: e.target.value})} className="w-full p-4 bg-slate-50 rounded-2xl font-bold border-2 border-slate-50 focus:border-pink-200 outline-none transition-all appearance-none">
+                      <option value="U">Unisex</option>
+                      <option value="M">Lelaki</option>
+                      <option value="F">Wanita</option>
+                    </select>
+                  </div>
+                  <div className="space-y-1.5">
+                    <label className="text-[10px] font-black text-indigo-950/40 uppercase tracking-widest ml-1">Hubungan Target</label>
+                    <select value={importFormData.relationship_target} onChange={e => setImportFormData({...importFormData, relationship_target: e.target.value})} className="w-full p-4 bg-slate-50 rounded-2xl font-bold border-2 border-slate-50 focus:border-pink-200 outline-none transition-all appearance-none">
+                      <option value="U">Semua (General)</option>
+                      <option value="P">Pasangan</option>
+                      <option value="K">Kawan</option>
+                      <option value="F">Keluarga</option>
+                    </select>
+                  </div>
+                </div>
+
+                <div className="space-y-1.5">
+                  <label className="text-[10px] font-black text-indigo-950/40 uppercase tracking-widest ml-1">Tags Tambahan (Hobi) - Pisahkan dengan koma</label>
+                  <input value={importFormData.tags} onChange={e => setImportFormData({...importFormData, tags: e.target.value})} placeholder="Gaming, Travel, Coffee (AI juga akan menambah secara automatik)" className="w-full p-4 bg-slate-50 rounded-2xl font-bold border-2 border-slate-50 focus:border-pink-200 outline-none transition-all" />
+                </div>
+
+                <button 
+                  onClick={handleImportSave}
+                  disabled={isImportingItem}
+                  className="w-full py-6 bg-indigo-950 text-white rounded-[2.5rem] font-black text-xl mt-4 shadow-2xl hover:bg-pink-500 transition-all flex items-center justify-center gap-3 disabled:opacity-50"
+                >
+                  {isImportingItem ? <Loader2 className="animate-spin" /> : <Sparkles className="w-6 h-6" />}
+                  {isImportingItem ? 'MENJANA DESKRIPSI AI & MENYIMPAN...' : 'SAHKAN & IMPORT SEKARANG'}
                 </button>
               </div>
             </motion.div>
