@@ -36,8 +36,8 @@ export default function Landing({ onNext }) {
       const destinationX = Math.cos(angle) * velocity
       // Upward force bias so they shoot up first
       const destinationY = Math.sin(angle) * velocity - 150
-      // Finer sizes (3px to 9px)
-      const size = 3 + Math.random() * 6
+      // Finer sizes (3px to 8px)
+      const size = 3 + Math.random() * 5
       const colors = ['#ec4899', '#a855f7', '#f97316', '#eab308', '#3b82f6', '#10b981', '#ff2e93', '#d946ef']
       const color = colors[Math.floor(Math.random() * colors.length)]
       
@@ -46,8 +46,12 @@ export default function Landing({ onNext }) {
         x: destinationX,
         y: destinationY,
         color,
-        size,
+        // Make rectangular aspect ratios (4-segi)
+        width: size,
+        height: size * (0.4 + Math.random() * 1.0),
         rotate: Math.random() * 360,
+        rotateX: Math.random() * 360,
+        rotateY: Math.random() * 360,
       }
     })
     setConfetti(newParticles)
@@ -160,20 +164,22 @@ export default function Landing({ onNext }) {
               {confetti.map((p) => (
                 <motion.div
                   key={p.id}
-                  initial={{ x: 0, y: 0, scale: 1, rotate: 0, opacity: 1 }}
+                  initial={{ x: 0, y: 0, scale: 1, rotate: 0, rotateX: 0, rotateY: 0, opacity: 1 }}
                   animate={{ 
                     x: p.x, 
                     // Physics gravity curve: shoots out then falls down gracefully
                     y: [0, p.y * 0.6, p.y, p.y + 400], 
                     scale: [1, 1.2, 1, 0.8, 0], 
                     rotate: p.rotate + 720,
+                    rotateX: p.rotateX + 1080,
+                    rotateY: p.rotateY + 1440,
                     opacity: [1, 1, 1, 0.9, 0] 
                   }}
                   transition={{ duration: 2.5, ease: [0.1, 0.6, 0.2, 1] }}
-                  className="absolute rounded-sm z-40 pointer-events-none"
+                  className="absolute z-40 pointer-events-none"
                   style={{
-                    width: p.size,
-                    height: p.size,
+                    width: p.width,
+                    height: p.height,
                     backgroundColor: p.color,
                     left: '50%',
                     top: '50%',
