@@ -6,6 +6,38 @@ export default function Landing({ onNext }) {
   const [confetti, setConfetti] = useState([])
   const containerRef = useRef(null)
   const hasTriggeredConfetti = useRef(false)
+  const [showCounter, setShowCounter] = useState(false)
+  const [count, setCount] = useState(345000)
+
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      setShowCounter(true)
+    }, 3000)
+    return () => clearTimeout(timer)
+  }, [])
+
+  useEffect(() => {
+    if (!showCounter) return
+    
+    let start = 345000
+    const end = 345688
+    const duration = 2000 // 2 seconds
+    const startTime = performance.now()
+
+    const animate = (now) => {
+      const elapsed = now - startTime
+      const progress = Math.min(elapsed / duration, 1)
+      const easeProgress = progress * (2 - progress) // Ease out quad
+      const currentCount = Math.floor(start + (end - start) * easeProgress)
+      setCount(currentCount)
+
+      if (progress < 1) {
+        requestAnimationFrame(animate)
+      }
+    }
+    requestAnimationFrame(animate)
+  }, [showCounter])
+
   const { scrollYProgress } = useScroll()
   
   const smoothProgress = useSpring(scrollYProgress, {
@@ -96,6 +128,12 @@ export default function Landing({ onNext }) {
   return (
     <div className="w-full bg-[#FDFCF0]">
       <style>{`
+        @import url('https://fonts.googleapis.com/css2?family=Caveat:wght@700&display=swap');
+        
+        .font-handwriting {
+          font-family: 'Caveat', cursive;
+        }
+
         @keyframes wiggle-gift {
           0%, 85%, 100% { transform: rotate(0deg) scale(1); }
           87% { transform: rotate(-4deg) scale(1.02); }
@@ -221,11 +259,32 @@ export default function Landing({ onNext }) {
                 <img src="/box-open.png" className="w-full h-full object-contain mix-blend-multiply brightness-[1.05]" alt="Open Box" />
               </motion.div>
 
+              {/* Running Counter */}
+              <motion.div
+                style={{ opacity: title1Opacity }}
+                className="absolute -bottom-14 md:-bottom-18 z-30 pointer-events-none text-center select-none w-[320px] md:w-[450px]"
+              >
+                <motion.div
+                  animate={showCounter ? { opacity: 1, y: 0 } : { opacity: 0, y: 15 }}
+                  initial={{ opacity: 0, y: 15 }}
+                  transition={{ duration: 0.8, ease: "easeOut" }}
+                  className="flex flex-col items-center justify-center"
+                >
+                  <p className="text-indigo-950/70 text-sm md:text-[15px] font-semibold flex items-center justify-center gap-2 flex-wrap leading-none select-text">
+                    Kami telah bantu{" "}
+                    <span className="font-handwriting text-pink-500 text-3xl md:text-[38px] font-bold tracking-wider leading-none select-text">
+                      {count.toLocaleString()}
+                    </span>{" "}
+                    org pencari hadiah!
+                  </p>
+                </motion.div>
+              </motion.div>
+
               {/* Enhanced Scroll Indicator */}
               <motion.div 
                 style={{ opacity: title1Opacity }}
                 onClick={handleScrollDown}
-                className="absolute -bottom-24 md:-bottom-32 flex flex-col items-center gap-2 pointer-events-auto cursor-pointer"
+                className="absolute -bottom-28 md:-bottom-36 flex flex-col items-center gap-2 pointer-events-auto cursor-pointer"
               >
                 <motion.div
                   animate={{ y: [0, 10, 0] }}
