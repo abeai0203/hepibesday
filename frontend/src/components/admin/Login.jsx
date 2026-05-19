@@ -15,7 +15,7 @@ export default function Login() {
     setError('')
 
     try {
-      const apiUrl = import.meta.env.VITE_API_URL || 'http://localhost:8787'
+      const apiUrl = import.meta.env.VITE_API_URL || (window.location.origin.includes('localhost') ? 'http://localhost:8787' : 'https://hepibesday-api.abeai0203.workers.dev')
       const res = await fetch(`${apiUrl}/api/admin/login`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },

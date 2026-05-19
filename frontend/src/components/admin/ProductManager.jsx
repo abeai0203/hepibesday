@@ -2,6 +2,8 @@ import { useState, useEffect, useRef } from 'react'
 import { Plus, Trash2, Loader2, X, ShoppingBag, Image as ImageIcon, Target, Tag, ExternalLink, Wand2, FileSpreadsheet, Download, Search, Sparkles, CheckCircle2, ListPlus, Edit3, Save } from 'lucide-react'
 import { motion, AnimatePresence } from 'framer-motion'
 
+const API_URL = import.meta.env.VITE_API_URL || (window.location.origin.includes('localhost') ? 'http://localhost:8787' : 'https://hepibesday-api.abeai0203.workers.dev')
+
 export default function ProductManager() {
   const [products, setProducts] = useState([])
   const [loading, setLoading] = useState(true)
@@ -44,7 +46,7 @@ export default function ProductManager() {
 
   const fetchProducts = async () => {
     try {
-      const apiUrl = import.meta.env.VITE_API_URL || 'http://localhost:8787'
+      const apiUrl = API_URL
       const res = await fetch(`${apiUrl}/api/admin/products`, {
         headers: { 'Authorization': `Bearer ${localStorage.getItem('adminToken')}` }
       })
@@ -89,7 +91,7 @@ export default function ProductManager() {
   const handleSave = async () => {
     setSaving(true)
     try {
-      const apiUrl = import.meta.env.VITE_API_URL || 'http://localhost:8787'
+      const apiUrl = API_URL
       const method = editingId ? 'PUT' : 'POST'
       const url = editingId ? `${apiUrl}/api/admin/products/${editingId}` : `${apiUrl}/api/admin/products`
       
@@ -124,7 +126,7 @@ export default function ProductManager() {
     const initialStatus = lines.map(line => ({ url: line, status: 'pending' }))
     setImportStatus(initialStatus)
 
-    const apiUrl = import.meta.env.VITE_API_URL || 'http://localhost:8787'
+    const apiUrl = API_URL
 
     for (let i = 0; i < lines.length; i++) {
       const line = lines[i]
@@ -230,7 +232,7 @@ export default function ProductManager() {
           tags: item['Tags (Hobi)'] || item.tags || '',
           relationship_target: item['Target Hubungan'] || item.relationship_target || 'U'
         }))
-        const apiUrl = import.meta.env.VITE_API_URL || 'http://localhost:8787'
+        const apiUrl = API_URL
         const res = await fetch(`${apiUrl}/api/admin/bulk-products`, {
           method: 'POST',
           headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${localStorage.getItem('adminToken')}` },
@@ -271,7 +273,7 @@ export default function ProductManager() {
   const handleDelete = async (id) => {
     if (!confirm('Hapus produk ini?')) return
     try {
-      const apiUrl = import.meta.env.VITE_API_URL || 'http://localhost:8787'
+      const apiUrl = API_URL
       await fetch(`${apiUrl}/api/admin/products/${id}`, {
         method: 'DELETE',
         headers: { 'Authorization': `Bearer ${localStorage.getItem('adminToken')}` }
@@ -289,7 +291,7 @@ export default function ProductManager() {
     setSearchResults([])
 
     try {
-      const apiUrl = import.meta.env.VITE_API_URL || 'http://localhost:8787'
+      const apiUrl = API_URL
       const res = await fetch(`${apiUrl}/api/admin/search-shopee?q=${encodeURIComponent(q)}`, {
         headers: { 'Authorization': `Bearer ${localStorage.getItem('adminToken')}` }
       })
@@ -329,7 +331,7 @@ export default function ProductManager() {
   const handleImportSave = async () => {
     setIsImportingItem(true)
     try {
-      const apiUrl = import.meta.env.VITE_API_URL || 'http://localhost:8787'
+      const apiUrl = API_URL
       
       // Step 1: Run AI Polish to generate descriptions & clean up tags
       const aiRes = await fetch(`${apiUrl}/api/admin/scrape-product`, {
