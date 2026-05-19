@@ -63,7 +63,7 @@ export default function DateSelection({ targetName, onNext, onBack }) {
             <Calendar className="w-10 h-10 text-pink-500" />
           </div>
           <h2 className="text-4xl md:text-5xl font-black text-indigo-950 leading-tight">
-            Bila tarikh lahir <br/>
+            Kau ingat tarikh lahir <br/>
             <span className="text-pink-500">{targetName || 'dorang'}?</span>
           </h2>
           <p className="text-slate-500 font-bold mt-4">

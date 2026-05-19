@@ -38,7 +38,7 @@ export default function GenderSelection({ targetName, onNext, onBack }) {
       >
         <div className="mb-12">
           <h2 className="text-4xl md:text-5xl font-black text-indigo-950 leading-tight">
-            Apa jantina <br/>
+            Ic... jantina <br/>
             <span className="text-pink-500">{targetName || 'si dia'}?</span>
           </h2>
           <p className="text-slate-500 font-bold mt-4">

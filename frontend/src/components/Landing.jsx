@@ -180,17 +180,17 @@ export default function Landing({ onNext }) {
                   <span className="text-[10px] md:text-xs font-black text-pink-500 uppercase tracking-wide">Pening pilih hadiah?</span>
                 </div>
                 <h1 className="text-[42px] md:text-6xl font-black text-indigo-950 leading-[0.95] tracking-tight mb-4">
-                  Sedang mencari<br/><span className="text-pink-500">hadiah?</span>
+                  Korang sedang<br/>cari <span className="text-pink-500">hadiah?</span>
                 </h1>
               </motion.div>
-
+ 
               <motion.div style={{ opacity: title2Opacity }} className="absolute inset-0 flex flex-col items-center">
                 <div className="inline-flex items-center gap-2 px-4 py-1.5 md:px-5 md:py-2 rounded-full bg-white shadow-md border border-pink-50 mb-3 md:mb-6">
                   <Wand2 className="w-3.5 h-3.5 md:w-4 md:h-4 text-pink-500" />
                   <span className="text-[10px] md:text-xs font-black text-pink-500 uppercase tracking-wide">Kami Sedia Membantu</span>
                 </div>
                 <h1 className="text-[42px] md:text-6xl font-black text-indigo-950 leading-[0.95] tracking-tight">
-                  Kami akan<br/><span className="text-pink-500">bantu anda!</span>
+                  Meh kami<br/><span className="text-pink-500">bantu!</span>
                 </h1>
               </motion.div>
             </div>

@@ -20,7 +20,7 @@ export default function RelationshipSelection({ targetName, onNext, onBack }) {
       </button>
 
       <h2 className="text-4xl font-black text-indigo-950 leading-tight mb-2">
-        Siapa <span className="text-pink-500">{targetName}</span> kepada anda?
+        Mantap! Siapa <span className="text-pink-500">{targetName}</span> ni?
       </h2>
       <p className="text-slate-500 font-bold mb-8">Ini membantu kami mencari hadiah dengan nada yang betul.</p>
 

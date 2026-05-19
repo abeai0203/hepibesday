@@ -68,7 +68,7 @@ export default function NameSelection({ onNext, onBack }) {
             <UserRound className="w-10 h-10 text-pink-500" />
           </div>
           <h2 className="text-4xl md:text-5xl font-black text-indigo-950 leading-tight">
-            Siapa si dia yang <br/>
+            Hmm, siapa si dia <br/>
             <span className="text-pink-500">bertuah tu?</span>
           </h2>
           <p className="text-slate-500 font-bold mt-4">
