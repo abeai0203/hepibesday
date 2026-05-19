@@ -1,6 +1,17 @@
 import { useState, useEffect, useRef } from 'react'
 import { motion, useScroll, useSpring, useTransform } from 'framer-motion'
 import { Wand2, Users, Star, Gift, ShoppingBag, ChevronRight, ChevronDown } from 'lucide-react'
+const Sparkle = ({ className, delay = 0 }) => (
+  <motion.div
+    animate={{ scale: [0.8, 1.2, 0.8], opacity: [0.2, 0.9, 0.2] }}
+    transition={{ duration: 4, repeat: Infinity, delay, ease: "easeInOut" }}
+    className={`absolute ${className}`}
+  >
+    <svg viewBox="0 0 24 24" className="w-5 h-5 fill-yellow-300 text-yellow-300">
+      <path d="M12 2l2.4 7.2L22 12l-7.6 2.8L12 22l-2.4-7.2L2 12l7.6-2.8z" />
+    </svg>
+  </motion.div>
+)
 
 export default function Landing({ onNext }) {
   const containerRef = useRef(null)
@@ -40,14 +51,75 @@ export default function Landing({ onNext }) {
   ]
 
   return (
-    <div className="w-full bg-[#FDFCF0]">
+    <div className="w-full bg-[#FFFDF9]">
       <div className="h-[200vh] w-full relative">
         <div className="sticky top-0 h-screen w-full flex flex-col items-center justify-between overflow-hidden">
           
-          <div className="absolute inset-0 -z-10 bg-gradient-to-b from-[#FDFCF0] to-white">
-            <div className="absolute top-1/4 -left-20 w-[500px] h-[500px] bg-pink-100/30 blur-[120px] rounded-full" />
-            <div className="absolute bottom-1/4 -right-20 w-[600px] h-[600px] bg-purple-100/30 blur-[120px] rounded-full" />
+          {/* Lavender-Pink-Cream Gradient Background */}
+          <div className="absolute inset-0 -z-10 bg-gradient-to-b from-[#E2D6FF] via-[#F8DBFF] to-[#FFFDF9]">
+            
+            {/* Dreamy Cloud Elements */}
+            <div className="absolute top-[20%] -left-16 w-72 h-36 bg-white/60 blur-[40px] rounded-full pointer-events-none" />
+            <div className="absolute top-[35%] -right-24 w-80 h-40 bg-white/50 blur-[30px] rounded-full pointer-events-none" />
+            <div className="absolute bottom-[20%] -left-20 w-80 h-40 bg-white/60 blur-[35px] rounded-full pointer-events-none" />
+            <div className="absolute bottom-[5%] -right-16 w-72 h-36 bg-white/70 blur-[30px] rounded-full pointer-events-none" />
+            
+            {/* Pulsing Sparkles (Star Graphics) */}
+            <Sparkle className="top-[15%] left-[25%]" delay={0} />
+            <Sparkle className="top-[45%] right-[20%]" delay={1.5} />
+            <Sparkle className="top-[60%] left-[15%]" delay={0.8} />
+            <Sparkle className="top-[25%] right-[30%]" delay={2.2} />
           </div>
+
+          {/* Social Proof Avatars / Bubble Element */}
+          <div className="absolute top-6 right-6 z-50 hidden sm:flex items-center gap-2 px-3.5 py-1.5 bg-white/70 backdrop-blur-md border border-white/50 shadow-lg shadow-purple-500/5 rounded-full pointer-events-auto">
+            <div className="flex -space-x-2">
+              <img className="w-6 h-6 rounded-full border border-white object-cover" src="https://images.unsplash.com/photo-1494790108377-be9c29b29330?w=100&auto=format&fit=crop&q=80" alt="" />
+              <img className="w-6 h-6 rounded-full border border-white object-cover" src="https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=100&auto=format&fit=crop&q=80" alt="" />
+              <img className="w-6 h-6 rounded-full border border-white object-cover" src="https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=100&auto=format&fit=crop&q=80" alt="" />
+            </div>
+            <div className="flex items-center gap-1">
+              <span className="text-[10px] font-black text-indigo-950/80">10K+</span>
+              <div className="w-4.5 h-4.5 rounded-full bg-pink-100/80 flex items-center justify-center">
+                <svg viewBox="0 0 24 24" className="w-2.5 h-2.5 fill-pink-500 text-pink-500">
+                  <path d="M12 21.35l-1.45-1.32C5.4 15.36 2 12.28 2 8.5 2 5.42 4.42 3 7.5 3c1.74 0 3.41.81 4.5 2.09C13.09 3.81 14.76 3 16.5 3 19.58 3 22 5.42 22 8.5c0 3.78-3.4 6.86-8.55 11.54L12 21.35z" />
+                </svg>
+              </div>
+            </div>
+          </div>
+
+          {/* Floating/Flying 3D Graphics (.webp format) */}
+          <motion.div
+            animate={{ y: [-12, 12, -12] }}
+            transition={{ duration: 5, repeat: Infinity, ease: "easeInOut" }}
+            className="absolute left-6 md:left-20 top-[22%] z-0 w-16 h-16 md:w-26 md:h-26 opacity-80 pointer-events-none"
+          >
+            <img src="/box-closed.webp" className="w-full h-full object-contain" alt="" />
+          </motion.div>
+
+          <motion.div
+            animate={{ y: [12, -12, 12] }}
+            transition={{ duration: 6, repeat: Infinity, ease: "easeInOut" }}
+            className="absolute right-6 md:right-24 top-[18%] z-0 w-14 h-14 md:w-22 md:h-22 opacity-85 pointer-events-none"
+          >
+            <img src="/heart.webp" className="w-full h-full object-contain" alt="" />
+          </motion.div>
+
+          <motion.div
+            animate={{ y: [-10, 10, -10] }}
+            transition={{ duration: 5.5, repeat: Infinity, ease: "easeInOut" }}
+            className="absolute right-8 md:right-32 top-[60%] z-0 w-16 h-16 md:w-24 md:h-24 opacity-80 pointer-events-none"
+          >
+            <img src="/bag.webp" className="w-full h-full object-contain" alt="" />
+          </motion.div>
+
+          <motion.div
+            animate={{ y: [10, -10, 10] }}
+            transition={{ duration: 4.8, repeat: Infinity, ease: "easeInOut" }}
+            className="absolute left-8 md:left-24 top-[65%] z-0 w-14 h-14 md:w-22 md:h-22 opacity-75 pointer-events-none"
+          >
+            <img src="/box-open.webp" className="w-full h-full object-contain" alt="" />
+          </motion.div>
 
           <div className="w-full flex flex-col items-center text-center pt-6 md:pt-12 px-6 z-40 pointer-events-none">
             <div className="w-24 md:w-32 mb-2 md:mb-4 overflow-hidden flex items-center justify-center">
@@ -99,7 +171,7 @@ export default function Landing({ onNext }) {
                 }} 
                 className="absolute z-30 w-32 h-32"
               >
-                <img src="/q-mark.png" className="w-full h-full object-contain mix-blend-multiply brightness-[1.1] contrast-[1.1]" alt="?" />
+                <img src="/q-mark.webp" className="w-full h-full object-contain brightness-[1.1] contrast-[1.1]" alt="?" />
               </motion.div>
 
               <motion.div 
@@ -107,11 +179,11 @@ export default function Landing({ onNext }) {
                 onClick={handleScrollDown}
                 className="absolute inset-0 z-20 pointer-events-auto cursor-pointer"
               >
-                <img src="/box-closed.png" className="w-full h-full object-contain mix-blend-multiply brightness-[1.05]" alt="Closed Box" />
+                <img src="/box-closed.webp" className="w-full h-full object-contain" alt="Closed Box" />
               </motion.div>
 
               <motion.div style={{ opacity: openOpacity }} className="absolute inset-0 z-10">
-                <img src="/box-open.png" className="w-full h-full object-contain mix-blend-multiply brightness-[1.05]" alt="Open Box" />
+                <img src="/box-open.webp" className="w-full h-full object-contain" alt="Open Box" />
               </motion.div>
 
               {/* Enhanced Scroll Indicator */}
