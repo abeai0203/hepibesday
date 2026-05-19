@@ -3,6 +3,7 @@ import { motion, useScroll, useSpring, useTransform } from 'framer-motion'
 import { Wand2, Users, Star, Gift, ShoppingBag, ChevronRight, ChevronDown } from 'lucide-react'
 
 export default function Landing({ onNext }) {
+  const [confetti, setConfetti] = useState([])
   const containerRef = useRef(null)
   const { scrollYProgress } = useScroll()
   
@@ -26,6 +27,32 @@ export default function Landing({ onNext }) {
   const footerOpacity = useTransform(smoothProgress, [0.4, 0.6], [0, 1])
 
   const handleScrollDown = () => {
+    // Generate confetti particles
+    const newParticles = Array.from({ length: 60 }).map((_, i) => {
+      const angle = Math.random() * Math.PI * 2
+      const velocity = 80 + Math.random() * 160
+      const destinationX = Math.cos(angle) * velocity
+      const destinationY = Math.sin(angle) * velocity - 40 // slight upward bias
+      const size = 6 + Math.random() * 10
+      const colors = ['#ec4899', '#a855f7', '#f97316', '#eab308', '#3b82f6', '#10b981']
+      const color = colors[Math.floor(Math.random() * colors.length)]
+      
+      return {
+        id: Date.now() + i + Math.random(),
+        x: destinationX,
+        y: destinationY,
+        color,
+        size,
+        rotate: Math.random() * 360,
+      }
+    })
+    setConfetti(newParticles)
+    
+    // Auto clear to avoid DOM clutter
+    setTimeout(() => {
+      setConfetti([])
+    }, 1600)
+
     window.scrollTo({
       top: window.innerHeight * 0.8,
       behavior: 'smooth'
@@ -106,6 +133,30 @@ export default function Landing({ onNext }) {
 
           <div className="absolute inset-0 flex items-center justify-center pointer-events-none z-10 pt-20 md:pt-32">
             <motion.div style={{ scale: boxScale }} className="relative w-64 h-64 md:w-80 md:h-80 flex items-center justify-center">
+              {/* Confetti Particles */}
+              {confetti.map((p) => (
+                <motion.div
+                  key={p.id}
+                  initial={{ x: 0, y: 0, scale: 1, rotate: 0, opacity: 1 }}
+                  animate={{ 
+                    x: p.x, 
+                    y: p.y, 
+                    scale: [1, 1.2, 0], 
+                    rotate: p.rotate + 360,
+                    opacity: [1, 1, 0] 
+                  }}
+                  transition={{ duration: 1.3, ease: "easeOut" }}
+                  className="absolute rounded-sm z-40 pointer-events-none"
+                  style={{
+                    width: p.size,
+                    height: p.size,
+                    backgroundColor: p.color,
+                    left: '50%',
+                    top: '50%',
+                    transform: 'translate(-50%, -50%)',
+                  }}
+                />
+              ))}
               <div className="absolute inset-0 bg-pink-400/10 blur-[100px] rounded-full" />
               
               <motion.div 
