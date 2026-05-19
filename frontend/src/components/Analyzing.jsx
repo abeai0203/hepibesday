@@ -13,12 +13,27 @@ const getApiUrl = () => {
 };
 const API_URL = getApiUrl();
 
-const loadingMessages = [
-  "Membaca posisi bintang...",
-  "Mencari frekuensi personaliti...",
-  "Menyusun algoritma kegembiraan...",
-  "Hampir siap! Keajaiban sedang berlaku...",
-  "Menentukan hadiah yang paling ngam..."
+const loadingSteps = [
+  {
+    title: "Tengah recall personaliti dia...",
+    subtitle: "Harap-harap tak tersalah orang"
+  },
+  {
+    title: "Tengah pening fikir bajet korang...",
+    subtitle: "Jangan risau, takkan poket bocor"
+  },
+  {
+    title: "Tengah ushar Shopee & Lazada...",
+    subtitle: "Mencari barang terpaling jimat"
+  },
+  {
+    title: "Tengah tapis idea-idea merapu...",
+    subtitle: "Hadiah pelik-pelik kita tolak tepi"
+  },
+  {
+    title: "Sikit lagi nak siap...",
+    subtitle: "Dah nampak bayang hadiah dah"
+  }
 ]
 
 export default function Analyzing({ sessionData, onComplete }) {
@@ -27,7 +42,7 @@ export default function Analyzing({ sessionData, onComplete }) {
 
   useEffect(() => {
     const interval = setInterval(() => {
-      setMsgIdx(prev => (prev + 1) % loadingMessages.length)
+      setMsgIdx(prev => (prev + 1) % loadingSteps.length)
     }, 2500)
     return () => clearInterval(interval)
   }, [])
@@ -163,10 +178,10 @@ export default function Analyzing({ sessionData, onComplete }) {
               className="space-y-3"
             >
               <h2 className="text-3xl md:text-4xl font-black text-indigo-950 leading-tight">
-                {loadingMessages[msgIdx]}
+                {loadingSteps[msgIdx].title}
               </h2>
               <p className="text-pink-500 font-black tracking-widest text-xs uppercase">
-                Keajaiban Sedang Berlaku
+                {loadingSteps[msgIdx].subtitle}
               </p>
             </motion.div>
           </AnimatePresence>
