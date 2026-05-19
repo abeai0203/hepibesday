@@ -12,7 +12,7 @@ export default function Landing({ onNext }) {
   useEffect(() => {
     const timer = setTimeout(() => {
       setShowCounter(true)
-    }, 3000)
+    }, 1500)
     return () => clearTimeout(timer)
   }, [])
 
