@@ -2,7 +2,16 @@ import { useState, useEffect, useRef } from 'react'
 import { Plus, Trash2, Loader2, X, ShoppingBag, Image as ImageIcon, Target, Tag, ExternalLink, Wand2, FileSpreadsheet, Download, Search, Sparkles, CheckCircle2, ListPlus, Edit3, Save } from 'lucide-react'
 import { motion, AnimatePresence } from 'framer-motion'
 
-const API_URL = import.meta.env.VITE_API_URL || (window.location.origin.includes('localhost') ? 'http://localhost:8787' : 'https://api.hepibesday.com')
+const getApiUrl = () => {
+  const envUrl = import.meta.env.VITE_API_URL;
+  if (envUrl && !envUrl.includes('workers.dev') && !envUrl.includes('localhost')) {
+    return envUrl;
+  }
+  return window.location.origin.includes('localhost')
+    ? 'http://localhost:8787'
+    : 'https://api.hepibesday.com';
+};
+const API_URL = getApiUrl();
 
 export default function ProductManager() {
   const [products, setProducts] = useState([])

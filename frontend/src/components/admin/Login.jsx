@@ -15,7 +15,16 @@ export default function Login() {
     setError('')
 
     try {
-      const apiUrl = import.meta.env.VITE_API_URL || (window.location.origin.includes('localhost') ? 'http://localhost:8787' : 'https://api.hepibesday.com')
+      const getApiUrl = () => {
+        const envUrl = import.meta.env.VITE_API_URL;
+        if (envUrl && !envUrl.includes('workers.dev') && !envUrl.includes('localhost')) {
+          return envUrl;
+        }
+        return window.location.origin.includes('localhost')
+          ? 'http://localhost:8787'
+          : 'https://api.hepibesday.com';
+      };
+      const apiUrl = getApiUrl()
       const res = await fetch(`${apiUrl}/api/admin/login`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },

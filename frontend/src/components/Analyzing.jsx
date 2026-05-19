@@ -2,7 +2,16 @@ import { useEffect, useState } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
 import { Sparkles, Star, Wand2, Moon, Sun, Loader2 } from 'lucide-react'
 
-const API_URL = import.meta.env.VITE_API_URL || (window.location.origin.includes('localhost') ? 'http://localhost:8787' : 'https://api.hepibesday.com')
+const getApiUrl = () => {
+  const envUrl = import.meta.env.VITE_API_URL;
+  if (envUrl && !envUrl.includes('workers.dev') && !envUrl.includes('localhost')) {
+    return envUrl;
+  }
+  return window.location.origin.includes('localhost')
+    ? 'http://localhost:8787'
+    : 'https://api.hepibesday.com';
+};
+const API_URL = getApiUrl();
 
 const loadingMessages = [
   "Membaca posisi bintang...",
