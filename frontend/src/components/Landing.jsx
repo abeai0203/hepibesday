@@ -41,6 +41,25 @@ export default function Landing({ onNext }) {
 
   return (
     <div className="w-full bg-[#FDFCF0]">
+      <style>{`
+        @keyframes wiggle-gift {
+          0%, 85%, 100% { transform: rotate(0deg) scale(1); }
+          87% { transform: rotate(-4deg) scale(1.02); }
+          90% { transform: rotate(4deg) scale(1.02); }
+          93% { transform: rotate(-4deg) scale(1.02); }
+          96% { transform: rotate(3deg) scale(1.02); }
+          98% { transform: rotate(0deg) scale(1); }
+        }
+        .gift-wiggle {
+          animation: wiggle-gift 3.5s infinite ease-in-out;
+          transform-origin: bottom center;
+        }
+        .gift-wiggle:hover {
+          animation-play-state: paused;
+          transform: scale(1.06) !important;
+          transition: transform 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+        }
+      `}</style>
       <div className="h-[200vh] w-full relative">
         <div className="sticky top-0 h-screen w-full flex flex-col items-center justify-between overflow-hidden">
           
@@ -105,9 +124,16 @@ export default function Landing({ onNext }) {
               <motion.div 
                 style={{ opacity: closedOpacity }} 
                 onClick={handleScrollDown}
-                className="absolute inset-0 z-20 pointer-events-auto cursor-pointer"
+                className="absolute inset-0 z-20 pointer-events-auto cursor-pointer flex items-center justify-center group"
               >
-                <img src="/box-closed.png" className="w-full h-full object-contain mix-blend-multiply brightness-[1.05]" alt="Closed Box" />
+                {/* Glow behind the box */}
+                <div className="absolute w-44 h-44 bg-pink-400/25 blur-[35px] rounded-full opacity-0 group-hover:opacity-100 group-hover:scale-125 transition-all duration-500 pointer-events-none" />
+                
+                <img 
+                  src="/box-closed.png" 
+                  className="w-full h-full object-contain mix-blend-multiply brightness-[1.05] gift-wiggle" 
+                  alt="Closed Box" 
+                />
               </motion.div>
 
               <motion.div style={{ opacity: openOpacity }} className="absolute inset-0 z-10">
