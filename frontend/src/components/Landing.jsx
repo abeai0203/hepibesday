@@ -1,10 +1,11 @@
 import { useState, useEffect, useRef } from 'react'
-import { motion, useScroll, useSpring, useTransform } from 'framer-motion'
+import { motion, useScroll, useSpring, useTransform, useMotionValueEvent } from 'framer-motion'
 import { Wand2, Users, Star, Gift, ShoppingBag, ChevronRight, ChevronDown } from 'lucide-react'
 
 export default function Landing({ onNext }) {
   const [confetti, setConfetti] = useState([])
   const containerRef = useRef(null)
+  const hasTriggeredConfetti = useRef(false)
   const { scrollYProgress } = useScroll()
   
   const smoothProgress = useSpring(scrollYProgress, {
@@ -26,7 +27,7 @@ export default function Landing({ onNext }) {
   const footerY = useTransform(smoothProgress, [0.4, 0.6], [80, 0])
   const footerOpacity = useTransform(smoothProgress, [0.4, 0.6], [0, 1])
 
-  const handleScrollDown = () => {
+  const triggerConfetti = () => {
     // Generate confetti particles
     const newParticles = Array.from({ length: 120 }).map((_, i) => {
       const angle = Math.random() * Math.PI * 2
@@ -55,12 +56,31 @@ export default function Landing({ onNext }) {
     setTimeout(() => {
       setConfetti([])
     }, 2800)
+  }
+
+  const handleScrollDown = () => {
+    if (!hasTriggeredConfetti.current) {
+      hasTriggeredConfetti.current = true
+      triggerConfetti()
+    }
 
     window.scrollTo({
       top: window.innerHeight * 0.8,
       behavior: 'smooth'
     })
   }
+
+  useMotionValueEvent(scrollYProgress, "change", (latest) => {
+    if (latest > 0.15) {
+      if (!hasTriggeredConfetti.current) {
+        hasTriggeredConfetti.current = true
+        triggerConfetti()
+      }
+    } else {
+      // Reset trigger state when user scrolls back to top
+      hasTriggeredConfetti.current = false
+    }
+  })
 
   const steps = [
     { icon: <Users className="w-7 h-7 text-pink-500" />, title: 'Kenali dia', color: 'bg-pink-50' },
