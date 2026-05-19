@@ -28,13 +28,16 @@ export default function Landing({ onNext }) {
 
   const handleScrollDown = () => {
     // Generate confetti particles
-    const newParticles = Array.from({ length: 60 }).map((_, i) => {
+    const newParticles = Array.from({ length: 120 }).map((_, i) => {
       const angle = Math.random() * Math.PI * 2
-      const velocity = 80 + Math.random() * 160
+      // Much higher velocity for wide-range scatter
+      const velocity = 100 + Math.random() * 500
       const destinationX = Math.cos(angle) * velocity
-      const destinationY = Math.sin(angle) * velocity - 40 // slight upward bias
-      const size = 6 + Math.random() * 10
-      const colors = ['#ec4899', '#a855f7', '#f97316', '#eab308', '#3b82f6', '#10b981']
+      // Upward force bias so they shoot up first
+      const destinationY = Math.sin(angle) * velocity - 150
+      // Finer sizes (3px to 9px)
+      const size = 3 + Math.random() * 6
+      const colors = ['#ec4899', '#a855f7', '#f97316', '#eab308', '#3b82f6', '#10b981', '#ff2e93', '#d946ef']
       const color = colors[Math.floor(Math.random() * colors.length)]
       
       return {
@@ -48,10 +51,10 @@ export default function Landing({ onNext }) {
     })
     setConfetti(newParticles)
     
-    // Auto clear to avoid DOM clutter
+    // Auto clear to avoid DOM clutter (aligned with 2.5s duration)
     setTimeout(() => {
       setConfetti([])
-    }, 1600)
+    }, 2800)
 
     window.scrollTo({
       top: window.innerHeight * 0.8,
@@ -140,12 +143,13 @@ export default function Landing({ onNext }) {
                   initial={{ x: 0, y: 0, scale: 1, rotate: 0, opacity: 1 }}
                   animate={{ 
                     x: p.x, 
-                    y: p.y, 
-                    scale: [1, 1.2, 0], 
-                    rotate: p.rotate + 360,
-                    opacity: [1, 1, 0] 
+                    // Physics gravity curve: shoots out then falls down gracefully
+                    y: [0, p.y * 0.6, p.y, p.y + 400], 
+                    scale: [1, 1.2, 1, 0.8, 0], 
+                    rotate: p.rotate + 720,
+                    opacity: [1, 1, 1, 0.9, 0] 
                   }}
-                  transition={{ duration: 1.3, ease: "easeOut" }}
+                  transition={{ duration: 2.5, ease: [0.1, 0.6, 0.2, 1] }}
                   className="absolute rounded-sm z-40 pointer-events-none"
                   style={{
                     width: p.size,
